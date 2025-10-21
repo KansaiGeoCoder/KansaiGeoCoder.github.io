@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Northlayer Studio — Maps • Spatial Analysis • Cartography</title>
+  <meta name="description" content="Northlayer Studio — thoughtful maps and spatial analysis. Portfolio, about, contact, and research." />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/style.css" />
+</head>
+<body>
+  <div class="geo-grid" aria-hidden="true"></div>
+
+  <header>
+    <div class="container nav">
+      <a class="brand" href="#home" aria-label="Northlayer Studio home">
+        <img src="/assets/logo-layers.svg" alt="Northlayer layers logo"/>
+        <span>Northlayer Studio</span>
+      </a>
+      <nav>
+        <button class="menu-toggle" aria-label="Toggle menu" aria-expanded="false">Menu</button>
+        <ul id="menu">
+          <li><a href="#work">Work</a></li>
+          <li><a href="#research">Research</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="home" class="hero">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow">Cartography & Spatial Analysis</span>
+        <h1>Lightweight maps, rich insights.</h1>
+        <p class="lead read">I help cities, studios, and organizations turn geographic data into clear stories and grounded decisions. Quiet aesthetics, solid methods, and outputs you can share confidently.</p>
+        <div class="chips">
+          <span class="chip blue">Web cartography</span>
+          <span class="chip teal">Spatial analysis</span>
+          <span class="chip gold">Urban research</span>
+        </div>
+        <div class="cta">
+          <a class="btn btn-primary" href="#contact">Start a project</a>
+          <a class="btn btn-ghost" href="#work">See recent work</a>
+        </div>
+      </div>
+      <div class="blob" aria-hidden="true">
+        <img src="/assets/hero-illustration.svg" alt="Map layers illustration" />
+        <div class="legend">Layers • Routes • Places</div>
+      </div>
+    </div>
+  </main>
+
+  <section id="work">
+    <div class="container">
+      <div class="section-head">
+        <h2>Selected work</h2>
+        <p>Maps, analysis, and spatial stories.</p>
+      </div>
+      <div class="grid">
+        <a class="card" href="/work/walkability.html">
+          <img src="/images/work-walkability.jpg" alt="Walkability analysis mockup"/>
+          <div class="meta">
+            <div class="tag">Analysis</div>
+            <h3>Citywide Walkability Index</h3>
+            <p class="read">Composite of land‑use mix, density, transit, and permeability at a 200m grid.</p>
+            <span class="more">Read case study →</span>
+          </div>
+        </a>
+        <a class="card" href="/work/retail-isochrones.html">
+          <img src="/images/work-retail.jpg" alt="Retail catchment explorer"/>
+          <div class="meta">
+            <div class="tag">Web</div>
+            <h3>Retail Isochrone Explorer</h3>
+            <p class="read">5–15 minute multi‑modal sheds to compare locations and capture areas.</p>
+            <span class="more">Read case study →</span>
+          </div>
+        </a>
+        <a class="card" href="/shotengai/">
+          <img src="/images/work-shotengai.jpg" alt="Shotengai atlas mockup"/>
+          <div class="meta">
+            <div class="tag" style="color:var(--teal)">Research</div>
+            <h3>Kansai Shotengai Atlas</h3>
+            <p class="read">What shopping streets reveal about proximity, vacancy, and walkability.</p>
+            <span class="more">Open research →</span>
+          </div>
+        </a>
+        <a class="card" href="/work/exhibit-map.html">
+          <img src="/images/work-print.jpg" alt="Exhibit map layout"/>
+          <div class="meta">
+            <div class="tag">Print</div>
+            <h3>Exhibit‑quality City Map</h3>
+            <p class="read">Calm hierarchy and type for public‑facing reports and exhibitions.</p>
+            <span class="more">View project →</span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="research">
+    <div class="container">
+      <div class="section-head">
+        <h2>Research</h2>
+        <p>Shotengai: methods, metrics, and maps.</p>
+      </div>
+      <div class="research-wrap">
+        <div class="topo" aria-hidden="true">
+          <img src="/assets/topo-illustration.svg" alt="Isochrone/topographic illustration" />
+          <div class="badge">5–15 min • Isochrones</div>
+        </div>
+        <div>
+          <h3 style="font-family:Outfit; margin:.2rem 0 .6rem; font-size:1.6rem">Kansai Shotengai — a proximity lens</h3>
+          <p class="read">This project documents covered shopping streets in Kobe–Osaka–Kyoto and relates their morphology to proximity and everyday needs. I map <strong>length</strong>, <strong>frontage use</strong>, <strong>vacancy</strong>, and <strong>accessibility</strong> via 5/10/15‑minute walks.</p>
+          <div class="cta">
+            <a class="btn btn-primary" href="/shotengai/">Open dedicated page</a>
+            <a class="btn btn-ghost" href="#contact">Ask about data/methods</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about">
+    <div class="container">
+      <div class="section-head">
+        <h2>About</h2>
+        <p>Northlayer Studio</p>
+      </div>
+      <div class="read">
+        <p>I'm Maximilian — geographer and cartographer working across Austria and Japan. I focus on maps and analysis that stay useful long after the meeting ends. Tools: QGIS, PostGIS, Python, Leaflet/Mapbox.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="container">
+      <div class="section-head">
+        <h2>Contact</h2>
+        <p>Share a sentence about your goals and timeline.</p>
+      </div>
+      <form class="read" name="contact" onsubmit="event.preventDefault(); alert('Thanks! I\'ll get back to you shortly.'); this.reset();">
+        <label>
+          <span>Name</span><br>
+          <input type="text" name="name" required placeholder="Your name" class="input" />
+        </label>
+        <div class="sp"></div>
+        <label>
+          <span>Email</span><br>
+          <input type="email" name="email" required placeholder="you@example.com" class="input" />
+        </label>
+        <div class="sp"></div>
+        <label>
+          <span>Message</span><br>
+          <textarea name="message" placeholder="Briefly describe your project, audience, and deadline…" class="textarea"></textarea>
+        </label>
+        <div class="cta">
+          <button class="btn btn-primary" type="submit">Send inquiry</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container footer">
+      <div>© <span id="year"></span> Northlayer Studio</div>
+      <div class="links"><a href="#">LinkedIn</a><a href="#">GitHub</a><a href="#contact">Contact</a></div>
+    </div>
+  </footer>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>

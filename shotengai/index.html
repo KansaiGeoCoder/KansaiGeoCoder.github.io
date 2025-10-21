@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shotengai — Research by Northlayer Studio</title>
+  <meta name="description" content="Shotengai research microsite — context, methods, maps, and findings about Japan's covered shopping streets." />
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/style.css" />
+</head>
+<body>
+  <div class="geo-grid" aria-hidden="true"></div>
+
+  <header>
+    <div class="container nav">
+      <a class="brand" href="/" aria-label="Northlayer Studio home">
+        <img src="/assets/logo-layers.svg" alt="Northlayer layers logo"/>
+        <span>Northlayer Studio</span>
+      </a>
+      <nav>
+        <button class="menu-toggle" aria-label="Toggle menu" aria-expanded="false">Menu</button>
+        <ul id="menu">
+          <li><a href="/index.html#work">Work</a></li>
+          <li><a href="/index.html#research">Research</a></li>
+          <li><a href="/index.html#about">About</a></li>
+          <li><a href="/index.html#contact">Contact</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="hero container">
+    <span class="eyebrow">Research</span>
+    <h1 class="title">Shotengai: mapping everyday proximity in Kansai</h1>
+    <div class="rule" aria-hidden="true"></div>
+    <p class="deck">Shotengai — Japan’s covered shopping streets — form walkable corridors of daily life. This study documents their spatial structure in Kobe, Osaka, and Kyoto, and relates morphology to accessibility and retail vitality using open data and reproducible methods.</p>
+
+    <div class="cover" role="img" aria-label="Shotengai cover illustration">
+      <img src="/assets/hero-illustration.svg" alt="Shotengai cover illustration"/>
+    </div>
+  </main>
+
+  <div class="container article">
+    <aside class="toc" aria-label="On this page">
+      <h4>On this page</h4>
+      <a href="#what">1. What is a Shotengai?</a>
+      <a href="#why">2. Why proximity matters</a>
+      <a href="#area">3. Study area & data</a>
+      <a href="#methods">4. Methods</a>
+      <a href="#findings">5. Key findings</a>
+      <a href="#cases">6. Case studies</a>
+      <a href="#maps">7. Maps & downloads</a>
+      <a href="#contact">8. Contact</a>
+      <div class="small">Reading time ~8–10 min</div>
+    </aside>
+
+    <article class="content">
+      <section id="what">
+        <h2>1. What is a Shotengai?</h2>
+        <p>Shotengai are pedestrian‑oriented shopping streets, often covered, that serve as local high streets in Japanese cities. They stitch together daily amenities — grocers, clinics, services — within a short walk of homes and transit. Their physical form concentrates doors and signage along continuous frontage, creating a vivid street threshold.</p>
+        <figure>
+          <img src="/images/work-shotengai.jpg" alt="Shotengai street photo placeholder"/>
+          <figcaption>Covered arcades create weather‑protected promenades with dense frontage. Photo placeholder — replace with field imagery.</figcaption>
+        </figure>
+      </section>
+
+      <section id="why">
+        <h2>2. Why proximity matters</h2>
+        <p>“Five minutes” describes a practical radius for daily life: roughly 400 meters at a comfortable pace. Mapping the overlap between Shotengai corridors and 5/10/15‑minute walks reveals which neighborhoods enjoy convenient access to everyday retail — and which do not.</p>
+        <div class="callout"><strong>Takeaway:</strong> Proximity is not only distance; continuity and frontage density shape the real experience of access.</div>
+      </section>
+
+      <section id="area">
+        <h2>3. Study area & data</h2>
+        <p>This study focuses on the Kansai region — <em>Kobe</em>, <em>Osaka</em>, and <em>Kyoto</em>. Data sources include OpenStreetMap for network and building footprints, municipal open data, and field surveys for frontage use and vacancy.</p>
+        <figure>
+          <img src="/assets/topo-illustration.svg" alt="Kansai schematic placeholder"/>
+          <figcaption>Kansai focus areas (schematic). Replace with basemap thumbnails for Kobe, Osaka, and Kyoto.</figcaption>
+        </figure>
+      </section>
+
+      <section id="methods">
+        <h2>4. Methods</h2>
+        <p>Analyses are reproducible using QGIS and PostGIS. Key steps include:</p>
+        <ul>
+          <li><strong>Network prep:</strong> Clean pedestrian network; enforce walkable edges.</li>
+          <li><strong>Isochrones:</strong> 5/10/15‑minute travel sheds from Shotengai access points (pgRouting or OSRM).</li>
+          <li><strong>Frontage survey:</strong> Capture use (retail/service/residential), vacancy, and openings per 50m.</li>
+          <li><strong>Length & continuity:</strong> Measure contiguous covered segments; note breaks/gaps.</li>
+          <li><strong>Accessibility overlay:</strong> Intersect isochrones with residential blocks and daily POIs.</li>
+        </ul>
+        <figure>
+          <img src="/assets/topo-illustration.svg" alt="Workflow placeholder"/>
+          <figcaption>Workflow overview. Replace with your actual pipeline diagram when ready.</figcaption>
+        </figure>
+      </section>
+
+      <section id="findings">
+        <h2>5. Key findings</h2>
+        <p>Early results suggest that continuity of covered frontage and the density of small‑format uses correlate with stronger overlapping 10‑minute catchments. Gaps and abrupt terminations often coincide with lower footfall proxies and higher vacancy.</p>
+        <ul>
+          <li>~<em>n</em> km of covered corridors across the three cities.</li>
+          <li>Median Shotengai length: <em>n</em> m (IQR <em>n–n</em> m).</li>
+          <li>Vacancy hotspots align with network discontinuities.</li>
+        </ul>
+      </section>
+
+      <section id="cases">
+        <h2>6. Case studies</h2>
+        <p>Compact profiles highlight different morphologies and contexts.</p>
+        <figure>
+          <img src="/images/work-walkability.jpg" alt="Case study placeholder"/>
+          <figcaption><strong>Kobe:</strong> waterfront adjacency; <strong>Osaka:</strong> parallel arcades; <strong>Kyoto:</strong> temple districts. Replace with dedicated case study visuals.</figcaption>
+        </figure>
+      </section>
+
+      <section id="maps">
+        <h2>7. Maps & downloads</h2>
+        <p>Interactive maps and reproducible assets (coming soon):</p>
+        <ul>
+          <li><strong>Web map:</strong> Shotengai network + 5/10/15‑minute isochrones.</li>
+          <li><strong>Data:</strong> GeoPackage with corridors, access points, frontage survey.</li>
+          <li><strong>Notebook:</strong> QGIS/GeoPandas workflow for isochrones and overlays.</li>
+        </ul>
+        <div class="callout">Need early access for a planning study? <a href="#contact" class="link-strong">Get in touch</a> and I’ll share a preview export.</div>
+      </section>
+
+      <div class="page-nav">
+        <a class="btn btn-ghost" href="/index.html#research">← Back to research</a>
+        <a class="btn btn-primary" href="#top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Back to top ↑</a>
+      </div>
+    </article>
+  </div>
+
+  <footer>
+    <div class="container footer">
+      <div>© <span id="year"></span> Northlayer Studio</div>
+      <div class="links"><a href="/index.html#contact">Contact</a><a href="#">LinkedIn</a><a href="#">GitHub</a></div>
+    </div>
+  </footer>
+
+  <script src="/js/script.js"></script>
+</body>
+</html>
