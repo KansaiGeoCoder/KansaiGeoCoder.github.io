@@ -598,9 +598,9 @@ footer {
   }
 }
 
-/* Timeline */
+/* Timeline styling */
 .timeline {
-  margin-top: 1.6rem;
+  margin-top: 2rem;
 }
 
 .timeline ol {
@@ -609,55 +609,49 @@ footer {
   padding: 0;
   border-left: 2px solid var(--line);
   padding-left: 1.4rem;
+  position: relative;
 }
 
 .timeline li {
   position: relative;
-  padding: 0 0 1.2rem 0;
+  margin-bottom: 1.6rem;
 }
 
 .timeline li:last-child {
-  padding-bottom: 0;
+  margin-bottom: 0;
 }
 
 .timeline .t-point {
   position: absolute;
-  left: -9px;
-  /* centers on the vertical line */
-  top: .15rem;
+  left: -8px;
+  top: 0.3rem;
   width: 12px;
   height: 12px;
-  border-radius: 999px;
-  background: #fff;
-  border: 2px solid var(--blue);
-  box-shadow: 0 0 0 3px rgba(63, 169, 245, .12);
+  background: var(--brand-primary);
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(46, 196, 182, 0.2);
 }
 
 .timeline .t-meta {
-  font-size: .88rem;
-  color: var(--muted);
-  margin-bottom: .15rem;
+  font-size: 0.9rem;
+  color: var(--brand-muted);
+  margin-bottom: 0.15rem;
 }
 
 .timeline .t-body h4 {
-  font-family: "Outfit";
-  margin: 0 0 .25rem 0;
+  margin: 0 0 0.2rem 0;
   font-size: 1.05rem;
+  font-weight: 600;
 }
 
 .timeline .t-body p {
   margin: 0;
-  color: var(--ink);
-  max-width: var(--read);
+  color: var(--brand-text);
+  max-width: 60ch;
 }
 
-/* Compact on small screens */
 @media (max-width: 640px) {
   .timeline ol {
     padding-left: 1rem;
-  }
-
-  .timeline .t-body h4 {
-    font-size: 1rem;
   }
 }
