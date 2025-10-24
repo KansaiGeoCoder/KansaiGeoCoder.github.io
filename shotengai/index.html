@@ -1,22 +1,453 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Shotengai — Research by Northlayer Studio</title>
-  <meta name="description" content="Shotengai research microsite — context, methods, maps, and findings about Japan's covered shopping streets." />
-  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <title>Shotengai (商店街) — History, Morphology & Urban Value | Northlayer Studio</title>
+  <meta name="description"
+    content="An educational long‑form microsite about Shotengai (商店街) in Kyoto — history, development, spatial analysis, and planning relevance. Based on MSc research at Kyoto University." />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles/style.css" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --ink: #111418;
+      --muted: #6b7280;
+      --line: #e8edf3;
+      --card: #ffffff;
+      --blue: #3FA9F5;
+      --teal: #2EC4B6;
+      --gold: #F5BF3F;
+      --max: 1100px;
+      --read: 74ch;
+      --radius: 14px;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Inter", "Outfit", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.75
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+      height: auto
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none
+    }
+
+    .container {
+      width: min(var(--max), 92vw);
+      margin: 0 auto
+    }
+
+    /* Background grid */
+    .geo-grid {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      opacity: .32;
+      mix-blend-mode: multiply
+    }
+
+    .geo-grid::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(to right, var(--line) 1px, transparent 1px), linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+      background-size: 44px 44px, 44px 44px
+    }
+
+    .geo-grid::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(800px 300px at 15% 0%, rgba(63, 169, 245, .08), transparent 40%), radial-gradient(900px 300px at 90% 10%, rgba(46, 196, 182, .08), transparent 42%), radial-gradient(700px 300px at 50% 100%, rgba(245, 191, 63, .06), transparent 45%)
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      background: rgba(255, 255, 255, .92);
+      backdrop-filter: saturate(120%) blur(6px);
+      border-bottom: 1px solid var(--line);
+      z-index: 40
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-weight: 800;
+      letter-spacing: .2px
+    }
+
+    .brand img {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px
+    }
+
+    nav ul {
+      display: flex;
+      gap: 1.2rem;
+      list-style: none;
+      margin: 0;
+      padding: 0
+    }
+
+    nav a {
+      color: var(--muted);
+      font-weight: 600
+    }
+
+    nav a:hover {
+      color: var(--ink)
+    }
+
+    .menu-toggle {
+      display: none;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 10px;
+      padding: .45rem .6rem
+    }
+
+    @media (max-width:860px) {
+      nav ul {
+        display: none;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 60px;
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+        padding: 1rem;
+        flex-direction: column
+      }
+
+      nav ul.open {
+        display: flex
+      }
+
+      .menu-toggle {
+        display: inline-flex
+      }
+    }
+
+    /* Hero */
+    .hero {
+      padding: clamp(2.6rem, 6vw, 4.6rem) 0 1.2rem
+    }
+
+    .eyebrow {
+      display: inline-block;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: .08em;
+      font-size: .78rem;
+      text-transform: uppercase
+    }
+
+    h1.title {
+      font-family: "Outfit";
+      font-weight: 800;
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      line-height: 1.12;
+      margin: .6rem 0 .4rem
+    }
+
+    .deck {
+      font-size: 1.08rem;
+      color: var(--muted);
+      max-width: var(--read)
+    }
+
+    .rule {
+      height: 4px;
+      width: 64px;
+      background: var(--blue);
+      border-radius: 4px;
+      margin: .6rem 0 1.2rem
+    }
+
+    .cover {
+      margin-top: 1.2rem;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #fff, #fbfdff)
+    }
+
+    /* Stats */
+    .statbar {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: .8rem;
+      margin: 1.2rem 0 0
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 12px;
+      padding: .8rem 1rem
+    }
+
+    .stat .k {
+      font-family: "Outfit";
+      font-weight: 800;
+      font-size: 1.2rem
+    }
+
+    .stat .l {
+      color: var(--muted);
+      font-size: .9rem
+    }
+
+    @media (max-width:720px) {
+      .statbar {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .stat:nth-child(3) {
+        grid-column: 1/-1
+      }
+    }
+
+    /* Article */
+    .article {
+      display: grid;
+      grid-template-columns: 270px 1fr;
+      gap: 2rem;
+      margin-top: 1.8rem
+    }
+
+    .toc {
+      position: sticky;
+      top: 88px;
+      align-self: start;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1rem;
+      background: #fff
+    }
+
+    .toc h4 {
+      margin: 0 0 .4rem 0;
+      font-family: "Outfit";
+      font-size: 1rem
+    }
+
+    .toc a {
+      display: block;
+      color: #2b3542;
+      padding: .34rem 0;
+      font-size: .95rem
+    }
+
+    .toc a:hover {
+      color: var(--blue)
+    }
+
+    .toc .small {
+      color: var(--muted);
+      font-size: .85rem;
+      margin-top: .4rem
+    }
+
+    @media (max-width:1080px) {
+      .article {
+        grid-template-columns: 1fr
+      }
+
+      .toc {
+        position: relative;
+        top: auto;
+        margin-bottom: 1rem
+      }
+    }
+
+    .content {
+      max-width: var(--read)
+    }
+
+    .content h2 {
+      font-family: "Outfit";
+      font-weight: 800;
+      margin: 2.2rem 0 .6rem;
+      font-size: 1.6rem
+    }
+
+    .content h3 {
+      font-family: "Outfit";
+      font-weight: 700;
+      margin: 1.2rem 0 .4rem;
+      font-size: 1.15rem
+    }
+
+    .content p {
+      margin: .8rem 0
+    }
+
+    figure {
+      margin: 1.2rem 0;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      overflow: hidden
+    }
+
+    figcaption {
+      font-size: .9rem;
+      color: var(--muted);
+      padding: .7rem 1rem;
+      border-top: 1px solid var(--line)
+    }
+
+    .callout {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: linear-gradient(180deg, #fff, #fdfefe);
+      padding: 1rem;
+      margin: 1rem 0
+    }
+
+    .note {
+      font-size: .85rem;
+      color: #2b3542
+    }
+
+    .supplement {
+      display: inline-block;
+      font-size: .78rem;
+      color: #5b6473;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: .1rem .4rem;
+      margin-left: .3rem
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 1rem
+    }
+
+    .card {
+      grid-column: span 6;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      overflow: hidden
+    }
+
+    .card .body {
+      padding: 1rem
+    }
+
+    .badge {
+      display: inline-block;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: .35rem .6rem;
+      font-weight: 700;
+      color: #2b3542;
+      background: #fff
+    }
+
+    @media (max-width:900px) {
+      .card {
+        grid-column: span 12
+      }
+    }
+
+    .page-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 2.2rem 0
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      border-radius: 999px;
+      padding: .7rem 1rem;
+      font-weight: 700;
+      border: 1px solid var(--ink);
+      transition: .2s
+    }
+
+    .btn:hover {
+      transform: translateY(-1px)
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--line);
+      color: var(--ink)
+    }
+
+    .btn-primary {
+      background: var(--ink);
+      color: #fff;
+      border-color: var(--ink)
+    }
+
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 1.6rem 0 2.6rem;
+      color: var(--muted);
+      margin-top: 2rem
+    }
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap
+    }
+  </style>
 </head>
+
 <body>
   <div class="geo-grid" aria-hidden="true"></div>
 
   <header>
     <div class="container nav">
       <a class="brand" href="/" aria-label="Northlayer Studio home">
-        <img src="/assets/logo-layers.svg" alt="Northlayer layers logo"/>
+        <img src="/assets/logo-layers.svg" alt="Northlayer layers logo" />
         <span>Northlayer Studio</span>
       </a>
       <nav>
@@ -33,114 +464,287 @@
 
   <main class="hero container">
     <span class="eyebrow">Research</span>
-    <h1 class="title">Shotengai: mapping everyday proximity in Kansai</h1>
+    <h1 class="title">Shotengai (商店街) — Walkable Corridors of Everyday Life in Kyoto</h1>
     <div class="rule" aria-hidden="true"></div>
-    <p class="deck">Shotengai — Japan’s covered shopping streets — form walkable corridors of daily life. This study documents their spatial structure in Kobe, Osaka, and Kyoto, and relates morphology to accessibility and retail vitality using open data and reproducible methods.</p>
+    <p class="deck">This long‑form page distills findings from my Master’s research (Kyoto University) into an
+      accessible guide to <strong>Shotengai (商店街)</strong> — their history, morphology, and contemporary value for a
+      walkable, human‑scale city. Japanese terms are shown with kanji/kana, e.g., <em>Shotengai (商店街)</em>,
+      <em>monzenmachi (門前町)</em>, <em>machizukuri (まちづくり)</em>. Where I add context beyond the thesis, it’s marked with
+      a <span class="supplement">Supplementary context</span> badge for your review.</p>
 
-    <div class="cover" role="img" aria-label="Shotengai cover illustration">
-      <img src="/assets/hero-illustration.svg" alt="Shotengai cover illustration"/>
+    <div class="cover" role="img" aria-label="Shotengai cover illustration: layers and isochrones">
+      <svg viewBox="0 0 1200 420" xmlns="http://www.w3.org/2000/svg" width="100%" height="auto">
+        <rect width="1200" height="420" fill="#fff" />
+        <g opacity="0.08">
+          <path d="M0 60 H1200 M0 120 H1200 M0 180 H1200 M0 240 H1200 M0 300 H1200 M0 360 H1200" stroke="#111418" />
+          <path
+            d="M120 0 V420 M240 0 V420 M360 0 V420 M480 0 V420 M600 0 V420 M720 0 V420 M840 0 V420 M960 0 V420 M1080 0 V420"
+            stroke="#111418" />
+        </g>
+        <rect x="140" y="120" width="920" height="70" rx="16" fill="rgba(63,169,245,.16)" />
+        <rect x="170" y="200" width="860" height="70" rx="16" fill="rgba(46,196,182,.16)" />
+        <rect x="200" y="280" width="800" height="70" rx="16" fill="rgba(245,191,63,.16)" />
+        <path d="M220 320 C 340 240, 540 240, 660 320 S 940 380, 1060 320" fill="none" stroke="#3FA9F5" stroke-width="6"
+          stroke-linecap="round" />
+        <circle cx="220" cy="320" r="7" fill="#3FA9F5" />
+        <circle cx="660" cy="320" r="7" fill="#3FA9F5" />
+        <circle cx="1060" cy="320" r="7" fill="#3FA9F5" />
+      </svg>
+    </div>
+
+    <div class="statbar">
+      <div class="stat">
+        <div class="k">Kyoto‑focused</div>
+        <div class="l">City‑specific lens</div>
+      </div>
+      <div class="stat">
+        <div class="k">5/10/15</div>
+        <div class="l">minute walk isochrones</div>
+      </div>
+      <div class="stat">
+        <div class="k">Field + GIS</div>
+        <div class="l">Frontage & continuity</div>
+      </div>
     </div>
   </main>
 
   <div class="container article">
     <aside class="toc" aria-label="On this page">
       <h4>On this page</h4>
-      <a href="#what">1. What is a Shotengai?</a>
-      <a href="#why">2. Why proximity matters</a>
-      <a href="#area">3. Study area & data</a>
-      <a href="#methods">4. Methods</a>
-      <a href="#findings">5. Key findings</a>
-      <a href="#cases">6. Case studies</a>
-      <a href="#maps">7. Maps & downloads</a>
-      <a href="#contact">8. Contact</a>
-      <div class="small">Reading time ~8–10 min</div>
+      <a href="#intro">0. Why Study Shotengai?</a>
+      <a href="#history">1. Historical Roots (Kyoto)</a>
+      <a href="#postwar">2. Postwar Growth & Policy</a>
+      <a href="#morphology">3. Spatial Morphology & Integration</a>
+      <a href="#culture">4. Cultural & Social Dimensions</a>
+      <a href="#methods">5. Fieldwork & Methods</a>
+      <a href="#findings">6. Spatial Findings</a>
+      <a href="#challenges">7. Challenges</a>
+      <a href="#revitalization">8. Revitalization & Prospects</a>
+      <a href="#lessons">9. Lessons for Urbanism</a>
+      <a href="#glossary">10. Glossary</a>
+      <a href="#refs">11. References & Acknowledgments</a>
+      <div class="small">Reading time ~15–20 min</div>
     </aside>
 
     <article class="content">
-      <section id="what">
-        <h2>1. What is a Shotengai?</h2>
-        <p>Shotengai are pedestrian‑oriented shopping streets, often covered, that serve as local high streets in Japanese cities. They stitch together daily amenities — grocers, clinics, services — within a short walk of homes and transit. Their physical form concentrates doors and signage along continuous frontage, creating a vivid street threshold.</p>
+      <!-- 0. INTRODUCTION -->
+      <section id="intro">
+        <h2>0. Why Study Shotengai?</h2>
+        <p>In Kyoto, <strong>Shotengai (商店街)</strong> are not simply retail corridors — they are everyday
+          infrastructures of proximity. They connect homes, transit, schools, clinics, and small businesses into
+          walkable constellations. My Master’s research at Kyoto University set out to understand how the <em>form</em>
+          and <em>continuity</em> of these corridors relate to practical access measured through walk‑time bands and to
+          on‑the‑ground patterns of frontage and vacancy.</p>
+        <p>Globally, cities are rediscovering the value of short‑trip urbanism and dense local amenity networks. Kyoto
+          offers an especially clear lens: a historic grid, a tradition of neighborhood organization, and a living
+          culture of small shops. The aim here is to ground contemporary ideas — proximity, liveability, and
+          <em>machizukuri (まちづくり)</em> — in the specific spatial logics of Kyoto’s Shotengai.</p>
+        <div class="callout"><strong>Framing:</strong> Proximity is not only distance; it is shaped by
+          <em>continuity</em> (unbroken covered segments), <em>frontage density</em> (doors per 50 m), and <em>access
+            nodes</em> (entry points near transit and intersections).</div>
+      </section>
+
+      <!-- 1. HISTORY -->
+      <section id="history">
+        <h2>1. Historical Roots (Kyoto)</h2>
+        <h3>From Monzenmachi (門前町) to Urban Arcades</h3>
+        <p>Kyoto’s lineage of commerce emerges from temple‑front settlements known as <em>monzenmachi (門前町)</em>, where
+          pilgrims and residents met along narrow street markets. As the city’s grid matured, these clusters linked into
+          linear streets aligned with district life and seasonal events. Over time, rain protection and shared branding
+          gave rise to covered corridors recognizable today as Shotengai (商店街).</p>
+        <h3>Merchants, Guilds, and Local Governance</h3>
+        <p>Merchant associations and guild traditions underpinned cooperative maintenance, mutual credit, and dispute
+          resolution. In Kyoto, the continuity between neighborhood councils and merchant groups shaped shared
+          investments — signage, lighting, seasonal décor — that unified a corridor’s identity while protecting
+          diversity at the shop scale.</p>
+        <h3>Modernization and Materiality</h3>
+        <p>Roof typologies in Kyoto evolved from awnings to lightweight steel and translucent panels, balancing daylight
+          with weather protection. While inspired in part by Western arcades, Kyoto’s arcades remain resolutely local in
+          scale: narrow plots, frequent openings, and rhythms designed for walking.</p>
         <figure>
-          <img src="/images/work-shotengai.jpg" alt="Shotengai street photo placeholder"/>
-          <figcaption>Covered arcades create weather‑protected promenades with dense frontage. Photo placeholder — replace with field imagery.</figcaption>
+          <img src="/images/work-shotengai.jpg" alt="Kyoto shotengai street placeholder" />
+          <figcaption>Continuity, fine‑grain parcels, and human scale characterize Kyoto’s Shotengai (商店街).</figcaption>
         </figure>
       </section>
 
-      <section id="why">
-        <h2>2. Why proximity matters</h2>
-        <p>“Five minutes” describes a practical radius for daily life: roughly 400 meters at a comfortable pace. Mapping the overlap between Shotengai corridors and 5/10/15‑minute walks reveals which neighborhoods enjoy convenient access to everyday retail — and which do not.</p>
-        <div class="callout"><strong>Takeaway:</strong> Proximity is not only distance; continuity and frontage density shape the real experience of access.</div>
+      <!-- 2. POSTWAR -->
+      <section id="postwar">
+        <h2>2. Postwar Growth & Policy</h2>
+        <p>Postwar reconstruction in Kyoto strengthened neighborhood‑scale retail. Merchant cooperatives, or
+          <em>shōtengai kumiai (商店街組合)</em>, formalized collective action — from pooled cleaning and promotions to
+          shared façade guidelines. Municipal initiatives supported upgrades to lighting, weather protection, and
+          barrier‑free access along key corridors.</p>
+        <p>Policy attention ebbed and flowed with broader retail trends. While suburban malls and e‑commerce challenged
+          footfall, Kyoto’s historic context and tourism cycles preserved the social centrality of several corridors.
+          These dynamics shaped a patchwork geography: some Shotengai intensified around rail nodes; others served
+          primarily local needs within residential grids.</p>
+        <div class="callout"><strong>Kyoto emphasis:</strong> Local governance and incremental investment mattered as
+          much as big policy — reinforcing a culture of care and shared maintenance.</div>
       </section>
 
-      <section id="area">
-        <h2>3. Study area & data</h2>
-        <p>This study focuses on the Kansai region — <em>Kobe</em>, <em>Osaka</em>, and <em>Kyoto</em>. Data sources include OpenStreetMap for network and building footprints, municipal open data, and field surveys for frontage use and vacancy.</p>
+      <!-- 3. MORPHOLOGY -->
+      <section id="morphology">
+        <h2>3. Spatial Morphology & Integration</h2>
+        <h3>Street Section & Frontage</h3>
+        <p>Kyoto corridors typically present tight sections: pedestrian space seldom wider than several meters, framed
+          by small plots (3–5 m frontage). This fine grain yields frequent openings, short visual intervals, and a
+          steady cadence of shopfronts. The covered roof stabilizes microclimate and produces a quiet, diffuse light
+          suited to slow walking and browsing.</p>
+        <h3>Continuity & Breaks</h3>
+        <p>Continuity — measured as unbroken covered length — is a key determinant of perceived walkability. Small gaps
+          at intersections can act as thresholds or friction points; long breaks often correlate with frontage
+          discontinuity and vacancy. In the thesis, corridors were segmented accordingly to capture changes in enclosure
+          and rhythm.</p>
+        <h3>Integration with Transit</h3>
+        <p>Entry points near bus or rail stations act as access nodes. Isochrone analysis (5/10/15‑minute walks) from
+          these nodes describes practical reach, highlighting overlapping sheds where several corridors mesh with
+          residential blocks and essential services.</p>
         <figure>
-          <img src="/assets/topo-illustration.svg" alt="Kansai schematic placeholder"/>
-          <figcaption>Kansai focus areas (schematic). Replace with basemap thumbnails for Kobe, Osaka, and Kyoto.</figcaption>
+          <img src="/assets/topo-illustration.svg" alt="Schematic of segments and nodes" />
+          <figcaption>Segments (continuity) and nodes (access) provide a simple structure for understanding corridor
+            performance.</figcaption>
         </figure>
       </section>
 
+      <!-- 4. CULTURE -->
+      <section id="culture">
+        <h2>4. Cultural & Social Dimensions</h2>
+        <p>Shotengai (商店街) are social infrastructures as much as retail devices. In Kyoto, seasonal events, small
+          shrines, and neighborhood rituals animate corridors beyond their commercial role. The covered public‑like
+          space functions as a weather‑proof threshold for daily greetings, informal care, and inter‑generational
+          presence.</p>
+        <p>Because many proprietors live close by, the corridor supports a compact lifecycle — opening shutters, placing
+          signs, sharing deliveries — that binds economic and social routines. These subtle patterns are difficult to
+          quantify but essential to understanding resilience.</p>
+        <div class="callout"><strong>Observation:</strong> Frontage diversity — clinics next to tofu shops next to
+          stationery — helps spread risk across everyday needs rather than concentrating it in a single retail category.
+        </div>
+      </section>
+
+      <!-- 5. METHODS -->
       <section id="methods">
-        <h2>4. Methods</h2>
-        <p>Analyses are reproducible using QGIS and PostGIS. Key steps include:</p>
+        <h2>5. Fieldwork & Methods</h2>
+        <p>The study used a reproducible GIS workflow combining <strong>QGIS</strong>, <strong>PostGIS</strong>, and
+          lightweight notebooks. Kyoto corridors were digitized and split into segments of continuous coverage. Access
+          nodes were mapped around transit and major intersections. A frontage survey recorded use
+          (retail/service/residential), openings per 50 m, and vacancy. Isochrones at 5/10/15 minutes were computed from
+          nodes and dissolved to reveal overlaps.</p>
+        <h3>Data</h3>
         <ul>
-          <li><strong>Network prep:</strong> Clean pedestrian network; enforce walkable edges.</li>
-          <li><strong>Isochrones:</strong> 5/10/15‑minute travel sheds from Shotengai access points (pgRouting or OSRM).</li>
-          <li><strong>Frontage survey:</strong> Capture use (retail/service/residential), vacancy, and openings per 50m.</li>
-          <li><strong>Length & continuity:</strong> Measure contiguous covered segments; note breaks/gaps.</li>
-          <li><strong>Accessibility overlay:</strong> Intersect isochrones with residential blocks and daily POIs.</li>
+          <li>OpenStreetMap: base network and buildings.</li>
+          <li>Municipal open data (Kyoto): contextual layers (where available).</li>
+          <li>Field observation: frontage use, vacancy, and continuity breaks.</li>
         </ul>
-        <figure>
-          <img src="/assets/topo-illustration.svg" alt="Workflow placeholder"/>
-          <figcaption>Workflow overview. Replace with your actual pipeline diagram when ready.</figcaption>
-        </figure>
+        <h3>Indicators</h3>
+        <ul>
+          <li><strong>Continuity index:</strong> length of unbroken coverage per segment.</li>
+          <li><strong>Frontage density:</strong> openings per 50 m as a proxy for vibrancy.</li>
+          <li><strong>Accessibility:</strong> area and population within 5/10/15‑minute walks from access nodes.</li>
+        </ul>
+        <div class="callout"><strong>Reproducibility:</strong> The pipeline favors simple, inspectable steps. Outputs
+          packaged as GeoPackage with metadata for sharing.</div>
       </section>
 
+      <!-- 6. FINDINGS -->
       <section id="findings">
-        <h2>5. Key findings</h2>
-        <p>Early results suggest that continuity of covered frontage and the density of small‑format uses correlate with stronger overlapping 10‑minute catchments. Gaps and abrupt terminations often coincide with lower footfall proxies and higher vacancy.</p>
-        <ul>
-          <li>~<em>n</em> km of covered corridors across the three cities.</li>
-          <li>Median Shotengai length: <em>n</em> m (IQR <em>n–n</em> m).</li>
-          <li>Vacancy hotspots align with network discontinuities.</li>
-        </ul>
-      </section>
-
-      <section id="cases">
-        <h2>6. Case studies</h2>
-        <p>Compact profiles highlight different morphologies and contexts.</p>
+        <h2>6. Spatial Findings</h2>
+        <h3>Continuity & Overlap</h3>
+        <p>Segments with higher continuity tended to coincide with stronger overlap of 10‑minute walk sheds, suggesting
+          a relationship between enclosure, perceived comfort, and practical access. While causality is complex, the
+          pattern recurs across multiple corridors.</p>
+        <h3>Vacancy & Breaks</h3>
+        <p>Vacancy hotspots often appear near long breaks or abrupt terminations in coverage, especially where network
+          permeability is weak. Short, deliberate thresholds (e.g., across small lanes) did not correspond to similar
+          vacancy spikes.</p>
+        <h3>Frontage Diversity</h3>
+        <p>Higher diversity of small‑format uses correlates with steadier foot traffic proxies. Narrow plot widths and
+          frequent openings seem to support incremental adaptation without erasing local identity.</p>
         <figure>
-          <img src="/images/work-walkability.jpg" alt="Case study placeholder"/>
-          <figcaption><strong>Kobe:</strong> waterfront adjacency; <strong>Osaka:</strong> parallel arcades; <strong>Kyoto:</strong> temple districts. Replace with dedicated case study visuals.</figcaption>
+          <img src="/images/work-walkability.jpg" alt="Illustrative trend lines" />
+          <figcaption>Illustrative trends from Kyoto corridors: continuity vs. overlap; vacancy clustering near long
+            breaks.</figcaption>
         </figure>
       </section>
 
-      <section id="maps">
-        <h2>7. Maps & downloads</h2>
-        <p>Interactive maps and reproducible assets (coming soon):</p>
-        <ul>
-          <li><strong>Web map:</strong> Shotengai network + 5/10/15‑minute isochrones.</li>
-          <li><strong>Data:</strong> GeoPackage with corridors, access points, frontage survey.</li>
-          <li><strong>Notebook:</strong> QGIS/GeoPandas workflow for isochrones and overlays.</li>
-        </ul>
-        <div class="callout">Need early access for a planning study? <a href="#contact" class="link-strong">Get in touch</a> and I’ll share a preview export.</div>
+      <!-- 7. CHALLENGES -->
+      <section id="challenges">
+        <h2>7. Challenges</h2>
+        <p>Kyoto’s Shotengai navigate demographic shifts, succession gaps, and competition from large‑format retail and
+          e‑commerce. Aging proprietors and rising renovation costs complicate adaptation. Where residential density
+          declines or tourist flows fluctuate, footfall can become uneven.</p>
+        <p>Yet the very constraints of fine‑grain fabric can be strengths: low thresholds for entry, small units that
+          incubate new uses, and public familiarity that resists sudden erasure. Policy that recognizes these nuances
+          can avoid blunt redevelopment that disrupts continuity.</p>
       </section>
 
-      <div class="page-nav">
-        <a class="btn btn-ghost" href="/index.html#research">← Back to research</a>
-        <a class="btn btn-primary" href="#top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Back to top ↑</a>
-      </div>
+      <!-- 8. REVITALIZATION -->
+      <section id="revitalization">
+        <h2>8. Revitalization & Prospects</h2>
+        <p>Revitalization in Kyoto often succeeds when it starts with care for the corridor’s everyday functions:
+          repairs to roof segments, improved lighting, barrier‑free thresholds, and modest wayfinding. Partnerships
+          between merchant associations and neighborhood groups create durable stewardship.</p>
+        <p>Programmatic strategies include multi‑use frontage (day/night functions), micro‑logistics for small
+          deliveries, and pop‑up formats that reduce barriers for new entrants. Where appropriate, lightweight cultural
+          programming supports identity without displacing daily convenience.</p>
+        <div class="callout note">Some examples in this paragraph reflect general urbanist practice <span
+            class="supplement">Supplementary context</span>. Please replace or align with your documented Kyoto cases
+          where needed.</div>
+      </section>
+
+      <!-- 9. LESSONS -->
+      <section id="lessons">
+        <h2>9. Lessons for Urbanism</h2>
+        <p>Kyoto’s Shotengai suggest that proximity is a product of fabric as much as distance. A continuous, fine‑grain
+          corridor concentrates openings, stabilizes microclimate, and invites slow movement. These conditions amplify
+          the real reach of a 10‑minute walk by making it pleasant, purposeful, and safe.</p>
+        <p>For planners, the lesson is methodological: analyze access <em>and</em> enclosure. For designers, it is
+          typological: reinforce fine grain and short intervals. For communities, it is organizational: support
+          <em>machizukuri (まちづくり)</em> that keeps stewardship local and visible.</p>
+      </section>
+
+      <!-- 10. GLOSSARY -->
+      <section id="glossary">
+        <h2>10. Glossary</h2>
+        <p><strong>Shotengai (商店街):</strong> covered or semi‑covered neighborhood shopping street.</p>
+        <p><strong>Monzenmachi (門前町):</strong> settlement and commerce near temple/shrine gates; historic roots of
+          street markets.</p>
+        <p><strong>Machizukuri (まちづくり):</strong> participatory, locally led town‑making or community planning.</p>
+        <p><strong>Shōtengai kumiai (商店街組合):</strong> merchant association or arcade cooperative.</p>
+        <p><strong>Isochrone:</strong> area reachable within a specified time (walking in this study).</p>
+        <p><strong>Frontage density:</strong> count of openings per fixed distance (e.g., 50 m) used as a proxy for
+          activity.</p>
+      </section>
+
+      <!-- 11. REFERENCES -->
+      <section id="refs">
+        <h2>11. References & Acknowledgments</h2>
+        <p>This page summarizes elements of my MSc thesis at Kyoto University. All observations, methods, and
+          interpretations presented here are adapted for public readability; formal citations and data sources appear in
+          the thesis document. Where I offered general urbanist examples or practice notes not present in the thesis,
+          they are flagged with the <span class="supplement">Supplementary context</span> badge for your review.</p>
+        <div class="page-nav">
+          <a class="btn btn-ghost" href="/index.html#research">← Back to research</a>
+          <a class="btn btn-primary" href="#top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Back
+            to top ↑</a>
+        </div>
+      </section>
     </article>
   </div>
 
   <footer>
     <div class="container footer">
       <div>© <span id="year"></span> Northlayer Studio</div>
-      <div class="links"><a href="/index.html#contact">Contact</a><a href="#">LinkedIn</a><a href="#">GitHub</a></div>
+      <div style="display:flex;gap:1rem"><a href="/index.html#contact">Contact</a><a href="#">LinkedIn</a><a
+          href="#">GitHub</a></div>
     </div>
   </footer>
 
-  <script src="/js/script.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    const btn = document.querySelector('.menu-toggle');
+    const menu = document.getElementById('menu');
+    btn?.addEventListener('click', () => { const open = menu.classList.toggle('open'); btn.setAttribute('aria-expanded', String(open)); });
+  </script>
 </body>
+
 </html>
