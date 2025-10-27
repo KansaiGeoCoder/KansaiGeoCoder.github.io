@@ -1,5 +1,5 @@
 // ===== CONFIG =====
-const DATA_URL = "data/shotengai.geojson"; // uses your existing /data folder
+const DATA_URL = "../data/shotengai.geojson";
 
 // Basemaps (dark + light)
 const basemaps = {

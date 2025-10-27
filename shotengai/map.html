@@ -11,9 +11,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
   <!-- Global site styles first -->
-  <link rel="stylesheet" href="styles/style.css">
+  <link rel="stylesheet" href="../styles/style.css?v=1">
   <!-- Atlas styles after (to safely override) -->
-  <link rel="stylesheet" href="styles/atlas.css">
+  <link rel="stylesheet" href="../styles/atlas.css?v=1">
 
   <!-- Leaflet + plugins -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -28,14 +28,14 @@
 
   <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0" defer></script>
 
-  <!-- Atlas logic -->
-  <script src="js/atlas.js" defer></script>
+  <!-- Atlas logic (one level up) -->
+  <script src="../js/atlas.js?v=1" defer></script>
 </head>
 <body>
   <div class="app" id="atlas-app">
     <header>
       <div class="title">
-        <img src="assets/favicon.svg" alt="" width="20" height="20" style="opacity:.9" />
+        <img src="../assets/favicon.svg" alt="" width="20" height="20" style="opacity:.9" />
         <h1>Shotengai Atlas <span class="badge">beta</span></h1>
       </div>
       <div class="sub">Explore & locate Shotengai (商店街) across Japan</div>
@@ -77,7 +77,7 @@
 
       <div class="card smallprint">
         <div class="smallprint-title">About</div>
-        <p>Data: <code>/data/shotengai.geojson</code>. Fields read: <code>name_en</code>, <code>name_ja</code>, <code>city</code>, <code>prefecture</code>, <code>status</code>, <code>length_m</code>, <code>established</code>, <code>notes</code>, <code>url</code>.</p>
+        <p>Data: <code>../data/shotengai.geojson</code>. Fields read: <code>name_en</code>, <code>name_ja</code>, <code>city</code>, <code>prefecture</code>, <code>status</code>, <code>length_m</code>, <code>established</code>, <code>notes</code>, <code>url</code>.</p>
       </div>
     </aside>
 
