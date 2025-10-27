@@ -1,42 +1,43 @@
 // ===== CONFIG =====
-// If map.html is in /shotengai/ and data is in /data/:
-const DATA_URL = "../data/testdata.geojson"; // change to "../data/testdata.geojson" if needed
+// Build an absolute URL from /shotengai/map.html to the data file:
+const DATA_PATH = "../data/testdata.geojson";             // change to ../data/testdata.geojson if needed
+const DATA_URL = new URL(DATA_PATH, window.location.href).href;
+// Add cache-busting while you iterate:
+const FETCH_URL = DATA_URL + (DATA_URL.includes("?") ? "&" : "?") + "v=" + Date.now();
 
 // ===== COORDINATE NORMALIZATION =====
-// Detect [lat, lon] and swap to [lon, lat], and coerce string numbers -> Number
-function toNum(n){ return (typeof n === "string") ? parseFloat(n) : n; }
-function fixPair(pair){
-  // handles ["135.76","35.01"] or [35.01,135.76]
+function toNum(n) { return (typeof n === "string") ? parseFloat(n) : n; }
+function fixPair(pair) {
   let a = toNum(pair[0]), b = toNum(pair[1]);
   const looksLatLon = Math.abs(a) <= 90 && Math.abs(b) > 90 && Math.abs(b) <= 180;
   return looksLatLon ? [b, a] : [a, b];
 }
-function normalizeGeometry(geom){
-  if(!geom || !geom.type) return geom;
+function normalizeGeometry(geom) {
+  if (!geom || !geom.type) return geom;
   const T = geom.type;
-  if(T === "Point") return { type:"Point", coordinates: fixPair(geom.coordinates) };
-  if(T === "MultiPoint") return { type:"MultiPoint", coordinates: geom.coordinates.map(fixPair) };
-  if(T === "LineString") return { type:"LineString", coordinates: geom.coordinates.map(fixPair) };
-  if(T === "MultiLineString") return {
-    type:"MultiLineString",
+  if (T === "Point") return { type: "Point", coordinates: fixPair(geom.coordinates) };
+  if (T === "MultiPoint") return { type: "MultiPoint", coordinates: geom.coordinates.map(fixPair) };
+  if (T === "LineString") return { type: "LineString", coordinates: geom.coordinates.map(fixPair) };
+  if (T === "MultiLineString") return {
+    type: "MultiLineString",
     coordinates: geom.coordinates.map(line => line.map(fixPair))
   };
-  if(T === "Polygon") return {
-    type:"Polygon",
+  if (T === "Polygon") return {
+    type: "Polygon",
     coordinates: geom.coordinates.map(ring => ring.map(fixPair))
   };
-  if(T === "MultiPolygon") return {
-    type:"MultiPolygon",
+  if (T === "MultiPolygon") return {
+    type: "MultiPolygon",
     coordinates: geom.coordinates.map(poly => poly.map(ring => ring.map(fixPair)))
   };
   return geom;
 }
 
-// ===== UI HELPERS (tolerant to current fields) =====
-function featureName(p){ return p.Name || p.name_en || p.name_ja || p.name || "Unnamed Shotengai"; }
-function featureCity(p){ return p.AddressEn || p.Address || [p.city, p.prefecture].filter(Boolean).join(", "); }
-function formatLength(m){ if(!m && m !== 0) return null; const km = m/1000; return m >= 1000 ? `${km.toFixed(2)} km` : `${m} m`; }
-function cardHTML(p){
+// ===== UI HELPERS =====
+function featureName(p) { return p.Name || p.name_en || p.name_ja || p.name || "Unnamed Shotengai"; }
+function featureCity(p) { return p.AddressEn || p.Address || [p.city, p.prefecture].filter(Boolean).join(", "); }
+function formatLength(m) { if (!m && m !== 0) return null; const km = m / 1000; return m >= 1000 ? `${km.toFixed(2)} km` : `${m} m`; }
+function cardHTML(p) {
   const title = featureName(p);
   const city = featureCity(p);
   const status = p.status ? `<span class="pill">${p.status}</span>` : "";
@@ -55,27 +56,26 @@ function cardHTML(p){
 
 // ===== MAP & BASEMAPS =====
 const basemaps = {
-  light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors'}),
-  dark:  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap &copy; CARTO'})
+  light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }),
+  dark: L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap &copy; CARTO' })
 };
-const map = L.map("map", { center:[36.2048,137.2529], zoom:5, layers:[basemaps.dark] });
+const map = L.map("map", { center: [36.2048, 137.2529], zoom: 5, layers: [basemaps.dark] });
 L.control.layers({ "Light": basemaps.light, "Dark": basemaps.dark }).addTo(map);
-L.Control.geocoder({defaultMarkGeocode:false}).on("markgeocode", e => map.fitBounds(e.geocode.bbox)).addTo(map);
+L.Control.geocoder({ defaultMarkGeocode: false }).on("markgeocode", e => map.fitBounds(e.geocode.bbox)).addTo(map);
 
 // Styles
-const lineStyle      = { color:"#7aa2ff", weight:3.5, opacity:0.95 };
-const lineStyleHover = { color:"#14b8a6", weight:4.5, opacity:1.0 };
-function pointCircleStyle(feature){
-  const status = (feature.properties?.status||"").toLowerCase();
+const lineStyle = { color: "#7aa2ff", weight: 3.5, opacity: 0.95 };
+const lineStyleHover = { color: "#14b8a6", weight: 4.5, opacity: 1.0 };
+function pointCircleStyle(feature) {
+  const status = (feature.properties?.status || "").toLowerCase();
   const color = status === "active" ? "#22c55e" : status === "declining" ? "#f59e0b" : "#9ca3af";
-  return { radius:6, color:"#0b1220", weight:1, fillColor:color, fillOpacity:0.95 };
+  return { radius: 6, color: "#0b1220", weight: 1, fillColor: color, fillOpacity: 0.95 };
 }
-// DivIcon for clustering (MarkerCluster cannot cluster circleMarker)
+// MarkerCluster cannot cluster circleMarker → use a DivIcon
 const dotIcon = L.divIcon({
   className: "sg-dot",
   html: '<div style="width:10px;height:10px;border-radius:999px;background:#9ca3af;border:1px solid #0b1220"></div>',
-  iconSize: [10,10],
-  iconAnchor: [5,5]
+  iconSize: [10, 10], iconAnchor: [5, 5]
 });
 
 // ===== DOM REFS =====
@@ -94,136 +94,147 @@ const infoCard = document.getElementById("info");
 let rawFeatures = [];
 let linesLayer, pointsStandalone, clusterLayer, fuse;
 
-// ===== LOAD DATA =====
-fetch(DATA_URL).then(r => r.json()).then(geojson => {
-  let features = geojson.type === "FeatureCollection" ? geojson.features : [geojson];
-
-  // Normalize coordinate order and coerce numeric strings
-  features = features.map(f => ({ ...f, geometry: normalizeGeometry(f.geometry) }));
-  rawFeatures = features;
-
-  // Prefecture dropdown (hide if dataset doesn’t have it yet)
-  const prefs = [...new Set(features.map(f => f.properties?.prefecture).filter(Boolean))].sort();
-  if (prefs.length) {
-    for (const p of prefs) {
-      const opt = document.createElement("option");
-      opt.value = p; opt.textContent = p; elPrefFilter.appendChild(opt);
-    }
-  } else {
-    const lab = document.querySelector('label[for="prefFilter"]');
-    if (lab) lab.style.display = "none";
-    elPrefFilter.style.display = "none";
-  }
-
-  // Search index (include current fields + future ones)
-  fuse = new Fuse(features.map((f,i) => ({
-    idx: i,
-    Name: f.properties?.Name || "",
-    Address: f.properties?.Address || "",
-    AddressEn: f.properties?.AddressEn || "",
-    name: featureName(f.properties||{}),
-    city: f.properties?.city || "",
-    prefecture: f.properties?.prefecture || "",
-    kana: f.properties?.name_kana || "",
-    romaji: f.properties?.name_romaji || ""
-  })), {
-    includeScore:true, threshold:0.3,
-    keys: ["Name","Address","AddressEn","name","city","prefecture","kana","romaji"]
-  });
-
-  // Split by geometry
-  const pointFeats = features.filter(f => ["Point","MultiPoint"].includes(f.geometry?.type));
-  const lineFeats  = features.filter(f => ["LineString","MultiLineString"].includes(f.geometry?.type));
-  console.log("features:", features.length, "points:", pointFeats.length, "lines:", lineFeats.length);
-
-  // ---- Lines layer ----
-  linesLayer = L.geoJSON(lineFeats, {
-    style: lineStyle,
-    onEachFeature: (f, layer) => {
-      layer.on({
-        mouseover: () => layer.setStyle(lineStyleHover),
-        mouseout:  () => layer.setStyle(lineStyle),
-        click: () => {
-          try { showInfo(f, layer.getBounds().getCenter()); }
-          catch { showInfo(f, null); }
-        }
-      });
-    }
-  }).addTo(map);
-
-  // ---- Points (non-cluster) ----
-  pointsStandalone = L.geoJSON(pointFeats, {
-    pointToLayer: (f, latlng) => L.circleMarker(latlng, pointCircleStyle(f)),
-    onEachFeature: (f, layer) => layer.on("click", () => showInfo(f, layer.getLatLng()))
-  });
-
-  // ---- Points (clustered) ----
-  clusterLayer = L.markerClusterGroup({
-    disableClusteringAtZoom: 15,
-    spiderfyOnMaxZoom: true,
-    showCoverageOnHover: false,
-    chunkedLoading: true
-  });
-  const clusterPoints = L.geoJSON(pointFeats, {
-    pointToLayer: (f, latlng) => L.marker(latlng, { icon: dotIcon })
-  });
-  clusterLayer.addLayer(clusterPoints).addTo(map);
-
-  // Fit to all data
+// ===== LOAD DATA (robust) =====
+(async function init() {
   try {
-    const b = L.latLngBounds();
-    features.forEach(f => { const g = L.geoJSON(f); if (g.getBounds) b.extend(g.getBounds()); });
-    if (b.isValid()) map.fitBounds(b.pad(0.06));
-  } catch(e) { console.warn("Bounds error", e); }
+    console.log("[Atlas] Fetching:", FETCH_URL);
+    const res = await fetch(FETCH_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} at ${res.url}`);
+    const ctype = (res.headers.get("content-type") || "").toLowerCase();
+    const text = await res.text();
 
-  // Render list
-  renderList(features);
+    let geojson;
+    try {
+      geojson = JSON.parse(text);
+    } catch (e) {
+      console.error("[Atlas] Non-JSON response head:", text.slice(0, 200));
+      throw new Error(`Response was not JSON (content-type: ${ctype || "unknown"})`);
+    }
 
-  // Wire UI
-  elSearch.addEventListener("input", handleFilter);
-  elPrefFilter.addEventListener("change", handleFilter);
-  elToggleActive.addEventListener("change", handleFilter);
+    let features = geojson.type === "FeatureCollection" ? geojson.features : [geojson];
+    // Normalize coords & numeric strings
+    features = features.map(f => ({ ...f, geometry: normalizeGeometry(f.geometry) }));
+    rawFeatures = features;
 
-  elTogglePoints.addEventListener("change", ensureLayerVisibility);
-  elToggleLines.addEventListener("change", ensureLayerVisibility);
-  elToggleCluster.addEventListener("change", ensureLayerVisibility);
+    // Prefecture filter (hide if none)
+    const prefs = [...new Set(features.map(f => f.properties?.prefecture).filter(Boolean))].sort();
+    if (prefs.length) {
+      for (const p of prefs) {
+        const opt = document.createElement("option");
+        opt.value = p; opt.textContent = p; elPrefFilter.appendChild(opt);
+      }
+    } else {
+      const lab = document.querySelector('label[for="prefFilter"]');
+      if (lab) lab.style.display = "none";
+      elPrefFilter.style.display = "none";
+    }
 
-  // Initial state: show lines, hide points if none
-  elToggleLines.checked = true;
-  elTogglePoints.checked = pointFeats.length > 0;
-  ensureLayerVisibility();
+    // Search index
+    fuse = new Fuse(features.map((f, i) => ({
+      idx: i,
+      Name: f.properties?.Name || "",
+      Address: f.properties?.Address || "",
+      AddressEn: f.properties?.AddressEn || "",
+      name: featureName(f.properties || {}),
+      city: f.properties?.city || "",
+      prefecture: f.properties?.prefecture || "",
+      kana: f.properties?.name_kana || "",
+      romaji: f.properties?.name_romaji || ""
+    })), {
+      includeScore: true, threshold: 0.3,
+      keys: ["Name", "Address", "AddressEn", "name", "city", "prefecture", "kana", "romaji"]
+    });
 
-}).catch(err => {
-  console.error("Failed to load GeoJSON", err);
-  L.marker([35.0116,135.7681]).addTo(map).bindPopup("Couldn’t load data").openPopup();
-});
+    // Split by geometry
+    const pointFeats = features.filter(f => ["Point", "MultiPoint"].includes(f.geometry?.type));
+    const lineFeats = features.filter(f => ["LineString", "MultiLineString"].includes(f.geometry?.type));
+    console.log("[Atlas] features:", features.length, "points:", pointFeats.length, "lines:", lineFeats.length);
+
+    // Lines
+    linesLayer = L.geoJSON(lineFeats, {
+      style: lineStyle,
+      onEachFeature: (f, layer) => {
+        layer.on({
+          mouseover: () => layer.setStyle(lineStyleHover),
+          mouseout: () => layer.setStyle(lineStyle),
+          click: () => {
+            try { showInfo(f, layer.getBounds().getCenter()); }
+            catch { showInfo(f, null); }
+          }
+        });
+      }
+    }).addTo(map);
+
+    // Points (non-cluster)
+    pointsStandalone = L.geoJSON(pointFeats, {
+      pointToLayer: (f, latlng) => L.circleMarker(latlng, pointCircleStyle(f)),
+      onEachFeature: (f, layer) => layer.on("click", () => showInfo(f, layer.getLatLng()))
+    });
+
+    // Points (cluster)
+    clusterLayer = L.markerClusterGroup({
+      disableClusteringAtZoom: 15,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      chunkedLoading: true
+    });
+    const clusterPoints = L.geoJSON(pointFeats, {
+      pointToLayer: (f, latlng) => L.marker(latlng, { icon: dotIcon })
+    });
+    clusterLayer.addLayer(clusterPoints).addTo(map);
+
+    // Fit to all
+    try {
+      const b = L.latLngBounds();
+      features.forEach(f => { const g = L.geoJSON(f); if (g.getBounds) b.extend(g.getBounds()); });
+      if (b.isValid()) map.fitBounds(b.pad(0.06));
+    } catch (e) { console.warn("[Atlas] Bounds error", e); }
+
+    // Render list + wire UI
+    renderList(features);
+    elSearch.addEventListener("input", handleFilter);
+    elPrefFilter.addEventListener("change", handleFilter);
+    elToggleActive.addEventListener("change", handleFilter);
+
+    elTogglePoints.addEventListener("change", ensureLayerVisibility);
+    elToggleLines.addEventListener("change", ensureLayerVisibility);
+    elToggleCluster.addEventListener("change", ensureLayerVisibility);
+
+    // Initial visibility
+    elToggleLines.checked = true;
+    elTogglePoints.checked = pointFeats.length > 0;
+    ensureLayerVisibility();
+
+  } catch (err) {
+    console.error("[Atlas] Failed to load GeoJSON:", err);
+    L.marker([35.0116, 135.7681]).addTo(map).bindPopup("Couldn't load data").openPopup();
+  }
+})();
 
 // ===== UI FUNCS =====
-function showInfo(feature, center){
+function showInfo(feature, center) {
   const p = feature.properties || {};
   infoCard.innerHTML = cardHTML(p);
   document.getElementById("infopanel").style.display = "block";
   if (center) map.panTo(center);
 }
-
-function handleFilter(){
+function handleFilter() {
   const q = (elSearch.value || "").trim();
   const pref = elPrefFilter.value;
   const onlyActive = elToggleActive.checked;
 
   let list = rawFeatures.slice();
-  if (pref) list = list.filter(f => (f.properties?.prefecture||"") === pref);
-  if (onlyActive) list = list.filter(f => (f.properties?.status||"").toLowerCase() === "active");
+  if (pref) list = list.filter(f => (f.properties?.prefecture || "") === pref);
+  if (onlyActive) list = list.filter(f => (f.properties?.status || "").toLowerCase() === "active");
 
-  if (q && fuse){
+  if (q && window.Fuse) {
     const hits = fuse.search(q).map(h => rawFeatures[h.item.idx]);
     const idset = new Set(list.map(f => rawFeatures.indexOf(f)));
     list = hits.filter(f => idset.has(rawFeatures.indexOf(f)));
   }
   renderList(list);
 }
-
-function renderList(features){
+function renderList(features) {
   elResults.innerHTML = "";
   elResultCount.textContent = features.length;
   const frag = document.createDocumentFragment();
@@ -240,29 +251,24 @@ function renderList(features){
   });
   elResults.appendChild(frag);
 }
-
-function zoomToFeature(f){
+function zoomToFeature(f) {
   const g = L.geoJSON(f);
-  try{
+  try {
     const b = g.getBounds();
     if (b && b.isValid()) map.fitBounds(b.pad(0.2));
-    else if (f.geometry?.type === "Point"){
+    else if (f.geometry?.type === "Point") {
       const [lng, lat] = f.geometry.coordinates;
       map.setView([lat, lng], 17);
     }
-  }catch(e){}
+  } catch (e) { }
   showInfo(f, null);
 }
-
-// Ensure layers match toggles (called on load and on toggle changes)
-function ensureLayerVisibility(){
-  // lines
+function ensureLayerVisibility() {
   if (elToggleLines.checked) {
     if (linesLayer && !map.hasLayer(linesLayer)) map.addLayer(linesLayer);
   } else {
     if (linesLayer && map.hasLayer(linesLayer)) map.removeLayer(linesLayer);
   }
-  // points
   if (elTogglePoints.checked) {
     if (elToggleCluster.checked) {
       if (clusterLayer && !map.hasLayer(clusterLayer)) map.addLayer(clusterLayer);
