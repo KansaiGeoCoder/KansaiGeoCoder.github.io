@@ -1,5 +1,5 @@
 // ===== CONFIG =====
-const DATA_URL = "../data/shotengai.geojson";
+const DATA_URL = "../data/testdata.geojson";
 
 // Basemaps (dark + light)
 const basemaps = {
@@ -19,43 +19,49 @@ const map = L.map('map', {
 });
 
 // Layer controls
-L.control.layers({"Light": basemaps.light, "Dark": basemaps.dark}).addTo(map);
+L.control.layers({ "Light": basemaps.light, "Dark": basemaps.dark }).addTo(map);
 
 // Geocoder
-L.Control.geocoder({defaultMarkGeocode:false}).on('markgeocode', function(e){
+L.Control.geocoder({ defaultMarkGeocode: false }).on('markgeocode', function (e) {
   map.fitBounds(e.geocode.bbox);
 }).addTo(map);
 
 // Style helpers
-const lineStyle = {color:'#7aa2ff', weight:3, opacity:0.8};
-const lineStyleHover = {color:'#14b8a6', weight:4, opacity:1.0};
+const lineStyle = { color: '#7aa2ff', weight: 3, opacity: 0.8 };
+const lineStyleHover = { color: '#14b8a6', weight: 4, opacity: 1.0 };
 
-function pointStyle(feature){
-  const status = (feature.properties?.status||'').toLowerCase();
+function pointStyle(feature) {
+  const status = (feature.properties?.status || '').toLowerCase();
   const color = status === 'active' ? '#22c55e' : status === 'declining' ? '#f59e0b' : '#9ca3af';
   return { radius: 6, color: '#0b1220', weight: 1, fillColor: color, fillOpacity: 0.95 };
 }
-function featureName(p){ return p.name_en || p.name_ja || p.name || 'Unnamed Shotengai'; }
-function featureCity(p){ return [p.city, p.prefecture].filter(Boolean).join(', '); }
-function formatLength(m){ if(!m && m !== 0) return null; const km = m/1000; return m >= 1000 ? `${km.toFixed(2)} km` : `${m} m`; }
+function featureName(p) {
+  // prefer your current "Name" (JP), fallbacks for future
+  return p.Name || p.name_en || p.name_ja || p.name || 'Unnamed Shotengai';
+}
+
+function featureCity(p) {
+  // you don't have city/prefecture yet, so show AddressEn or Address
+  return p.AddressEn || p.Address || '';
+}
+
+function formatLength(m) { if (!m && m !== 0) return null; const km = m / 1000; return m >= 1000 ? `${km.toFixed(2)} km` : `${m} m`; }
 function cardHTML(p){
   const title = featureName(p);
   const city = featureCity(p);
-  const status = p.status ? `<span class="pill">${p.status}</span>` : '';
-  const len = formatLength(Number(p.length_m));
-  const est = p.established ? `Since ${p.established}` : '';
+  const photo = p.PhotoLocation && /^https?:/i.test(p.PhotoLocation)
+    ? `<img src="${p.PhotoLocation}" alt="${title}" style="width:100%;border-radius:10px;margin-top:8px">`
+    : '';
   const url = p.url ? `<a href="${p.url}" target="_blank" rel="noopener">Official site</a>` : '';
-  const note = p.notes ? `<p style="margin-top:8px;color:#cbd5e1">${p.notes}</p>` : '';
-  // Optional deep-link to your /shotengai page if you add a slug:
-  // const details = p.slug ? `<a href="shotengai/index.html?id=${encodeURIComponent(p.slug)}">Details</a>` : '';
+
   return `
-    <h3>${title} ${status}</h3>
+    <h3>${title}</h3>
     <div class="meta">${city}</div>
-    <div class="meta" style="margin-top:6px">${[len, est].filter(Boolean).join(' · ')}</div>
+    ${photo}
     <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">${url}</div>
-    ${note}
   `;
 }
+
 
 // Layers + state
 let pointsLayer, linesLayer, clusterLayer;
@@ -75,21 +81,26 @@ const infoPanel = document.getElementById('infopanel');
 const infoCard = document.getElementById('info');
 
 // Fetch data
-fetch(DATA_URL).then(r=>r.json()).then(geojson => {
+fetch(DATA_URL).then(r => r.json()).then(geojson => {
   const features = geojson.type === 'FeatureCollection' ? geojson.features : [geojson];
   rawFeatures = features;
 
   // Pref dropdown
   const prefs = [...new Set(features.map(f => f.properties?.prefecture).filter(Boolean))].sort();
-  for(const p of prefs){
+  for (const p of prefs) {
     const opt = document.createElement('option');
     opt.value = p; opt.textContent = p; elPrefFilter.appendChild(opt);
   }
 
-  // Fuse index
-  fuse = new Fuse(features.map((f,i) => ({
+  // Fuse index (include your current fields)
+  fuse = new Fuse(features.map((f, i) => ({
     idx: i,
-    name: featureName(f.properties||{}),
+    // these are the fields we’ll search through
+    Name: f.properties?.Name || '',
+    Address: f.properties?.Address || '',
+    AddressEn: f.properties?.AddressEn || '',
+    // keep future-friendly keys:
+    name: featureName(f.properties || {}),
     city: f.properties?.city || '',
     prefecture: f.properties?.prefecture || '',
     kana: f.properties?.name_kana || '',
@@ -97,12 +108,13 @@ fetch(DATA_URL).then(r=>r.json()).then(geojson => {
   })), {
     includeScore: true,
     threshold: 0.3,
-    keys: ['name','city','prefecture','kana','romaji']
+    keys: ['Name', 'Address', 'AddressEn', 'name', 'city', 'prefecture', 'kana', 'romaji']
   });
 
+
   // Split geometries
-  const pointFeats = features.filter(f => ['Point','MultiPoint'].includes(f.geometry?.type));
-  const lineFeats  = features.filter(f => ['LineString','MultiLineString'].includes(f.geometry?.type));
+  const pointFeats = features.filter(f => ['Point', 'MultiPoint'].includes(f.geometry?.type));
+  const lineFeats = features.filter(f => ['LineString', 'MultiLineString'].includes(f.geometry?.type));
 
   // Lines
   const lines = L.geoJSON(lineFeats, {
@@ -110,7 +122,7 @@ fetch(DATA_URL).then(r=>r.json()).then(geojson => {
     onEachFeature: (f, layer) => {
       layer.on({
         mouseover: () => layer.setStyle(lineStyleHover),
-        mouseout:  () => layer.setStyle(lineStyle),
+        mouseout: () => layer.setStyle(lineStyle),
         click: () => showInfo(f, layer.getBounds().getCenter())
       });
     }
@@ -141,11 +153,11 @@ fetch(DATA_URL).then(r=>r.json()).then(geojson => {
   clusterLayer.addTo(map);
 
   // Fit bounds
-  try{
+  try {
     const b = L.latLngBounds();
     features.forEach(f => { const g = L.geoJSON(f); g.getBounds && b.extend(g.getBounds()); });
-    if(b.isValid()) map.fitBounds(b.pad(0.06));
-  }catch(e){ console.warn('Bounds error', e); }
+    if (b.isValid()) map.fitBounds(b.pad(0.06));
+  } catch (e) { console.warn('Bounds error', e); }
 
   // Initial list + UI wiring
   renderList(features);
@@ -155,22 +167,22 @@ fetch(DATA_URL).then(r=>r.json()).then(geojson => {
 
   elTogglePoints.addEventListener('change', () => {
     const show = elTogglePoints.checked;
-    if(elToggleCluster.checked){
-      if(show) map.addLayer(clusterLayer); else map.removeLayer(clusterLayer);
-    }else{
-      if(show) map.addLayer(pointsStandalone); else map.removeLayer(pointsStandalone);
+    if (elToggleCluster.checked) {
+      if (show) map.addLayer(clusterLayer); else map.removeLayer(clusterLayer);
+    } else {
+      if (show) map.addLayer(pointsStandalone); else map.removeLayer(pointsStandalone);
     }
   });
   elToggleLines.addEventListener('change', () => {
-    if(elToggleLines.checked) map.addLayer(linesLayer); else map.removeLayer(linesLayer);
+    if (elToggleLines.checked) map.addLayer(linesLayer); else map.removeLayer(linesLayer);
   });
   elToggleCluster.addEventListener('change', () => {
     const useCluster = elToggleCluster.checked;
-    if(elTogglePoints.checked){
-      if(useCluster){
+    if (elTogglePoints.checked) {
+      if (useCluster) {
         map.removeLayer(pointsStandalone);
         map.addLayer(clusterLayer);
-      }else{
+      } else {
         map.removeLayer(clusterLayer);
         map.addLayer(pointsStandalone);
       }
@@ -182,27 +194,27 @@ fetch(DATA_URL).then(r=>r.json()).then(geojson => {
 
 }).catch(err => {
   console.error('Failed to load GeoJSON', err);
-  const fallback = L.marker([35.0116,135.7681]).addTo(map).bindPopup('Add your GeoJSON at /data/shotengai.geojson');
+  const fallback = L.marker([35.0116, 135.7681]).addTo(map).bindPopup('Add your GeoJSON at /data/shotengai.geojson');
   fallback.openPopup();
 });
 
-function showInfo(feature, center){
+function showInfo(feature, center) {
   const p = feature.properties || {};
   infoCard.innerHTML = cardHTML(p);
   infoPanel.style.display = 'block';
-  if(center) map.panTo(center);
+  if (center) map.panTo(center);
 }
 
-function handleFilter(){
+function handleFilter() {
   const q = (document.getElementById('search').value || '').trim();
   const pref = document.getElementById('prefFilter').value;
   const onlyActive = document.getElementById('toggleActive').checked;
 
   let list = rawFeatures.slice();
-  if(pref) list = list.filter(f => (f.properties?.prefecture||'') === pref);
-  if(onlyActive) list = list.filter(f => (f.properties?.status||'').toLowerCase() === 'active');
+  if (pref) list = list.filter(f => (f.properties?.prefecture || '') === pref);
+  if (onlyActive) list = list.filter(f => (f.properties?.status || '').toLowerCase() === 'active');
 
-  if(q && fuse){
+  if (q && fuse) {
     const hits = fuse.search(q).map(h => rawFeatures[h.item.idx]);
     const idset = new Set(list.map(f => rawFeatures.indexOf(f)));
     list = hits.filter(f => idset.has(rawFeatures.indexOf(f)));
@@ -211,7 +223,7 @@ function handleFilter(){
   renderList(list);
 }
 
-function renderList(features){
+function renderList(features) {
   const elResults = document.getElementById('results');
   const elResultCount = document.getElementById('resultCount');
   elResults.innerHTML = '';
@@ -232,15 +244,15 @@ function renderList(features){
   elResults.appendChild(frag);
 }
 
-function zoomToFeature(f){
+function zoomToFeature(f) {
   const g = L.geoJSON(f);
-  try{
+  try {
     const b = g.getBounds();
-    if(b && b.isValid()) map.fitBounds(b.pad(0.2));
-    else if(f.geometry?.type === 'Point'){
+    if (b && b.isValid()) map.fitBounds(b.pad(0.2));
+    else if (f.geometry?.type === 'Point') {
       const [lng, lat] = f.geometry.coordinates;
       map.setView([lat, lng], 17);
     }
-  }catch(e){}
+  } catch (e) { }
   showInfo(f, null);
 }
