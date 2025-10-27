@@ -1,6 +1,43 @@
 // ===== CONFIG =====
 const DATA_URL = "../data/testdata.geojson";
 
+// --- Add these helpers near the top of atlas.js ---
+function looksLikeLatLon(a, b) {
+  // a ~ latitude (<=90), b ~ longitude (can be >90). If so, the pair is [lat, lon].
+  return Math.abs(a) <= 90 && Math.abs(b) <= 180 && Math.abs(b) > 90;
+}
+
+function swapIfLatLonPair(pair) {
+  const [a, b] = pair;
+  // If it looks like [lat, lon], return [lon, lat]; otherwise leave as is
+  return looksLikeLatLon(a, b) ? [b, a] : pair;
+}
+
+function normalizeGeometry(geom) {
+  if (!geom || !geom.type) return geom;
+
+  if (geom.type === 'LineString') {
+    return {
+      type: 'LineString',
+      coordinates: geom.coordinates.map(swapIfLatLonPair)
+    };
+  }
+  if (geom.type === 'MultiLineString') {
+    return {
+      type: 'MultiLineString',
+      coordinates: geom.coordinates.map(line => line.map(swapIfLatLonPair))
+    };
+  }
+  if (geom.type === 'Point') {
+    return { type: 'Point', coordinates: swapIfLatLonPair(geom.coordinates) };
+  }
+  if (geom.type === 'MultiPoint') {
+    return { type: 'MultiPoint', coordinates: geom.coordinates.map(swapIfLatLonPair) };
+  }
+  return geom;
+}
+
+
 // Basemaps (dark + light)
 const basemaps = {
   light: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -46,7 +83,7 @@ function featureCity(p) {
 }
 
 function formatLength(m) { if (!m && m !== 0) return null; const km = m / 1000; return m >= 1000 ? `${km.toFixed(2)} km` : `${m} m`; }
-function cardHTML(p){
+function cardHTML(p) {
   const title = featureName(p);
   const city = featureCity(p);
   const photo = p.PhotoLocation && /^https?:/i.test(p.PhotoLocation)
@@ -82,8 +119,14 @@ const infoCard = document.getElementById('info');
 
 // Fetch data
 fetch(DATA_URL).then(r => r.json()).then(geojson => {
-  const features = geojson.type === 'FeatureCollection' ? geojson.features : [geojson];
+  let features = geojson.type === 'FeatureCollection' ? geojson.features : [geojson];
+
+  // NEW: normalize coordinates in case data is [lat, lon]
+  features = features.map(f => ({ ...f, geometry: normalizeGeometry(f.geometry) }));
+
   rawFeatures = features;
+  // ... (rest of your existing code stays the same)
+
 
   // Pref dropdown
   const prefs = [...new Set(features.map(f => f.properties?.prefecture).filter(Boolean))].sort();
