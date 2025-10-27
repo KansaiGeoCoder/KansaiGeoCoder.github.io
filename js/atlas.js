@@ -1,6 +1,6 @@
 // ===== CONFIG =====
 // If map.html is in /shotengai/ and data is in /data/:
-const DATA_URL = "../data/shotengai.geojson"; // change to "../data/testdata.geojson" if needed
+const DATA_URL = "../data/testdata.geojson"; // change to "../data/testdata.geojson" if needed
 
 // ===== COORDINATE NORMALIZATION =====
 // Detect [lat, lon] and swap to [lon, lat], and coerce string numbers -> Number
