@@ -194,7 +194,7 @@ fetch(DATA_URL).then(r => r.json()).then(geojson => {
 
 }).catch(err => {
   console.error('Failed to load GeoJSON', err);
-  const fallback = L.marker([35.0116, 135.7681]).addTo(map).bindPopup('Add your GeoJSON at /data/shotengai.geojson');
+  const fallback = L.marker([35.0116, 135.7681]).addTo(map).bindPopup('Add your GeoJSON at /data/testdata.geojson');
   fallback.openPopup();
 });
 
