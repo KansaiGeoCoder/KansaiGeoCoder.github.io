@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shotengai Atlas | Northlayer Studio</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Global site styles first -->
+  <link rel="stylesheet" href="styles/style.css">
+  <!-- Atlas styles after (to safely override) -->
+  <link rel="stylesheet" href="styles/atlas.css">
+
+  <!-- Leaflet + plugins -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" defer></script>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js" defer></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0" defer></script>
+
+  <!-- Atlas logic -->
+  <script src="js/atlas.js" defer></script>
+</head>
+<body>
+  <div class="app" id="atlas-app">
+    <header>
+      <div class="title">
+        <img src="assets/favicon.svg" alt="" width="20" height="20" style="opacity:.9" />
+        <h1>Shotengai Atlas <span class="badge">beta</span></h1>
+      </div>
+      <div class="sub">Explore & locate Shotengai (商店街) across Japan</div>
+    </header>
+
+    <aside class="sidebar">
+      <div class="card controls">
+        <label for="search">Search by name / city / prefecture</label>
+        <input id="search" type="text" placeholder="e.g., 錦市場, Teramachi, Kobe" autocomplete="off" />
+
+        <div class="toggle-row">
+          <label>Show points</label>
+          <input id="togglePoints" type="checkbox" checked />
+        </div>
+        <div class="toggle-row">
+          <label>Show centerlines</label>
+          <input id="toggleLines" type="checkbox" checked />
+        </div>
+        <div class="toggle-row">
+          <label>Cluster points</label>
+          <input id="toggleCluster" type="checkbox" checked />
+        </div>
+        <div class="toggle-row">
+          <label>Only active Shotengai</label>
+          <input id="toggleActive" type="checkbox" />
+        </div>
+
+        <label for="prefFilter" class="mt8">Prefecture filter</label>
+        <select id="prefFilter"><option value="">All prefectures</option></select>
+      </div>
+
+      <div class="card">
+        <div class="results-head">
+          <div class="results-title">Results</div>
+          <div id="resultCount" class="pill">0</div>
+        </div>
+        <div id="results" class="results" aria-live="polite"></div>
+      </div>
+
+      <div class="card smallprint">
+        <div class="smallprint-title">About</div>
+        <p>Data: <code>/data/shotengai.geojson</code>. Fields read: <code>name_en</code>, <code>name_ja</code>, <code>city</code>, <code>prefecture</code>, <code>status</code>, <code>length_m</code>, <code>established</code>, <code>notes</code>, <code>url</code>.</p>
+      </div>
+    </aside>
+
+    <main id="map"></main>
+  </div>
+
+  <div class="infopanel" id="infopanel" style="display:none">
+    <div class="infocard" id="info"></div>
+  </div>
+</body>
+</html>
