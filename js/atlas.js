@@ -104,26 +104,112 @@ function fmtLength(props, fmap) {
   const km = v / 1000;
   return v >= 1000 ? `${km.toFixed(2)} km` : `${v.toFixed(0)} m`;
 }
+// --- improved info card ---
 function cardHTML(props, fmap) {
-  const meta = [
-    featureCity(props, fmap),
-    fmtLength(props, fmap),
-    prop(props, "established", fmap) ? `Since ${prop(props, "established", fmap)}` : ""
+  const get = (k) => (fmap && fmap[k] ? props[fmap[k]] : props[k]);
+  const name = featureName(props, fmap);
+  const city = featureCity(props, fmap);
+  const stat = (get("status") || "").toString().trim();
+  const len = fmtLength(props, fmap);
+  const est = get("established");
+  const cov = get("covered");
+  const stalls = get("stalls_est");
+  const sta = get("nearest_sta");
+  const line = get("nearest_line");
+  const walk = get("walk_min");
+  const typ = get("typology");
+  const theme = get("theme");
+  const assoc = get("association");
+  const assocUrl = get("association_url");
+  const url = get("url");
+  const id = get("id");
+  const slug = get("slug");
+  const notes = get("notes");
+  const imgs = Array.isArray(get("images")) ? get("images") : [];
+
+  const chips = [
+    stat && `<span class="pill pill-${stat.toLowerCase()}">${stat}</span>`,
+    cov === true ? `<span class="pill">covered</span>` : (cov === false ? `<span class="pill">open-air</span>` : ""),
+    typ && `<span class="pill">${escapeHtml(typ)}</span>`,
+    theme && `<span class="pill">${escapeHtml(theme)}</span>`
+  ].filter(Boolean).join("");
+
+  const metaLeft = [
+    city || "",
+    len || "",
+    est ? `Since ${escapeHtml(est)}` : ""
   ].filter(Boolean).join(" · ");
 
-  const url = prop(props, "url", fmap);
-  const urlHTML = url ? `<a href="${url}" target="_blank" rel="noopener">Official site</a>` : "";
+  const metaRight = [
+    stalls != null ? `${Number(stalls)} shops (est.)` : "",
+    (sta || line) ? `${escapeHtml(sta || "")} ${sta && line ? "·" : ""} ${escapeHtml(line || "")}`.trim() : "",
+    walk != null ? `${Number(walk)} min` : ""
+  ].filter(Boolean).join(" · ");
 
-  const notes = prop(props, "notes", fmap);
-  const notesHTML = notes ? `<p style="margin-top:8px;color:#cbd5e1">${notes}</p>` : "";
+  const links = [
+    url && `<a class="btn btn-primary" href="${url}" target="_blank" rel="noopener">Official site</a>`,
+    assocUrl && `<a class="btn" href="${assocUrl}" target="_blank" rel="noopener">Association</a>`
+  ].filter(Boolean).join("");
+
+  const idBlock = (id || slug) ? `
+    <div class="kv">
+      ${id ? `<div><span class="k">ID</span><span class="v">${escapeHtml(id)}</span></div>` : ""}
+      ${slug ? `<div><span class="k">Slug</span><span class="v">${escapeHtml(slug)}</span></div>` : ""}
+    </div>` : "";
+
+  const gallery = imgs.length ? `
+    <div class="gallery">
+      ${imgs.slice(0, 3).map(src => `<img src="${src}" alt="" loading="lazy">`).join("")}
+    </div>` : "";
 
   return `
-    <h3>${featureName(props, fmap)} ${statusPill(props, fmap)}</h3>
-    <div class="meta">${meta}</div>
-    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">${urlHTML}</div>
-    ${notesHTML}
+    <div class="card-head">
+      <div class="title">${escapeHtml(name)}</div>
+      <button class="close" aria-label="Close" onclick="hideInfo()">×</button>
+    </div>
+
+    <div class="chips">${chips}</div>
+
+    <div class="meta-row">
+      <div class="meta-left">${metaLeft}</div>
+      <div class="meta-right">${metaRight}</div>
+    </div>
+
+    ${assoc ? `<div class="subtle">Managed by: ${escapeHtml(assoc)}</div>` : ""}
+
+    ${links ? `<div class="actions">${links}</div>` : ""}
+
+    ${gallery}
+
+    ${idBlock}
+
+    ${notes ? `<div class="notes">${escapeHtml(notes)}</div>` : ""}
+    <div class="toolbar">
+      <button class="btn" onclick="zoomToSelected()">Zoom to</button>
+      <button class="btn" onclick="copyPermalink('${encodeURIComponent(slug || id || "")}')">Copy link</button>
+    </div>
   `;
 }
+
+// --- helpers to support the card ---
+function escapeHtml(s) { return (s == null) ? "" : String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
+
+// Keep a reference to the last feature for the Zoom button / permalink
+let __lastFeatureClicked = null;
+function zoomToSelected() {
+  if (!__lastFeatureClicked) return;
+  const g = L.geoJSON(__lastFeatureClicked);
+  const b = g.getBounds && g.getBounds();
+  if (b && b.isValid()) map.fitBounds(b.pad(0.2));
+}
+function copyPermalink(slug) {
+  const url = slug ? `${location.origin}${location.pathname}?id=${slug}` : location.href;
+  navigator.clipboard.writeText(url).catch(() => { });
+  // simple feedback
+  const el = document.querySelector(".infocard .toolbar"); if (el) { el.insertAdjacentHTML("beforeend", `<span class="copied">Copied!</span>`); setTimeout(() => { const c = document.querySelector(".copied"); c && c.remove(); }, 1200); }
+}
+function hideInfo() { document.getElementById("infopanel").style.display = "none"; }
+
 
 // ===== MAP SETUP =====
 const basemaps = {
@@ -277,11 +363,16 @@ let FIELD_MAP = null;
 
 // ===== UI FUNCS =====
 function showInfo(feature, center) {
+  __lastFeatureClicked = feature;
   const p = feature.properties || {};
   infoCard.innerHTML = cardHTML(p, FIELD_MAP || {});
   infoPanel.style.display = "block";
-  if (center) map.panTo(center);
+  if (center) {
+    const b = L.geoJSON(feature).getBounds?.();
+    if (!b || !b.contains(center)) map.panTo(center);
+  }
 }
+
 function handleFilter() {
   const q = (elSearch.value || "").trim();
   const prefKey = FIELD_MAP && FIELD_MAP.prefecture;
