@@ -11,9 +11,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Global site styles first -->
+  <!-- Global site styles -->
   <link rel="stylesheet" href="../styles/style.css?v=1">
-  <!-- Atlas styles after (to safely override) -->
   <link rel="stylesheet" href="../styles/atlas.css?v=1">
 
   <!-- Leaflet + plugins -->
@@ -28,48 +27,6 @@
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js" defer></script>
 
   <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0" defer></script>
-
-  <!-- map.html -->
-  <script type="module">
-    import { loadShotengaiAsFeatureCollection } from "../js/supabase-load.js";
-
-    const map = L.map('map', {
-      center: [35.0, 135.76],
-      zoom: 10,
-      preferCanvas: true
-    });
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    const fc = await loadShotengaiAsFeatureCollection();
-    console.log("Loaded Shotengai:", fc);
-
-    L.geoJSON(fc, {
-      style: f => ({
-        color:
-          f.properties.status === "active"
-            ? "#2ecc71"
-            : f.properties.status === "declining"
-              ? "#f39c12"
-              : f.properties.status === "closed"
-                ? "#e74c3c"
-                : "#95a5a6",
-        weight: 4,
-        opacity: 0.8
-      }),
-      onEachFeature: (f, layer) => {
-        layer.bindPopup(
-          `<b>${f.properties.name_en || "Unknown"}</b><br>
-         ${f.properties.city || ""}<br>
-         Status: ${f.properties.status || ""}<br>
-         Length: ${Math.round(f.properties.length_m)} m`
-        );
-      }
-    }).addTo(map);
-  </script>
-
 </head>
 
 <body>
@@ -120,9 +77,11 @@
 
       <div class="card smallprint">
         <div class="smallprint-title">About</div>
-        <p>Data: <code>../data/shotengai.geojson</code>. Fields read: <code>name_en</code>, <code>name_ja</code>,
-          <code>city</code>, <code>prefecture</code>, <code>status</code>, <code>length_m</code>,
-          <code>established</code>, <code>notes</code>, <code>url</code>.
+        <p>
+          Data: <code>Supabase (v_shotengai_geojson)</code>.<br>
+          Fields read: <code>name_en</code>, <code>name_ja</code>,
+          <code>city</code>, <code>prefecture</code>, <code>status</code>,
+          <code>length_m</code>, <code>url</code>.
         </p>
       </div>
     </aside>
@@ -133,8 +92,9 @@
   <div class="infopanel" id="infopanel" style="display:none">
     <div class="infocard" id="info"></div>
   </div>
-    <!-- Loading atlas code -->
-  <script src="../js/atlas.js"></script>
+
+  <!-- Load the unified atlas script -->
+  <script type="module" src="../js/atlas.js"></script>
 </body>
 
 </html>

@@ -171,14 +171,16 @@ header .sub {
   right: 16px;
   top: 88px;
   z-index: 500;
-  max-width: 360px
+  max-width: 360px;
+  pointer-events: none
 }
 
 .infocard {
   background: #0e1318;
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 14px
+  padding: 14px;
+  pointer-events: auto
 }
 
 .infocard h3 {
@@ -462,4 +464,115 @@ header .sub {
     max-width: none;
     width: 100%;
   }
+}
+
+/* ===== Info panel bottom-right ===== */
+.infopanel {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  z-index: 450;
+  display: none;
+  pointer-events: none;
+}
+
+.infocard {
+  pointer-events: auto;
+  background: #0e1318;
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  padding: 16px;
+  width: 320px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  color: #e5ebf5;
+  font-family: "Inter", sans-serif;
+}
+
+.infocard .card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.infocard .title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.infocard .close {
+  background: none;
+  border: none;
+  color: #9aa4b2;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.infocard .chips {
+  margin: 8px 0;
+}
+
+.pill {
+  display: inline-block;
+  background: #1f2b3a;
+  border-radius: 12px;
+  padding: 3px 8px;
+  margin-right: 6px;
+  font-size: 0.8rem;
+  color: #cfe2ff;
+  border: 1px solid #334155;
+}
+
+.pill-active {
+  background: #153d27;
+  color: #a5f3bc;
+  border-color: #195e38;
+}
+
+.pill-declining {
+  background: #3d2f0f;
+  color: #facc15;
+  border-color: #6b5111;
+}
+
+.pill-closed {
+  background: #3d0f0f;
+  color: #f87171;
+  border-color: #7f1d1d;
+}
+
+.infocard .meta {
+  font-size: 0.85rem;
+  color: #a9b4c2;
+  margin-bottom: 6px;
+}
+
+.infocard .desc {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+}
+
+.infocard .link a {
+  color: #93c5fd;
+  text-decoration: none;
+}
+
+.infocard .link a:hover {
+  text-decoration: underline;
+}
+
+.infocard .footer {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin-top: 10px;
+  text-align: right;
+}
+
+/* Ensure shotengai lines can be clicked */
+.leaflet-interactive,
+.shotengai-line {
+  pointer-events: auto !important;
+  cursor: pointer;
 }
