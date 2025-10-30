@@ -104,6 +104,7 @@ function fmtLength(props, fmap) {
   const km = v / 1000;
   return v >= 1000 ? `${km.toFixed(2)} km` : `${v.toFixed(0)} m`;
 }
+
 // --- improved info card ---
 function cardHTML(props, fmap) {
   const get = (k) => (fmap && fmap[k] ? props[fmap[k]] : props[k]);
@@ -210,6 +211,74 @@ function copyPermalink(slug) {
 }
 function hideInfo() { document.getElementById("infopanel").style.display = "none"; }
 
+// --- Great-circle distance (meters) ---
+function haversine(a, b) {
+  const R = 6371000;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(b[1] - a[1]);
+  const dLon = toRad(b[0] - a[0]);
+  const lat1 = toRad(a[1]);
+  const lat2 = toRad(b[1]);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+// --- Length of a LineString (meters) ---
+function lineLength(coords) {
+  let L = 0;
+  for (let i = 1; i < coords.length; i++) L += haversine(coords[i - 1], coords[i]);
+  return L;
+}
+
+// --- Interpolate a point at fraction t (0..1) along LineString ---
+function interpolateLineAt(coords, t) {
+  const total = lineLength(coords);
+  if (total === 0) return coords[0];
+  const target = t * total;
+  let acc = 0;
+  for (let i = 1; i < coords.length; i++) {
+    const seg = haversine(coords[i - 1], coords[i]);
+    if (acc + seg >= target) {
+      // fraction along this segment
+      const r = (target - acc) / seg;
+      const a = coords[i - 1], b = coords[i];
+      // simple linear in lon/lat (OK for small segments)
+      return [a[0] + (b[0] - a[0]) * r, a[1] + (b[1] - a[1]) * r];
+    }
+    acc += seg;
+  }
+  return coords[coords.length - 1];
+}
+
+// --- Midpoint along a feature (LineString or MultiLineString) ---
+function centroidFromLineFeature(f) {
+  const g = f.geometry;
+  if (!g || !g.type) return null;
+
+  if (g.type === "LineString") {
+    const pt = interpolateLineAt(g.coordinates, 0.5);
+    return { type: "Feature", properties: { ...f.properties, role: "centroid", centroid_method: "length_midpoint" }, geometry: { type: "Point", coordinates: pt } };
+  }
+
+  if (g.type === "MultiLineString") {
+    // choose length-weighted midpoint across parts
+    const parts = g.coordinates;
+    const lengths = parts.map(lineLength);
+    const total = lengths.reduce((a, b) => a + b, 0);
+    if (total === 0) return null;
+    let target = total * 0.5;
+    for (let i = 0; i < parts.length; i++) {
+      if (target <= lengths[i]) {
+        const pt = interpolateLineAt(parts[i], target / lengths[i]);
+        return { type: "Feature", properties: { ...f.properties, role: "centroid", centroid_method: "length_midpoint" }, geometry: { type: "Point", coordinates: pt } };
+      }
+      target -= lengths[i];
+    }
+  }
+
+  return null;
+}
+
 
 // ===== MAP SETUP =====
 const basemaps = {
@@ -306,6 +375,17 @@ let FIELD_MAP = null;
   // Split by geom type
   const pointFeats = features.filter(f => ["Point", "MultiPoint"].includes(f.geometry?.type));
   const lineFeats = features.filter(f => ["LineString", "MultiLineString"].includes(f.geometry?.type));
+  // Generate virtual centroids from lines if needed (or force it on)
+  const GENERATE_CENTROIDS_FROM_LINES = true; // set to false to disable
+
+  let derivedPoints = [];
+  if (GENERATE_CENTROIDS_FROM_LINES) {
+    derivedPoints = lineFeats.map(centroidFromLineFeature).filter(Boolean);
+  }
+
+  // Use real points if present; otherwise fall back to derived points.
+  const allPoints = pointFeats.length ? pointFeats : derivedPoints;
+
   console.log("[Atlas] features:", features.length, "points:", pointFeats.length, "lines:", lineFeats.length);
 
   // Lines
@@ -321,7 +401,7 @@ let FIELD_MAP = null;
   }).addTo(map);
 
   // Points (standalone)
-  pointsStandalone = L.geoJSON(pointFeats, {
+  pointsStandalone = L.geoJSON(allPoints, {
     pointToLayer: (f, latlng) => L.circleMarker(latlng, circleStyle(f)),
     onEachFeature: (f, layer) => layer.on("click", () => showInfo(f, layer.getLatLng()))
   });
@@ -333,7 +413,7 @@ let FIELD_MAP = null;
     showCoverageOnHover: false,
     chunkedLoading: true
   });
-  const clusterPoints = L.geoJSON(pointFeats, {
+  const clusterPoints = L.geoJSON(allPoints, {
     pointToLayer: (f, latlng) => L.marker(latlng, { icon: dotIcon })
   });
   clusterLayer.addLayer(clusterPoints).addTo(map);
