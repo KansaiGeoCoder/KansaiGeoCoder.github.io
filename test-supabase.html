@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Supabase Test</title>
+</head>
+<body>
+  <h2>Testing Supabase Connection...</h2>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const SUPABASE_URL = "https://YOURPROJECT.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
+
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const { data, error } = await sb.from('v_shotengai_geojson').select('*').limit(1);
+    if (error) {
+      document.body.innerHTML += `<p style="color:red">❌ ${error.message}</p>`;
+      console.error(error);
+    } else {
+      document.body.innerHTML += `<p style="color:green">✅ Connection OK — ${data.length} rows loaded.</p>`;
+      console.log("Data:", data);
+    }
+  </script>
+</body>
+</html>

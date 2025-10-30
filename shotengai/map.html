@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -28,9 +29,21 @@
 
   <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0" defer></script>
 
-  <!-- Atlas logic (one level up) -->
-  <script src="../js/atlas.js?v=1" defer></script>
+  <!-- map.html -->
+  <script type="module">
+    import { sb } from "../js/supabase.js";
+
+    // Optional: quick connection test
+    const { data, error } = await sb.from('v_shotengai_geojson').select('*').limit(1);
+    if (error) console.error("Supabase connection error:", error);
+    else console.log("Connected to Supabase ✅", data);
+  </script>
+
+  <!-- Loading atlas code -->
+  <script src="../js/atlas.js"></script>
+
 </head>
+
 <body>
   <div class="app" id="atlas-app">
     <header>
@@ -64,7 +77,9 @@
         </div>
 
         <label for="prefFilter" class="mt8">Prefecture filter</label>
-        <select id="prefFilter"><option value="">All prefectures</option></select>
+        <select id="prefFilter">
+          <option value="">All prefectures</option>
+        </select>
       </div>
 
       <div class="card">
@@ -77,7 +92,9 @@
 
       <div class="card smallprint">
         <div class="smallprint-title">About</div>
-        <p>Data: <code>../data/shotengai.geojson</code>. Fields read: <code>name_en</code>, <code>name_ja</code>, <code>city</code>, <code>prefecture</code>, <code>status</code>, <code>length_m</code>, <code>established</code>, <code>notes</code>, <code>url</code>.</p>
+        <p>Data: <code>../data/shotengai.geojson</code>. Fields read: <code>name_en</code>, <code>name_ja</code>,
+          <code>city</code>, <code>prefecture</code>, <code>status</code>, <code>length_m</code>,
+          <code>established</code>, <code>notes</code>, <code>url</code>.</p>
       </div>
     </aside>
 
@@ -88,4 +105,5 @@
     <div class="infocard" id="info"></div>
   </div>
 </body>
+
 </html>
