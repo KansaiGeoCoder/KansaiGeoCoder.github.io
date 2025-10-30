@@ -31,13 +31,45 @@
 
   <!-- map.html -->
   <script type="module">
-    import { sb } from "../js/supabase.js";
+    import { loadShotengaiAsFeatureCollection } from "../js/supabase-load.js";
 
-    // Optional: quick connection test
-    const { data, error } = await sb.from('v_shotengai_geojson').select('*').limit(1);
-    if (error) console.error("Supabase connection error:", error);
-    else console.log("Connected to Supabase ✅", data);
+    const map = L.map('map', {
+      center: [35.0, 135.76],
+      zoom: 10,
+      preferCanvas: true
+    });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const fc = await loadShotengaiAsFeatureCollection();
+    console.log("Loaded Shotengai:", fc);
+
+    L.geoJSON(fc, {
+      style: f => ({
+        color:
+          f.properties.status === "active"
+            ? "#2ecc71"
+            : f.properties.status === "declining"
+              ? "#f39c12"
+              : f.properties.status === "closed"
+                ? "#e74c3c"
+                : "#95a5a6",
+        weight: 4,
+        opacity: 0.8
+      }),
+      onEachFeature: (f, layer) => {
+        layer.bindPopup(
+          `<b>${f.properties.name_en || "Unknown"}</b><br>
+         ${f.properties.city || ""}<br>
+         Status: ${f.properties.status || ""}<br>
+         Length: ${Math.round(f.properties.length_m)} m`
+        );
+      }
+    }).addTo(map);
   </script>
+
 
   <!-- Loading atlas code -->
   <script src="../js/atlas.js"></script>
@@ -94,7 +126,8 @@
         <div class="smallprint-title">About</div>
         <p>Data: <code>../data/shotengai.geojson</code>. Fields read: <code>name_en</code>, <code>name_ja</code>,
           <code>city</code>, <code>prefecture</code>, <code>status</code>, <code>length_m</code>,
-          <code>established</code>, <code>notes</code>, <code>url</code>.</p>
+          <code>established</code>, <code>notes</code>, <code>url</code>.
+        </p>
       </div>
     </aside>
 
