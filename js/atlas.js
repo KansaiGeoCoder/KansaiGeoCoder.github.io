@@ -509,31 +509,48 @@ function slugify(s) {
     .substring(0, 80);
 }
 
-/* ===== LOAD DATA FROM SUPABASE ===== */
+/* ===== LOAD DATA FROM SUPABASE (robust) ===== */
 (async function init() {
   try {
-    // Supabase client
+    // 1) Client
     sbClient = (await import("https://esm.sh/@supabase/supabase-js@2"))
       .createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ===== Track auth state =====
-    sbClient.auth.onAuthStateChange((_event, session) => {
+    // 2) Track auth state (so Edit button gating works)
+    sbClient.auth.onAuthStateChange((_e, session) => {
       currentUser = session?.user || null;
       console.log("[Auth] currentUser:", currentUser ? currentUser.email : "none");
     });
-
-    // On page load, check if already logged in
     const { data: { user } } = await sbClient.auth.getUser();
     currentUser = user || null;
 
+    // 3) Query view
+    console.log("[Atlas] Querying v_shotengai_geojson …");
+    const { data, error } = await sbClient
+      .from("v_shotengai_geojson")
+      .select("*");
 
-    console.log("[Atlas] Loading Shotengai data from Supabase…");
-    const { data, error } = await sbClient.from("v_shotengai_geojson").select("*");
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[Atlas] Supabase error:", error);
+      throw new Error(error.message);
+    }
+    if (!Array.isArray(data)) {
+      console.error("[Atlas] Unexpected response:", data);
+      throw new Error("Unexpected response shape");
+    }
+    console.log(`[Atlas] Rows: ${data.length}`);
 
-    const geojson = {
-      type: "FeatureCollection",
-      features: data.map((r) => ({
+    // 4) Build FeatureCollection (handle geomjson as object OR string)
+    const features = data.map((r, i) => {
+      let geom = r.geomjson;
+      if (typeof geom === "string") {
+        try { geom = JSON.parse(geom); }
+        catch (e) {
+          console.warn(`[Atlas] Row ${i} has string geomjson that failed to parse:`, r.geomjson);
+          geom = null;
+        }
+      }
+      return {
         type: "Feature",
         properties: {
           id: r.id,
@@ -562,38 +579,34 @@ function slugify(s) {
           last_update: r.last_update,
           accuracy: r.accuracy
         },
-        geometry: r.geomjson
-      }))
-    };
+        geometry: geom
+      };
+    }).filter(f => !!f.geometry);
 
-    console.log(`[Atlas] Loaded ${geojson.features.length} features from Supabase.`);
+    const geojson = { type: "FeatureCollection", features };
+    console.log("[Atlas] Features built:", geojson.features.length);
 
-    /* ===== Populate Results list ===== */
+    // 5) Populate results list
     const resultsContainer = document.getElementById("results");
     const resultCount = document.getElementById("resultCount");
-
     if (resultsContainer && resultCount) {
       resultCount.textContent = geojson.features.length;
+      resultsContainer.innerHTML = geojson.features.map((f) => {
+        const p = f.properties;
+        const name = p.name_en || p.name_jp || "Unnamed Shotengai";
+        const city = p.city || "";
+        const status = (p.status || "").toString().toLowerCase();
+        const color =
+          status === "active" ? "#22c55e" :
+            status === "declining" ? "#f59e0b" :
+              status === "closed" ? "#ef4444" : "#9ca3af";
+        return `
+          <div class="result-item" data-id="${p.id}" style="border-left:4px solid ${color}">
+            <div class="result-name">${name}</div>
+            <div class="result-meta">${city} · ${p.prefecture || ""}</div>
+          </div>`;
+      }).join("");
 
-      resultsContainer.innerHTML = geojson.features
-        .map((f) => {
-          const p = f.properties;
-          const name = p.name_en || p.name_jp || "Unnamed Shotengai";
-          const city = p.city || "";
-          const status = (p.status || "").toString().toLowerCase();
-          const color =
-            status === "active" ? "#22c55e" :
-              status === "declining" ? "#f59e0b" :
-                status === "closed" ? "#ef4444" : "#9ca3af";
-          return `
-            <div class="result-item" data-id="${p.id}" style="border-left:4px solid ${color}">
-              <div class="result-name">${name}</div>
-              <div class="result-meta">${city} · ${p.prefecture || ""}</div>
-            </div>`;
-        })
-        .join("");
-
-      // Click -> zoom + open card
       resultsContainer.querySelectorAll(".result-item").forEach((el) => {
         el.addEventListener("click", () => {
           const id = el.dataset.id;
@@ -607,19 +620,25 @@ function slugify(s) {
       });
     }
 
-    /* ===== Render lines ===== */
+    // 6) Render lines
+    if (!geojson.features.length) {
+      console.warn("[Atlas] No features to render.");
+      return;
+    }
+
     const lineLayer = L.geoJSON(geojson, {
-      style: (f) => ({ ...lineStyle, weight: 5, className: "shotengai-line" }),
-      bubblingMouseEvents: false, // keep click from reaching map
+      style: (f) => ({ color: "#7aa2ff", weight: 5, opacity: 0.9, className: "shotengai-line" }),
+      bubblingMouseEvents: false,
       onEachFeature: (f, layer) => {
         layer.on({
-          mouseover: () => layer.setStyle(lineStyleHover),
-          mouseout: () => layer.setStyle(lineStyle),
-          click: (e) => {
+          mouseover: () => layer.setStyle({ color: "#14b8a6", weight: 4, opacity: 1 }),
+          mouseout: () => layer.setStyle({ color: "#7aa2ff", weight: 5, opacity: 0.9 }),
+          click: async (e) => {
             if (L && L.DomEvent) L.DomEvent.stop(e);
             showInfo(f);
-            // Tip: Shift+Click to open attribute form directly
             if (e.originalEvent && e.originalEvent.shiftKey) {
+              if (!currentUser) { await ensureAuth(); if (!currentUser) return; }
+              if (!editMode) enterEditMode();
               openFeatureForm(f, "Edit Shotengai");
             }
           }
@@ -628,15 +647,12 @@ function slugify(s) {
       }
     }).addTo(map);
 
-    // Make editable group & mirror current lines for edit mode
     if (!editableGroup) editableGroup = new L.FeatureGroup().addTo(map);
     lineLayer.eachLayer(l => editableGroup.addLayer(l));
 
-    // Fit to features
     try { map.fitBounds(lineLayer.getBounds(), { padding: [40, 40] }); }
     catch (err) { console.warn("No bounds to fit:", err); }
 
-    // Map background click closes the card
     map.on("click", (e) => {
       const target = e.originalEvent?.target;
       if (target && target.closest && target.closest(".infocard")) return;
@@ -648,9 +664,9 @@ function slugify(s) {
     L.marker([35.0116, 135.7681]).addTo(map)
       .bindPopup("Couldn’t load Shotengai data from Supabase")
       .openPopup();
-    return;
   }
 })();
+
 
 /* ===== Leaflet.draw CRUD handlers ===== */
 map.on(L.Draw.Event.CREATED, async (e) => {
