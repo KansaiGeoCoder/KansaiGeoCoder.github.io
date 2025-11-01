@@ -103,8 +103,7 @@
     <div class="infocard" id="info"></div>
   </div>
 
-  <!-- Load the unified atlas script -->
-  <script type="module" src="../js/atlas.js"></script>
+
 
   <div id="authModal" class="auth-modal" style="display:none">
     <div class="auth-card">
@@ -118,6 +117,65 @@
       <div id="authMsg" class="auth-msg"></div>
     </div>
   </div>
+  <!-- Feature Attribute Form Modal -->
+  <div id="featureModal" class="auth-modal" style="display:none">
+    <div class="auth-card" style="max-width:420px">
+      <h3 id="featureFormTitle">Shotengai Details</h3>
+
+      <div class="form-row">
+        <label>Name (EN)</label>
+        <input id="f_name_en" type="text" placeholder="Teramachi-dori Shotengai">
+      </div>
+
+      <div class="form-row two">
+        <div>
+          <label>City</label>
+          <input id="f_city" type="text" placeholder="Kyoto">
+        </div>
+        <div>
+          <label>Prefecture</label>
+          <input id="f_prefecture" type="text" placeholder="Kyoto">
+        </div>
+      </div>
+
+      <div class="form-row two">
+        <div>
+          <label>Status</label>
+          <select id="f_status">
+            <option value="">—</option>
+            <option value="active">active</option>
+            <option value="declining">declining</option>
+            <option value="closed">closed</option>
+            <option value="planned">planned</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:flex-end;gap:6px">
+          <input id="f_covered" type="checkbox">
+          <label for="f_covered" style="margin:0">Covered</label>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Website URL</label>
+        <input id="f_url" type="url" placeholder="https://…">
+      </div>
+
+      <div class="form-row">
+        <label>Description</label>
+        <textarea id="f_description" rows="3" placeholder="Short description"></textarea>
+      </div>
+
+      <div class="auth-row" style="justify-content:space-between">
+        <button id="btnSaveFeature" class="btn">Save</button>
+        <button id="btnCancelFeature" class="btn btn-ghost">Cancel</button>
+        <div id="featureMsg" class="auth-msg"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Load the unified atlas script -->
+  <script type="module" src="../js/atlas.js"></script>
 
 </body>
 

@@ -35,8 +35,8 @@ function circleStyle(feature) {
     .toLowerCase();
   const fill =
     s === "active" ? "#22c55e" :
-      s === "declining" ? "#f59e0b" :
-        s === "closed" ? "#ef4444" : "#9ca3af";
+    s === "declining" ? "#f59e0b" :
+    s === "closed" ? "#ef4444" : "#9ca3af";
   return { radius: 6, color: "#0b1220", weight: 1, fillColor: fill, fillOpacity: 0.95 };
 }
 
@@ -48,7 +48,7 @@ const dotIcon = L.divIcon({
 
 /* ===== INFO CARD (bottom-right) ===== */
 const infoPanel = document.getElementById("infopanel");
-const infoCard = document.getElementById("info");
+const infoCard  = document.getElementById("info");
 
 function showInfo(feature) {
   const p = feature.properties || {};
@@ -65,7 +65,10 @@ function showInfo(feature) {
   infoCard.innerHTML = `
     <div class="card-head">
       <div class="title">${name}</div>
-      <button class="close" onclick="(window._hideInfo&&window._hideInfo())">×</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-ghost" onclick="(window._openFeatureForm&&window._openFeatureForm())">Edit</button>
+        <button class="close" onclick="(window._hideInfo&&window._hideInfo())">×</button>
+      </div>
     </div>
     <div class="chips">${statusChip} ${coveredChip}</div>
     <div class="meta">
@@ -79,8 +82,11 @@ function showInfo(feature) {
     <div class="footer">Last updated: ${p.last_update ? new Date(p.last_update).toLocaleDateString() : "—"}</div>
   `;
   infoPanel.style.display = "block";
+
+  // Bind the Edit button to this feature
+  window._openFeatureForm = () => openFeatureForm(feature, "Edit Shotengai");
 }
-function hideInfo() { infoPanel.style.display = "none"; }
+function hideInfo(){ infoPanel.style.display = "none"; }
 window._hideInfo = hideInfo;
 
 /* ===== SUPABASE (client + helpers) ===== */
@@ -88,7 +94,7 @@ const SUPABASE_URL = "https://qdykenvvtqnzdgtzcmhe.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeWtlbnZ2dHFuemRndHpjbWhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4MDg0MDEsImV4cCI6MjA3NzM4NDQwMX0.zN6Mpfnxr5_ufc6dMDO89LZBXSFYa4ex4vbiu1Q813U";
 
-let sbClient; // filled in init()
+let sbClient; // set in init()
 
 // Normalize to MultiLineString
 function toMultiLine(geom) {
@@ -108,25 +114,25 @@ function wktFromGeom(geom) {
 }
 
 /* ===== Edit mode state ===== */
-let editableGroup;              // FeatureGroup used by Leaflet.draw
-let drawControl;                // Draw control instance
-let editMode = false;           // toggle
+let editableGroup;                // FeatureGroup used by Leaflet.draw
+let drawControl;                  // Draw control instance
+let editMode = false;             // toggle
 let featureIndexById = new Map(); // id -> layer
 
 // Auth modal elements (if present)
-const authModal = document.getElementById("authModal");
-const authEmail = document.getElementById("authEmail");
-const authPass = document.getElementById("authPass");
-const authMsg = document.getElementById("authMsg");
-const btnLogin = document.getElementById("btnLogin");
+const authModal    = document.getElementById("authModal");
+const authEmail    = document.getElementById("authEmail");
+const authPass     = document.getElementById("authPass");
+const authMsg      = document.getElementById("authMsg");
+const btnLogin     = document.getElementById("btnLogin");
 const btnCloseAuth = document.getElementById("btnCloseAuth");
-const btnEditMode = document.getElementById("btnEditMode");
-const editStatus = document.getElementById("editStatus");
+const btnEditMode  = document.getElementById("btnEditMode");
+const editStatus   = document.getElementById("editStatus");
 
-function openAuth() { if (authModal) { authModal.style.display = "flex"; authMsg && (authMsg.textContent = ""); } }
-function closeAuth() { if (authModal) { authModal.style.display = "none"; if (authEmail) authEmail.value = ""; if (authPass) authPass.value = ""; } }
+function openAuth(){ if (authModal) { authModal.style.display = "flex"; authMsg && (authMsg.textContent=""); } }
+function closeAuth(){ if (authModal) { authModal.style.display = "none"; if (authEmail) authEmail.value=""; if (authPass) authPass.value=""; } }
 
-async function ensureAuth() {
+async function ensureAuth(){
   const { data: { user } } = await sbClient.auth.getUser();
   if (user) return user;
   openAuth();
@@ -143,7 +149,7 @@ btnLogin?.addEventListener("click", async () => {
   });
   if (error) { if (authMsg) authMsg.textContent = "❌ " + error.message; return; }
   if (authMsg) authMsg.textContent = "✅ Signed in";
-  setTimeout(() => { closeAuth(); enterEditMode(); }, 300);
+  setTimeout(()=>{ closeAuth(); enterEditMode(); }, 300);
 });
 
 btnEditMode?.addEventListener("click", async () => {
@@ -155,26 +161,103 @@ btnEditMode?.addEventListener("click", async () => {
   }
 });
 
-function enterEditMode() {
+function enterEditMode(){
   editMode = true;
   if (btnEditMode) btnEditMode.textContent = "Exit Edit Mode";
-  if (editStatus) editStatus.textContent = "You can draw / edit / delete lines.";
+  if (editStatus)  editStatus.textContent  = "You can draw / edit / delete lines.";
   if (!editableGroup) editableGroup = new L.FeatureGroup().addTo(map);
   if (!drawControl) {
     drawControl = new L.Control.Draw({
-      draw: { polygon: false, marker: false, circle: false, rectangle: false, circlemarker: false, polyline: true },
+      draw: { polygon:false, marker:false, circle:false, rectangle:false, circlemarker:false, polyline:true },
       edit: { featureGroup: editableGroup }
     });
   }
   map.addControl(drawControl);
 }
 
-function exitEditMode() {
+function exitEditMode(){
   editMode = false;
   if (btnEditMode) btnEditMode.textContent = "Enter Edit Mode";
-  if (editStatus) editStatus.textContent = "";
+  if (editStatus)  editStatus.textContent  = "";
   if (drawControl) map.removeControl(drawControl);
 }
+
+/* ===== Attribute Form (create/edit) ===== */
+const featureModal     = document.getElementById("featureModal");
+const featureFormTitle = document.getElementById("featureFormTitle");
+const f_name_en        = document.getElementById("f_name_en");
+const f_city           = document.getElementById("f_city");
+const f_prefecture     = document.getElementById("f_prefecture");
+const f_status         = document.getElementById("f_status");
+const f_covered        = document.getElementById("f_covered");
+const f_url            = document.getElementById("f_url");
+const f_description    = document.getElementById("f_description");
+const btnSaveFeature   = document.getElementById("btnSaveFeature");
+const btnCancelFeature = document.getElementById("btnCancelFeature");
+const featureMsg       = document.getElementById("featureMsg");
+
+let editingFeature = null; // GeoJSON Feature being edited (must contain properties.id)
+
+async function openFeatureForm(feature, title = "Shotengai Details") {
+  editingFeature = feature;
+  featureFormTitle.textContent = title;
+
+  const p = feature?.properties || {};
+  f_name_en.value     = p.name_en || "";
+  f_city.value        = p.city || "";
+  f_prefecture.value  = p.prefecture || "";
+  f_status.value      = (p.status || "").toString().toLowerCase();
+  f_covered.checked   = !!p.covered;
+  f_url.value         = p.url || "";
+  f_description.value = p.description || "";
+
+  featureMsg.textContent = "";
+  featureModal.style.display = "flex";
+}
+function closeFeatureForm(){
+  featureModal.style.display = "none";
+  editingFeature = null;
+}
+btnCancelFeature?.addEventListener("click", closeFeatureForm);
+
+// Save attributes (UPDATE)
+btnSaveFeature?.addEventListener("click", async () => {
+  try {
+    if (!sbClient) throw new Error("No Supabase client");
+    if (!editingFeature?.properties?.id) throw new Error("Missing feature id");
+
+    featureMsg.textContent = "Saving…";
+
+    const id = editingFeature.properties.id;
+    const payload = {
+      name_en:     (f_name_en.value || "").trim() || null,
+      city:        (f_city.value || "").trim() || null,
+      prefecture:  (f_prefecture.value || "").trim() || null,
+      status:      f_status.value || null,
+      covered:     !!f_covered.checked,
+      url:         (f_url.value || "").trim() || null,
+      description: (f_description.value || "").trim() || null
+    };
+
+    const { error } = await sbClient
+      .from("shotengai")
+      .update(payload)
+      .eq("id", id);
+
+    if (error) throw error;
+
+    // Update in-memory feature + info card + list
+    Object.assign(editingFeature.properties, payload);
+    showInfo(editingFeature);
+    const item = document.querySelector(`.result-item[data-id="${id}"] .result-name`);
+    if (item && payload.name_en) item.textContent = payload.name_en;
+
+    featureMsg.textContent = "✅ Saved";
+    setTimeout(closeFeatureForm, 300);
+  } catch (err) {
+    featureMsg.textContent = "❌ " + err.message;
+  }
+});
 
 /* ===== LOAD DATA FROM SUPABASE ===== */
 (async function init() {
@@ -202,6 +285,7 @@ function exitEditMode() {
           covered: r.covered,
           length_m: r.length_m,
           url: r.url,
+          description: r.description,
           notes: r.notes,
           last_update: r.last_update
         },
@@ -226,8 +310,8 @@ function exitEditMode() {
           const status = (p.status || "").toString().toLowerCase();
           const color =
             status === "active" ? "#22c55e" :
-              status === "declining" ? "#f59e0b" :
-                status === "closed" ? "#ef4444" : "#9ca3af";
+            status === "declining" ? "#f59e0b" :
+            status === "closed" ? "#ef4444" : "#9ca3af";
           return `
             <div class="result-item" data-id="${p.id}" style="border-left:4px solid ${color}">
               <div class="result-name">${name}</div>
@@ -257,8 +341,15 @@ function exitEditMode() {
       onEachFeature: (f, layer) => {
         layer.on({
           mouseover: () => layer.setStyle(lineStyleHover),
-          mouseout: () => layer.setStyle(lineStyle),
-          click: (e) => { if (L && L.DomEvent) L.DomEvent.stop(e); showInfo(f); }
+          mouseout:  () => layer.setStyle(lineStyle),
+          click:     (e) => {
+            if (L&&L.DomEvent) L.DomEvent.stop(e);
+            showInfo(f);
+            // Tip: Shift+Click to open attribute form directly
+            if (e.originalEvent && e.originalEvent.shiftKey) {
+              openFeatureForm(f, "Edit Shotengai");
+            }
+          }
         });
         featureIndexById.set(f.properties.id, layer);
       }
@@ -293,12 +384,12 @@ map.on(L.Draw.Event.CREATED, async (e) => {
   if (!editMode || !sbClient) return;
   const layer = e.layer;
   const gj = layer.toGeoJSON();
-  const id = crypto.randomUUID();
-  const slug = `sg-${id.slice(0, 8)}`;
+  const id  = crypto.randomUUID();
+  const slug = `sg-${id.slice(0,8)}`;
 
   try {
     const multi = toMultiLine(gj.geometry);      // normalize to MULTILINESTRING
-    const wkt = wktFromGeom(multi);
+    const wkt   = wktFromGeom(multi);
 
     const { error } = await sbClient.from('shotengai').insert({
       id, slug,
@@ -311,12 +402,15 @@ map.on(L.Draw.Event.CREATED, async (e) => {
     // keep on map & index
     layer.feature = {
       type: 'Feature',
-      properties: { id, slug, name_en: 'New Shotengai', status: 'planned' },
+      properties: { id, slug, name_en:'New Shotengai', status:'planned' },
       geometry: multi
     };
     editableGroup.addLayer(layer);
     featureIndexById.set(id, layer);
     showInfo(layer.feature);
+
+    // Open attribute form immediately
+    openFeatureForm(layer.feature, "New Shotengai");
   } catch (err) {
     alert("Insert failed: " + err.message);
   }
@@ -330,7 +424,7 @@ map.on(L.Draw.Event.EDITED, async (e) => {
     if (!f?.properties?.id) continue;
     try {
       const multi = toMultiLine(layer.toGeoJSON().geometry); // normalize
-      const wkt = wktFromGeom(multi);
+      const wkt   = wktFromGeom(multi);
       const { error } = await sbClient
         .from('shotengai')
         .update({ geom: `SRID=4326;${wkt}` })

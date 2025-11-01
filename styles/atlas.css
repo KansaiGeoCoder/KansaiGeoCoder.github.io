@@ -653,3 +653,32 @@ header .sub {
   font-size: .85rem;
   color: #9fe2bf;
 }
+
+/* Reuse modal styles; add simple form layout */
+.form-row {
+  margin: 8px 0;
+}
+
+.form-row.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.form-row label {
+  display: block;
+  font-size: .85rem;
+  color: #9aa4b2;
+  margin-bottom: 4px;
+}
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+  width: 100%;
+  padding: 8px;
+  background: #121821;
+  color: #e5ebf5;
+  border: 1px solid #2a3543;
+  border-radius: 8px;
+}
