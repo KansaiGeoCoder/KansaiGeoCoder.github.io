@@ -37,6 +37,12 @@ function showInfo(feature) {
   const p = feature.properties || {};
   const name = p.name_en || p.name_jp || "Unnamed Shotengai";
 
+  // Show Edit button only if user is signed in AND edit mode is active
+  const canEdit = !!currentUser && editMode;
+  const editBtnHtml = canEdit
+    ? `<button class="btn btn-ghost" onclick="(window._openFeatureForm && window._openFeatureForm())">Edit</button>`
+    : ""; // hidden otherwise
+
   const statusChip = p.status
     ? `<span class="pill pill-${String(p.status).toLowerCase()}">${p.status}</span>`
     : "";
@@ -49,8 +55,8 @@ function showInfo(feature) {
     <div class="card-head">
       <div class="title">${name}</div>
       <div style="display:flex;gap:6px;align-items:center">
-        <button class="btn btn-ghost" onclick="(window._openFeatureForm&&window._openFeatureForm())">Edit</button>
-        <button class="close" onclick="(window._hideInfo&&window._hideInfo())">×</button>
+        ${editBtnHtml}
+        <button class="close" onclick="(window._hideInfo && window._hideInfo())">×</button>
       </div>
     </div>
     <div class="chips">${statusChip} ${coveredChip}</div>
@@ -79,9 +85,15 @@ function showInfo(feature) {
   `;
   infoPanel.style.display = "block";
 
-  // Bind the Edit button to this feature
-  window._openFeatureForm = () => openFeatureForm(feature, "Edit Shotengai");
+  // Hook for Edit button — double-checks auth and editMode before opening form
+  window._openFeatureForm = async () => {
+    if (!currentUser) { const u = await ensureAuth(); if (!u) return; }
+    if (!editMode) enterEditMode();
+    openFeatureForm(feature, "Edit Shotengai");
+  };
 }
+
+
 function hideInfo() { infoPanel.style.display = "none"; }
 window._hideInfo = hideInfo;
 
@@ -90,7 +102,17 @@ const SUPABASE_URL = "https://qdykenvvtqnzdgtzcmhe.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeWtlbnZ2dHFuemRndHpjbWhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4MDg0MDEsImV4cCI6MjA3NzM4NDQwMX0.zN6Mpfnxr5_ufc6dMDO89LZBXSFYa4ex4vbiu1Q813U";
 
-let sbClient; // set in init()
+let sbClient;            // Supabase client
+let currentUser = null;  // signed-in user (or null)
+
+// Auth state tracking
+sbClient.auth.onAuthStateChange(async (_event, session) => {
+  currentUser = session?.user || null;
+});
+
+const { data: { user } } = await sbClient.auth.getUser();
+currentUser = user || null;
+
 
 // Normalize to MultiLineString
 function toMultiLine(geom) {
@@ -130,10 +152,11 @@ function closeAuth() { if (authModal) { authModal.style.display = "none"; if (au
 
 async function ensureAuth() {
   const { data: { user } } = await sbClient.auth.getUser();
-  if (user) return user;
+  if (user) { currentUser = user; return user; }
   openAuth();
   return null;
 }
+
 
 btnCloseAuth?.addEventListener("click", closeAuth);
 btnLogin?.addEventListener("click", async () => {
@@ -156,6 +179,7 @@ btnEditMode?.addEventListener("click", async () => {
     exitEditMode();
   }
 });
+
 
 function enterEditMode() {
   editMode = true;
@@ -319,21 +343,35 @@ function ensureFormScaffold() {
   btnSaveFeature.addEventListener("click", async () => {
     try {
       if (!sbClient) throw new Error("No Supabase client");
+      // Ensure signed in (RLS will block otherwise)
+      if (!currentUser) {
+        const user = await ensureAuth();
+        if (!user) throw new Error("Please sign in to save changes.");
+      }
       if (!editingFeature?.properties?.id) throw new Error("Missing feature id");
+
       featureMsg.textContent = "Saving…";
 
+      const id = editingFeature.properties.id;
       const payload = readFormValues();
-      const { error } = await sbClient
+
+      // Return updated row to confirm success; if RLS blocks, data will be empty
+      const { data, error } = await sbClient
         .from("shotengai")
         .update(payload)
-        .eq("id", editingFeature.properties.id);
+        .eq("id", id)
+        .select("*");  // <-- important: confirms rows updated
 
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Update failed (RLS). Is this user in the 'public.editors' allow-list?");
+      }
 
+      // Reflect in memory + UI
       Object.assign(editingFeature.properties, payload);
       showInfo(editingFeature);
 
-      const item = document.querySelector(`.result-item[data-id="${editingFeature.properties.id}"] .result-name`);
+      const item = document.querySelector(`.result-item[data-id="${id}"] .result-name`);
       if (item) {
         const newName = editingFeature.properties.name_en || editingFeature.properties.name_jp || "Unnamed Shotengai";
         item.textContent = newName;
@@ -342,9 +380,11 @@ function ensureFormScaffold() {
       featureMsg.textContent = "✅ Saved";
       setTimeout(closeFeatureForm, 300);
     } catch (err) {
+      console.error("[Save] ", err);
       featureMsg.textContent = "❌ " + err.message;
     }
   });
+
 }
 
 
@@ -475,6 +515,17 @@ function slugify(s) {
     // Supabase client
     sbClient = (await import("https://esm.sh/@supabase/supabase-js@2"))
       .createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ===== Track auth state =====
+    sbClient.auth.onAuthStateChange((_event, session) => {
+      currentUser = session?.user || null;
+      console.log("[Auth] currentUser:", currentUser ? currentUser.email : "none");
+    });
+
+    // On page load, check if already logged in
+    const { data: { user } } = await sbClient.auth.getUser();
+    currentUser = user || null;
+
 
     console.log("[Atlas] Loading Shotengai data from Supabase…");
     const { data, error } = await sbClient.from("v_shotengai_geojson").select("*");
