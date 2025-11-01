@@ -6,6 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shotengai Atlas | Northlayer Studio</title>
 
+  <div class="edit-controls">
+    <button id="btnEditMode" class="btn">Enter Edit Mode</button>
+    <span id="editStatus" class="hint"></span>
+  </div>
+
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,6 +33,10 @@
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js" defer></script>
 
   <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0" defer></script>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js" defer></script>
+
 </head>
 
 <body>
@@ -95,6 +105,20 @@
 
   <!-- Load the unified atlas script -->
   <script type="module" src="../js/atlas.js"></script>
+
+  <div id="authModal" class="auth-modal" style="display:none">
+    <div class="auth-card">
+      <h3>Editor Sign in</h3>
+      <input id="authEmail" type="email" placeholder="Email">
+      <input id="authPass" type="password" placeholder="Password">
+      <div class="auth-row">
+        <button id="btnLogin" class="btn">Sign in</button>
+        <button id="btnCloseAuth" class="btn btn-ghost">Cancel</button>
+      </div>
+      <div id="authMsg" class="auth-msg"></div>
+    </div>
+  </div>
+
 </body>
 
 </html>

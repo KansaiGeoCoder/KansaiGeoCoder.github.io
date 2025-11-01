@@ -576,3 +576,80 @@ header .sub {
   pointer-events: auto !important;
   cursor: pointer;
 }
+
+/* Edit / auth UI */
+.edit-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn {
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #2a3543;
+  background: #121821;
+  color: #e5ebf5;
+}
+
+.btn:hover {
+  background: #171f2a;
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: #2a3543;
+  color: #b3bfd0;
+}
+
+.hint {
+  color: #9aa4b2;
+  font-size: .9rem;
+}
+
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.auth-card {
+  width: 320px;
+  background: #0e1318;
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
+  color: #e5ebf5;
+}
+
+.auth-card h3 {
+  margin: 0 0 10px;
+}
+
+.auth-card input {
+  width: 100%;
+  margin: 6px 0;
+  padding: 8px;
+  background: #121821;
+  color: #e5ebf5;
+  border: 1px solid #2a3543;
+  border-radius: 8px;
+}
+
+.auth-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.auth-msg {
+  margin-top: 6px;
+  font-size: .85rem;
+  color: #9fe2bf;
+}

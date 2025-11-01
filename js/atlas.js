@@ -94,6 +94,94 @@ const dotIcon = L.divIcon({
   iconAnchor: [5, 5],
 });
 
+// ===== SUPABASE (reuse your existing URL/KEY) =====
+const SUPABASE_URL = "https://qdykenvvtqnzdgtzcmhe.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeWtlbnZ2dHFuemRndHpjbWhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4MDg0MDEsImV4cCI6MjA3NzM4NDQwMX0.zN6Mpfnxr5_ufc6dMDO89LZBXSFYa4ex4vbiu1Q813U";
+let sbClient; // filled in init()
+
+// Helper: GeoJSON -> WKT (Line/MultiLine)
+function wktFromGeom(geom) {
+  if (geom.type === 'LineString') {
+    return `LINESTRING(${geom.coordinates.map(([x, y]) => `${x} ${y}`).join(',')})`;
+  }
+  if (geom.type === 'MultiLineString') {
+    const parts = geom.coordinates
+      .map(line => `(${line.map(([x, y]) => `${x} ${y}`).join(',')})`)
+      .join(',');
+    return `MULTILINESTRING(${parts})`;
+  }
+  throw new Error('Only LineString/MultiLineString supported');
+}
+
+// Editing state
+let editableGroup;       // FeatureGroup used by Leaflet.draw
+let drawControl;         // Draw control instance
+let editMode = false;    // toggle
+let featureIndexById = new Map(); // id -> layer
+
+// Auth modal elements
+const authModal = document.getElementById("authModal");
+const authEmail = document.getElementById("authEmail");
+const authPass = document.getElementById("authPass");
+const authMsg = document.getElementById("authMsg");
+const btnLogin = document.getElementById("btnLogin");
+const btnCloseAuth = document.getElementById("btnCloseAuth");
+const btnEditMode = document.getElementById("btnEditMode");
+const editStatus = document.getElementById("editStatus");
+
+function openAuth() { authModal.style.display = "flex"; authMsg.textContent = ""; }
+function closeAuth() { authModal.style.display = "none"; authEmail.value = ""; authPass.value = ""; }
+
+async function ensureAuth() {
+  const { data: { user } } = await sbClient.auth.getUser();
+  if (user) return user;
+  openAuth();
+  return null;
+}
+
+btnCloseAuth?.addEventListener("click", closeAuth);
+btnLogin?.addEventListener("click", async () => {
+  authMsg.textContent = "Signing in…";
+  const { data, error } = await sbClient.auth.signInWithPassword({
+    email: authEmail.value.trim(),
+    password: authPass.value
+  });
+  if (error) { authMsg.textContent = "❌ " + error.message; return; }
+  authMsg.textContent = "✅ Signed in";
+  setTimeout(() => { closeAuth(); enterEditMode(); }, 400);
+});
+
+btnEditMode?.addEventListener("click", async () => {
+  if (!editMode) {
+    const user = await ensureAuth();
+    if (user) enterEditMode();
+  } else {
+    exitEditMode();
+  }
+});
+
+function enterEditMode() {
+  editMode = true;
+  btnEditMode.textContent = "Exit Edit Mode";
+  editStatus.textContent = "You can draw/edit/delete lines.";
+  if (!editableGroup) editableGroup = new L.FeatureGroup().addTo(map);
+  if (!drawControl) {
+    drawControl = new L.Control.Draw({
+      draw: { polygon: false, marker: false, circle: false, rectangle: false, circlemarker: false, polyline: true },
+      edit: { featureGroup: editableGroup }
+    });
+  }
+  map.addControl(drawControl);
+}
+
+function exitEditMode() {
+  editMode = false;
+  btnEditMode.textContent = "Enter Edit Mode";
+  editStatus.textContent = "";
+  if (drawControl) map.removeControl(drawControl);
+}
+
+
 // ===== LOAD DATA FROM SUPABASE =====
 (async function init() {
   let geojson;
@@ -105,11 +193,12 @@ const dotIcon = L.divIcon({
     const SUPABASE_ANON_KEY =
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeWtlbnZ2dHFuemRndHpjbWhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4MDg0MDEsImV4cCI6MjA3NzM4NDQwMX0.zN6Mpfnxr5_ufc6dMDO89LZBXSFYa4ex4vbiu1Q813U";
 
-    const sb = (await import("https://esm.sh/@supabase/supabase-js@2"))
+    sbClient = (await import("https://esm.sh/@supabase/supabase-js@2"))
       .createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+
     // Query the GeoJSON view
-    const { data, error } = await sb.from("v_shotengai_geojson").select("*");
+    const { data, error } = await sbClient.from("v_shotengai_geojson").select("*");
     if (error) throw new Error(error.message);
 
     // Convert to FeatureCollection
@@ -190,25 +279,26 @@ const dotIcon = L.divIcon({
 
   // ===== ADD LAYERS =====
   if (geojson.features.length) {
+    // Build the display layer (as before)
     const lineLayer = L.geoJSON(geojson, {
-      style: (f) => ({
-        ...lineStyle,
-        weight: 5,                 // easier to click
-        className: "shotengai-line"
-      }),
-      bubblingMouseEvents: false,  // ✅ stop bubbling to map
+      style: (f) => ({ ...lineStyle, weight: 5, className: "shotengai-line" }),
+      bubblingMouseEvents: false,
       onEachFeature: (f, layer) => {
+        // Hover + Click to open info card
         layer.on({
           mouseover: () => layer.setStyle(lineStyleHover),
           mouseout: () => layer.setStyle(lineStyle),
-          click: (e) => {
-            // ✅ completely swallow the event so map's click handler never fires
-            if (L && L.DomEvent) L.DomEvent.stop(e);
-            showInfo(f);
-          },
+          click: (e) => { if (L && L.DomEvent) L.DomEvent.stop(e); showInfo(f); }
         });
-      },
+        // Index for edit lookups
+        featureIndexById.set(f.properties.id, layer);
+      }
     }).addTo(map);
+
+    // Mirror into editable group so Leaflet.draw can edit existing lines
+    if (!editableGroup) editableGroup = new L.FeatureGroup().addTo(map);
+    lineLayer.eachLayer(l => editableGroup.addLayer(l));
+
 
     // keep lines on top
     lineLayer.eachLayer((l) => l.bringToFront && l.bringToFront());
@@ -232,6 +322,68 @@ const dotIcon = L.divIcon({
       .openPopup();
   }
 
+  // ===== Leaflet.draw event handlers (CRUD) =====
+  map.on(L.Draw.Event.CREATED, async (e) => {
+    if (!editMode) return;
+    const layer = e.layer;
+    const gj = layer.toGeoJSON();
+    const id = crypto.randomUUID();
+    const slug = `sg-${id.slice(0, 8)}`;
+
+    try {
+      const wkt = wktFromGeom(gj.geometry);
+      const { error } = await sbClient.from('shotengai').insert({
+        id, slug,
+        name_en: 'New Shotengai',
+        status: 'planned',
+        geom: `SRID=4326;${wkt}`
+      });
+      if (error) throw error;
+
+      editableGroup.addLayer(layer);
+      featureIndexById.set(id, layer);
+      // Light refresh: just add ID to properties so showInfo works
+      layer.feature = { type: 'Feature', properties: { id, slug, name_en: 'New Shotengai', status: 'planned' }, geometry: gj.geometry };
+      showInfo(layer.feature);
+    } catch (err) {
+      alert("Insert failed: " + err.message);
+    }
+  });
+
+  map.on(L.Draw.Event.EDITED, async (e) => {
+    if (!editMode) return;
+    const layers = e.layers.getLayers();
+    for (const layer of layers) {
+      const f = layer.feature;
+      if (!f?.properties?.id) continue;
+      try {
+        const wkt = wktFromGeom(layer.toGeoJSON().geometry);
+        const { error } = await sbClient
+          .from('shotengai')
+          .update({ geom: `SRID=4326;${wkt}` })
+          .eq('id', f.properties.id);
+        if (error) throw error;
+      } catch (err) {
+        alert("Update failed: " + err.message);
+      }
+    }
+  });
+
+  map.on(L.Draw.Event.DELETED, async (e) => {
+    if (!editMode) return;
+    const layers = e.layers.getLayers();
+    for (const layer of layers) {
+      const f = layer.feature;
+      if (!f?.properties?.id) continue;
+      try {
+        const { error } = await sbClient.from('shotengai').delete().eq('id', f.properties.id);
+        if (error) throw error;
+        featureIndexById.delete(f.properties.id);
+      } catch (err) {
+        alert("Delete failed: " + err.message);
+      }
+    }
+  });
 
 
 
