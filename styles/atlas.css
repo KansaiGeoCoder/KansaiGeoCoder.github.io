@@ -682,3 +682,63 @@ header .sub {
   border: 1px solid #2a3543;
   border-radius: 8px;
 }
+
+/* ====== Feature Form Styling (compact + scrollable) ====== */
+.feature-form {
+  max-height: 65vh;               /* fit on screen */
+  overflow-y: auto;               /* scroll internally */
+  padding-right: 6px;             /* room for scrollbar */
+  margin-bottom: 12px;
+  scrollbar-width: thin;
+}
+
+.form-section {
+  margin-top: 8px;
+  background: #0f141b;
+  border: 1px solid #1f2a37;
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+.form-section summary {
+  font-weight: 600;
+  color: #e5ebf5;
+  cursor: pointer;
+  padding: 6px 0;
+}
+.form-section summary:hover {
+  color: #90c4ff;
+}
+.form-section[open] summary::after {
+  content: "▲";
+  float: right;
+  opacity: 0.5;
+}
+.form-section summary::after {
+  content: "▼";
+  float: right;
+  opacity: 0.5;
+}
+
+/* Compact field rows */
+.form-row {
+  margin: 6px 0;
+}
+.form-row label {
+  font-size: 0.8rem;
+  color: #a6b1c2;
+  margin-bottom: 2px;
+}
+.form-row input,
+.form-row select {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  border: 1px solid #283340;
+  background: #121921;
+  color: #e5ebf5;
+}
+.form-row input[readonly] {
+  opacity: 0.7;
+  background: #0e1319;
+}

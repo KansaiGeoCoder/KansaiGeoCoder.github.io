@@ -232,14 +232,11 @@ const FIELD_DEFS = [
 // Build the form skeleton if needed
 function ensureFormScaffold() {
   if (!featureModal) return;
-
-  // If already rendered once, do nothing
   if (featureModal.querySelector(".feature-form")) return;
 
   const card = featureModal.querySelector(".auth-card") || featureModal.firstElementChild;
   if (!card) return;
 
-  // Replace inner content with full dynamic form
   card.innerHTML = `
     <h3 id="featureFormTitle">Shotengai Details</h3>
     <div class="feature-form"></div>
@@ -250,49 +247,70 @@ function ensureFormScaffold() {
     </div>
   `;
 
-  // Render inputs
   const form = card.querySelector(".feature-form");
-  FIELD_DEFS.forEach(def => {
-    const row = document.createElement("div");
-    row.className = "form-row";
-    row.dataset.key = def.key;
 
-    const label = document.createElement("label");
-    label.textContent = def.label;
+  // Define grouped layout
+  const GROUPS = {
+    General: ["name_jp", "name_en", "slug", "status", "covered", "pedestrian_only", "type"],
+    Location: ["city", "prefecture", "nearest_station", "walk_min"],
+    Structure: ["length_m", "width_avg", "shops_est", "classification", "theme"],
+    History: ["established", "last_renov"],
+    Organization: ["association", "url", "image", "source"],
+    Meta: ["accuracy", "last_update", "id"]
+  };
 
-    let input;
-    if (def.type === "select") {
-      input = document.createElement("select");
-      def.options.forEach(opt => {
-        const o = document.createElement("option");
-        o.value = opt;
-        o.textContent = opt || "—";
-        input.appendChild(o);
-      });
-    } else if (def.type === "boolean") {
-      // checkbox row style
-      row.style.display = "flex";
-      row.style.alignItems = "center";
-      row.style.gap = "8px";
-      input = document.createElement("input");
-      input.type = "checkbox";
-      label.style.margin = "0";
-    } else {
-      input = document.createElement("input");
-      input.type = def.type;
-      if (def.step) input.step = def.step;
-      if (def.help) input.placeholder = def.help;
-    }
+  for (const [section, fields] of Object.entries(GROUPS)) {
+    const details = document.createElement("details");
+    details.className = "form-section";
+    if (section === "General") details.setAttribute("open", "true");
 
-    input.id = "f_" + def.key;
-    if (def.readonly) input.readOnly = true;
+    const summary = document.createElement("summary");
+    summary.textContent = section;
+    details.appendChild(summary);
 
-    row.appendChild(label);
-    row.appendChild(input);
-    form.appendChild(row);
-  });
+    fields.forEach((key) => {
+      const def = FIELD_DEFS.find((d) => d.key === key);
+      if (!def) return;
+      const row = document.createElement("div");
+      row.className = "form-row";
 
-  // Attach buttons
+      const label = document.createElement("label");
+      label.textContent = def.label;
+
+      let input;
+      if (def.type === "select") {
+        input = document.createElement("select");
+        def.options.forEach((opt) => {
+          const o = document.createElement("option");
+          o.value = opt;
+          o.textContent = opt || "—";
+          input.appendChild(o);
+        });
+      } else if (def.type === "boolean") {
+        input = document.createElement("input");
+        input.type = "checkbox";
+        row.style.display = "flex";
+        row.style.alignItems = "center";
+        row.style.gap = "8px";
+        label.style.margin = "0";
+      } else {
+        input = document.createElement("input");
+        input.type = def.type;
+        if (def.step) input.step = def.step;
+        if (def.help) input.placeholder = def.help;
+      }
+
+      input.id = "f_" + def.key;
+      if (def.readonly) input.readOnly = true;
+
+      row.appendChild(label);
+      row.appendChild(input);
+      details.appendChild(row);
+    });
+
+    form.appendChild(details);
+  }
+
   const btnSaveFeature = card.querySelector("#btnSaveFeature");
   const btnCancelFeature = card.querySelector("#btnCancelFeature");
   const featureMsg = card.querySelector("#featureMsg");
@@ -304,10 +322,7 @@ function ensureFormScaffold() {
       if (!editingFeature?.properties?.id) throw new Error("Missing feature id");
       featureMsg.textContent = "Saving…";
 
-      // Gather values
       const payload = readFormValues();
-
-      // Update DB
       const { error } = await sbClient
         .from("shotengai")
         .update(payload)
@@ -315,11 +330,9 @@ function ensureFormScaffold() {
 
       if (error) throw error;
 
-      // Update in-memory + UI
       Object.assign(editingFeature.properties, payload);
       showInfo(editingFeature);
 
-      // Update list title if name changed
       const item = document.querySelector(`.result-item[data-id="${editingFeature.properties.id}"] .result-name`);
       if (item) {
         const newName = editingFeature.properties.name_en || editingFeature.properties.name_jp || "Unnamed Shotengai";
@@ -333,6 +346,7 @@ function ensureFormScaffold() {
     }
   });
 }
+
 
 // Read values from form into clean payload (empty->null, numbers parsed)
 function readFormValues() {
