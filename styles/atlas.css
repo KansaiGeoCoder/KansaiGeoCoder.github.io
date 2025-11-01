@@ -61,10 +61,17 @@ header .sub {
   color: var(--muted)
 }
 
+.edit-controls {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px
+}
+
 .sidebar {
   background: var(--panel);
   border-right: 1px solid var(--border);
-  padding: 14px 14px 0 14px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -136,10 +143,6 @@ header .sub {
   margin-bottom: 6px
 }
 
-.results-title {
-  font-weight: 600
-}
-
 .result-item {
   padding: 10px;
   border: 1px solid var(--border);
@@ -166,41 +169,81 @@ header .sub {
   height: 100%
 }
 
+/* Info panel (single definition) */
 .infopanel {
   position: absolute;
-  right: 16px;
-  top: 88px;
-  z-index: 500;
-  max-width: 360px;
+  right: 20px;
+  bottom: 20px;
+  z-index: 450;
+  display: none;
   pointer-events: none
 }
 
 .infocard {
+  pointer-events: auto;
   background: #0e1318;
-  border: 1px solid var(--border);
+  border: 1px solid #1f2937;
   border-radius: 14px;
-  padding: 14px;
-  pointer-events: auto
+  padding: 16px;
+  width: 320px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
+  color: #e5ebf5
 }
 
-.infocard h3 {
-  margin: 0 0 6px 0;
-  font-size: 16px
+.infocard .card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between
 }
 
-.infocard .meta {
-  font-size: 12px;
-  color: var(--muted)
+.infocard .title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff
 }
 
+.infocard .close {
+  background: none;
+  border: none;
+  color: #9aa4b2;
+  font-size: 20px;
+  cursor: pointer
+}
+
+/* Pills (single definition) */
 .pill {
   display: inline-block;
-  padding: 2px 8px;
-  border: 1px solid #234;
-  background: #0b1420;
-  border-radius: 999px;
-  font-size: 11px;
-  color: #9ec7ff
+  background: #1f2b3a;
+  border-radius: 12px;
+  padding: 3px 8px;
+  margin-right: 6px;
+  font-size: .8rem;
+  color: #cfe2ff;
+  border: 1px solid #334155
+}
+
+.pill-active {
+  background: #153d27;
+  color: #a5f3bc;
+  border-color: #195e38
+}
+
+.pill-declining {
+  background: #3d2f0f;
+  color: #facc15;
+  border-color: #6b5111
+}
+
+.pill-closed {
+  background: #3d0f0f;
+  color: #f87171;
+  border-color: #7f1d1d
+}
+
+.pill-planned {
+  background: #1a2330;
+  color: #cfe2ff;
+  border-color: #2d4a7a
 }
 
 .leaflet-control {
@@ -225,20 +268,81 @@ header .sub {
   padding: 2px 6px
 }
 
-@media (max-width: 960px) {
-  .app {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr
-  }
+/* Ensure lines are clickable */
+.leaflet-interactive,
+.shotengai-line {
+  pointer-events: auto !important;
+  cursor: pointer
+}
 
-  .sidebar {
-    grid-row: 2;
-    order: 2
-  }
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #2a3543;
+  background: #121821;
+  color: #e5ebf5;
+  text-decoration: none;
+  font-size: 14px
+}
 
-  header {
-    grid-column: 1
-  }
+.btn:hover {
+  background: #171f2a
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: #2a3543;
+  color: #b3bfd0
+}
+
+.hint {
+  color: #9aa4b2;
+  font-size: .9rem
+}
+
+/* Modal (auth + feature) */
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000
+}
+
+.auth-card {
+  width: 320px;
+  background: #0e1318;
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
+  color: #e5ebf5
+}
+
+.auth-card input {
+  width: 100%;
+  margin: 6px 0;
+  padding: 8px;
+  background: #121821;
+  color: #e5ebf5;
+  border: 1px solid #2a3543;
+  border-radius: 8px
+}
+
+.auth-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px
+}
+
+.auth-msg {
+  margin-top: 6px;
+  font-size: .85rem;
+  color: #9fe2bf
 }
 
 .smallprint {
@@ -252,493 +356,18 @@ header .sub {
   margin-bottom: 6px
 }
 
-/* Info panel placement: bottom-right (avoids Leaflet controls at top-right) */
-.infopanel {
-  position: absolute;
-  right: 16px;
-  bottom: 16px;
-  left: auto;
-  top: auto;
-  z-index: 450;
-  /* below leaflet controls (1000), above map */
-  pointer-events: none;
-  /* clicks pass through outside the card */
-}
-
-.infocard {
-  pointer-events: auto;
-  max-width: 380px;
-  background: #0e1318;
-  border: 1px solid #1f2937;
-  border-radius: 16px;
-  padding: 14px 14px 10px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
-}
-
-/* Head */
-.infocard .card-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.infocard .title {
-  font-weight: 700;
-  font-size: 18px;
-  line-height: 1.2;
-  flex: 1;
-}
-
-.infocard .close {
-  border: 0;
-  background: transparent;
-  color: #9aa4b2;
-  font-size: 20px;
-  line-height: 1;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.infocard .close:hover {
-  background: #141a20;
-  color: #e2e8f0;
-}
-
-/* Pills / chips */
-.pill {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  background: #18202a;
-  border: 1px solid #233042;
-  color: #cfe2ff;
-  margin-right: 6px;
-}
-
-.pill-active {
-  background: #13301f;
-  border-color: #1d5f3a;
-  color: #bff1cf;
-}
-
-.pill-declining {
-  background: #2a2413;
-  border-color: #6b5111;
-  color: #f7e3b0;
-}
-
-.pill-closed {
-  background: #2b1515;
-  border-color: #6b1a1a;
-  color: #f5c2c2;
-}
-
-.pill-planned {
-  background: #1a2330;
-  border-color: #2d4a7a;
-  color: #cfe2ff;
-}
-
-.chips {
-  margin: 6px 0 4px;
-}
-
-/* Meta row */
-.meta-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 8px;
-  align-items: baseline;
-}
-
-.meta-left,
-.meta-right {
-  color: #a9b4c2;
-  font-size: 13px;
-}
-
-/* Subtle line */
-.subtle {
-  color: #93a1b3;
-  font-size: 13px;
-  margin-top: 6px;
-}
-
-/* Buttons */
-.btn {
-  display: inline-block;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid #2a3543;
-  background: #121821;
-  color: #e5ebf5;
-  text-decoration: none;
-  font-size: 14px;
-}
-
-.btn:hover {
-  background: #171f2a;
-}
-
-.btn-primary {
-  background: #1a3a6a;
-  border-color: #274a81;
-}
-
-.btn-primary:hover {
-  background: #1f457d;
-}
-
-.actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 10px 0 4px;
-}
-
-/* Key-values (ID/slug) */
-.kv {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 4px 10px;
-  margin-top: 6px;
-}
-
-.kv .k {
-  color: #8ea0b3;
-  font-size: 12px;
-}
-
-.kv .v {
-  color: #d9e2ef;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-}
-
-/* Notes */
-.notes {
-  margin-top: 10px;
-  color: #cbd5e1;
-}
-
-/* Toolbar */
-.toolbar {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 8px;
-}
-
-.copied {
-  color: #9fe2bf;
-  font-size: 12px;
-}
-
-/* Thumb gallery */
-.gallery {
-  display: flex;
-  gap: 6px;
-  margin: 8px 0 2px;
-}
-
-.gallery img {
-  width: 30%;
-  aspect-ratio: 4/3;
-  object-fit: cover;
-  border-radius: 10px;
-  border: 1px solid #222b36;
-}
-
-/* Mobile: bottom sheet */
-@media (max-width: 720px) {
-  .infopanel {
-    right: 12px;
-    left: 12px;
-    bottom: 12px;
+@media (max-width:960px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr
   }
 
-  .infocard {
-    max-width: none;
-    width: 100%;
+  .sidebar {
+    grid-row: 2;
+    order: 2
   }
-}
 
-/* ===== Info panel bottom-right ===== */
-.infopanel {
-  position: absolute;
-  right: 20px;
-  bottom: 20px;
-  z-index: 450;
-  display: none;
-  pointer-events: none;
-}
-
-.infocard {
-  pointer-events: auto;
-  background: #0e1318;
-  border: 1px solid #1f2937;
-  border-radius: 14px;
-  padding: 16px;
-  width: 320px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  color: #e5ebf5;
-  font-family: "Inter", sans-serif;
-}
-
-.infocard .card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.infocard .title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #fff;
-}
-
-.infocard .close {
-  background: none;
-  border: none;
-  color: #9aa4b2;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.infocard .chips {
-  margin: 8px 0;
-}
-
-.pill {
-  display: inline-block;
-  background: #1f2b3a;
-  border-radius: 12px;
-  padding: 3px 8px;
-  margin-right: 6px;
-  font-size: 0.8rem;
-  color: #cfe2ff;
-  border: 1px solid #334155;
-}
-
-.pill-active {
-  background: #153d27;
-  color: #a5f3bc;
-  border-color: #195e38;
-}
-
-.pill-declining {
-  background: #3d2f0f;
-  color: #facc15;
-  border-color: #6b5111;
-}
-
-.pill-closed {
-  background: #3d0f0f;
-  color: #f87171;
-  border-color: #7f1d1d;
-}
-
-.infocard .meta {
-  font-size: 0.85rem;
-  color: #a9b4c2;
-  margin-bottom: 6px;
-}
-
-.infocard .desc {
-  font-size: 0.9rem;
-  line-height: 1.4;
-  color: #cbd5e1;
-  margin-bottom: 8px;
-}
-
-.infocard .link a {
-  color: #93c5fd;
-  text-decoration: none;
-}
-
-.infocard .link a:hover {
-  text-decoration: underline;
-}
-
-.infocard .footer {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  margin-top: 10px;
-  text-align: right;
-}
-
-/* Ensure shotengai lines can be clicked */
-.leaflet-interactive,
-.shotengai-line {
-  pointer-events: auto !important;
-  cursor: pointer;
-}
-
-/* Edit / auth UI */
-.edit-controls {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.btn {
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid #2a3543;
-  background: #121821;
-  color: #e5ebf5;
-}
-
-.btn:hover {
-  background: #171f2a;
-}
-
-.btn-ghost {
-  background: transparent;
-  border-color: #2a3543;
-  color: #b3bfd0;
-}
-
-.hint {
-  color: #9aa4b2;
-  font-size: .9rem;
-}
-
-.auth-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, .5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-}
-
-.auth-card {
-  width: 320px;
-  background: #0e1318;
-  border: 1px solid #1f2937;
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
-  color: #e5ebf5;
-}
-
-.auth-card h3 {
-  margin: 0 0 10px;
-}
-
-.auth-card input {
-  width: 100%;
-  margin: 6px 0;
-  padding: 8px;
-  background: #121821;
-  color: #e5ebf5;
-  border: 1px solid #2a3543;
-  border-radius: 8px;
-}
-
-.auth-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.auth-msg {
-  margin-top: 6px;
-  font-size: .85rem;
-  color: #9fe2bf;
-}
-
-/* Reuse modal styles; add simple form layout */
-.form-row {
-  margin: 8px 0;
-}
-
-.form-row.two {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.form-row label {
-  display: block;
-  font-size: .85rem;
-  color: #9aa4b2;
-  margin-bottom: 4px;
-}
-
-.form-row input,
-.form-row select,
-.form-row textarea {
-  width: 100%;
-  padding: 8px;
-  background: #121821;
-  color: #e5ebf5;
-  border: 1px solid #2a3543;
-  border-radius: 8px;
-}
-
-/* ====== Feature Form Styling (compact + scrollable) ====== */
-.feature-form {
-  max-height: 65vh;               /* fit on screen */
-  overflow-y: auto;               /* scroll internally */
-  padding-right: 6px;             /* room for scrollbar */
-  margin-bottom: 12px;
-  scrollbar-width: thin;
-}
-
-.form-section {
-  margin-top: 8px;
-  background: #0f141b;
-  border: 1px solid #1f2a37;
-  border-radius: 10px;
-  padding: 6px 10px;
-}
-.form-section summary {
-  font-weight: 600;
-  color: #e5ebf5;
-  cursor: pointer;
-  padding: 6px 0;
-}
-.form-section summary:hover {
-  color: #90c4ff;
-}
-.form-section[open] summary::after {
-  content: "▲";
-  float: right;
-  opacity: 0.5;
-}
-.form-section summary::after {
-  content: "▼";
-  float: right;
-  opacity: 0.5;
-}
-
-/* Compact field rows */
-.form-row {
-  margin: 6px 0;
-}
-.form-row label {
-  font-size: 0.8rem;
-  color: #a6b1c2;
-  margin-bottom: 2px;
-}
-.form-row input,
-.form-row select {
-  width: 100%;
-  padding: 6px 8px;
-  font-size: 0.85rem;
-  border-radius: 6px;
-  border: 1px solid #283340;
-  background: #121921;
-  color: #e5ebf5;
-}
-.form-row input[readonly] {
-  opacity: 0.7;
-  background: #0e1319;
+  header {
+    grid-column: 1
+  }
 }

@@ -3,40 +3,27 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Shotengai Atlas | Northlayer Studio</title>
-
-  <div class="edit-controls">
-    <button id="btnEditMode" class="btn">Enter Edit Mode</button>
-    <span id="editStatus" class="hint"></span>
-  </div>
-
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Global site styles -->
-  <link rel="stylesheet" href="../styles/style.css?v=1">
-  <link rel="stylesheet" href="../styles/atlas.css?v=1">
+  <!-- Global styles -->
+  <link rel="stylesheet" href="../styles/style.css?v=2">
+  <link rel="stylesheet" href="../styles/atlas.css?v=2">
 
-  <!-- Leaflet + plugins -->
+  <!-- Leaflet core + plugins actually used -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
-
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
-  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" defer></script>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
   <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js" defer></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0" defer></script>
-
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js" defer></script>
-
 </head>
 
 <body>
@@ -47,6 +34,12 @@
         <h1>Shotengai Atlas <span class="badge">beta</span></h1>
       </div>
       <div class="sub">Explore & locate Shotengai (商店街) across Japan</div>
+
+      <!-- moved from <head> -->
+      <div class="edit-controls">
+        <button id="btnEditMode" class="btn">Enter Edit Mode</button>
+        <span id="editStatus" class="hint"></span>
+      </div>
     </header>
 
     <aside class="sidebar">
@@ -89,7 +82,7 @@
         <div class="smallprint-title">About</div>
         <p>
           Data: <code>Supabase (v_shotengai_geojson)</code>.<br>
-          Fields read: <code>name_en</code>, <code>name_ja</code>,
+          Fields read: <code>name_en</code>, <code>name_jp</code>,
           <code>city</code>, <code>prefecture</code>, <code>status</code>,
           <code>length_m</code>, <code>url</code>.
         </p>
@@ -99,12 +92,12 @@
     <main id="map"></main>
   </div>
 
+  <!-- Info panel -->
   <div class="infopanel" id="infopanel" style="display:none">
     <div class="infocard" id="info"></div>
   </div>
 
-
-
+  <!-- Auth modal -->
   <div id="authModal" class="auth-modal" style="display:none">
     <div class="auth-card">
       <h3>Editor Sign in</h3>
@@ -117,7 +110,8 @@
       <div id="authMsg" class="auth-msg"></div>
     </div>
   </div>
-  <!-- Feature Attribute Form Modal -->
+
+  <!-- Feature form modal -->
   <div id="featureModal" class="auth-modal" style="display:none">
     <div class="auth-card" style="max-width:420px">
       <h3 id="featureFormTitle">Shotengai Details</h3>
@@ -173,10 +167,8 @@
     </div>
   </div>
 
-
-  <!-- Load the unified atlas script -->
-  <script type="module" src="../js/atlas.js"></script>
-
+  <!-- Unified atlas script -->
+  <script type="module" src="../js/atlas.js?v=2"></script>
 </body>
 
 </html>
