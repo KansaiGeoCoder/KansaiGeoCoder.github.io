@@ -368,20 +368,48 @@ map.on(L.Draw.Event.DELETED, async (e) => {
 /* ===== Init: Supabase + load data ===== */
 (async function init() {
   try {
-    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    // Load supabase-js from a reliable CDN (with fallback)
+    async function loadSupabaseClient() {
+      try {
+        const mod = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+        return mod.createClient;
+      } catch (e1) {
+        try {
+          const mod = await import("https://unpkg.com/@supabase/supabase-js@2.45.1/+esm");
+          return mod.createClient;
+        } catch (e2) {
+          throw new Error("Could not load supabase-js from any CDN (blocked or offline).");
+        }
+      }
+    }
+
+    // Get createClient from the CDN loader
+    const createClient = await loadSupabaseClient();
+
+    // Optional: quick connectivity probe to your project's REST endpoint
+    await fetch(`${SUPABASE_URL.replace(/\/$/, "")}/rest/v1/`, { method: "HEAD" });
+
+    // Create client
     sbClient = createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
 
+    // Auth state
     sbClient.auth.onAuthStateChange((_e, session) => {
       currentUser = session?.user || null;
     });
-    const { data: { user } } = await sbClient.auth.getUser();
-    currentUser = user || null;
+    {
+      const { data: { user } } = await sbClient.auth.getUser();
+      currentUser = user || null;
+    }
 
+    // Fetch data
     const { data, error } = await sbClient.from("v_shotengai_geojson").select("*");
     if (error) throw error;
+
     const features = (data || []).map((r) => {
       let geom = r.geomjson;
-      if (typeof geom === "string") { try { geom = JSON.parse(geom); } catch { geom = null; } }
+      if (typeof geom === "string") {
+        try { geom = JSON.parse(geom); } catch { geom = null; }
+      }
       return {
         type: "Feature",
         properties: {
@@ -397,6 +425,7 @@ map.on(L.Draw.Event.DELETED, async (e) => {
       };
     });
 
+    // Add to map
     const layer = L.geoJSON({ type: "FeatureCollection", features }, {
       style: lineStyle,
       onEachFeature: (feat, lyr) => {
@@ -418,16 +447,22 @@ map.on(L.Draw.Event.DELETED, async (e) => {
     const resultsContainer = document.getElementById("results");
     const resultCount = document.getElementById("resultCount");
     resultCount.textContent = features.length;
+
     resultsContainer.innerHTML = features.map(f => {
       const p = f.properties;
       const name = p.name_en || p.name_jp || "Unnamed Shotengai";
       const status = (p.status || "").toString().toLowerCase();
-      const color = status === "active" ? "#22c55e" : status === "declining" ? "#f59e0b" : status === "closed" ? "#ef4444" : "#9ca3af";
+      const color =
+        status === "active" ? "#22c55e" :
+          status === "declining" ? "#f59e0b" :
+            status === "closed" ? "#ef4444" : "#9ca3af";
+
       return `<div class="result-item" data-id="${p.id}" style="border-left:4px solid ${color}">
         <div class="result-name">${name}</div>
         <div class="result-meta">${[p.city, p.prefecture].filter(Boolean).join(" · ")}</div>
       </div>`;
     }).join("");
+
     resultsContainer.querySelectorAll(".result-item").forEach(el => {
       el.addEventListener("click", () => {
         const id = el.dataset.id;
@@ -435,12 +470,16 @@ map.on(L.Draw.Event.DELETED, async (e) => {
         if (!lyr) return;
         map.fitBounds(lyr.getBounds(), { padding: [50, 50] });
         const feat = lyr.feature || features.find(f => String(f.properties.id) === id);
-        if (feat) { currentEdit = { mode: "edit", layer: lyr, feature: feat }; showInfo(feat); }
+        if (feat) {
+          currentEdit = { mode: "edit", layer: lyr, feature: feat };
+          showInfo(feat);
+        }
       });
     });
 
   } catch (err) {
     console.error("[Atlas] init failed:", err);
-    alert("Failed to load data from Supabase: " + err.message);
+    alert("Failed to load data from Supabase: " + (err.message || err));
   }
 })();
+
