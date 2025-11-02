@@ -2,12 +2,11 @@
    Shotengai Atlas (Supabase)
    ========================= */
 
-/* ===== Supabase config =====
-   Replace with your real values (you said it's working now). */
-const SUPABASE_URL = "https://qdykenvvtqnzdgtzcmhe.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeWtlbnZ2dHFuemRndHpjbWhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4MDg0MDEsImV4cCI6MjA3NzM4NDQwMX0.zN6Mpfnxr5_ufc6dMDO89LZBXSFYa4ex4vbiu1Q813U";
+/* ===== Supabase config (replace) ===== */
+const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
 
-/* ===== MAP SETUP ===== */
+/* ===== Map Setup ===== */
 const basemaps = {
   light: L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     { maxZoom: 19, attribution: "&copy; OpenStreetMap contributors" }),
@@ -25,9 +24,10 @@ L.Control.geocoder({ defaultMarkGeocode: false })
 const lineStyle = { color: "#7aa2ff", weight: 3, opacity: 0.9 };
 const lineStyleHover = { color: "#14b8a6", weight: 4, opacity: 1 };
 
-/* ===== INFO CARD ===== */
+/* ===== Info Card ===== */
 const infoPanel = document.getElementById("infopanel");
 const infoCard = document.getElementById("info");
+
 function showInfo(feature) {
   const p = feature.properties || {};
   const name = p.name_en || p.name_jp || "Unnamed Shotengai";
@@ -84,12 +84,25 @@ function showInfo(feature) {
     openFeatureForm(feature, "Edit Shotengai");
   };
 }
-
-
 function hideInfo() { infoPanel.style.display = "none"; }
 window._hideInfo = hideInfo;
 
-/* ===== SUPABASE client & auth ===== */
+/* ===== Supabase loader (robust) ===== */
+async function loadSupabaseClient() {
+  try {
+    const mod = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
+    return mod.createClient;
+  } catch (e1) {
+    try {
+      const mod = await import("https://unpkg.com/@supabase/supabase-js@2.45.1/+esm");
+      return mod.createClient;
+    } catch (e2) {
+      throw new Error("Could not load supabase-js from any CDN (blocked or offline).");
+    }
+  }
+}
+
+/* ===== Supabase client & auth ===== */
 let sbClient = null;
 let currentUser = null;
 
@@ -169,7 +182,7 @@ function wktFromGeom(geom) {
   return `MULTILINESTRING(${parts})`;
 }
 
-/* ===== Feature form definitions ===== */
+/* ===== Feature form ===== */
 const FEATURE_FIELDS = [
   { key: "id", label: "ID", type: "hidden" },
   { key: "slug", label: "Slug", type: "text", group: "Identification" },
@@ -181,7 +194,6 @@ const FEATURE_FIELDS = [
   { key: "prefecture", label: "Prefecture", type: "text", group: "Location" },
 
   { key: "status", label: "Status", type: "select", group: "Status", options: ["active", "declining", "closed", "planned", "unknown"] },
-  // covered & pedestrian_only will be rendered inline by a small custom block (below)
   { key: "covered", label: "Covered arcade", type: "checkbox", group: "Status" },
   { key: "pedestrian_only", label: "Pedestrian only", type: "checkbox", group: "Status" },
 
@@ -209,7 +221,6 @@ const FEATURE_FIELDS = [
 ];
 const FEATURE_GROUP_ORDER = ["Identification", "Names", "Location", "Status", "Classification", "Metrics", "History", "Access", "Links", "Notes"];
 
-
 let currentEdit = { mode: "new", layer: null, feature: null };
 
 const featureModal = document.getElementById("featureModal");
@@ -223,13 +234,12 @@ function openFeatureModal() { featureModal.style.display = "flex"; }
 function closeFeatureModal() { featureModal.style.display = "none"; if (featureMsg) featureMsg.textContent = ""; }
 btnCancelFeature?.addEventListener("click", closeFeatureModal);
 
-// build grouped form
+// Build grouped form (compact 2-col, fullwidth for Links/Notes, inline checkboxes in Status)
 function buildFeatureForm(props = {}) {
   featureFormBody.innerHTML = "";
   const groups = {};
   FEATURE_GROUP_ORDER.forEach(g => groups[g] = []);
 
-  // First, create plain controls
   FEATURE_FIELDS.forEach(f => {
     const group = f.group || "Other";
     const val = props[f.key];
@@ -238,7 +248,7 @@ function buildFeatureForm(props = {}) {
 
     if (f.type === "hidden") {
       control = `<input id="${id}" type="hidden" value="${val ?? ""}">`;
-      (groups[FEATURE_GROUP_ORDER[0]] ||= []).push(control);
+      (groups[FEATURE_GROUP_ORDER[0]] ||= []).push({ key: f.key, html: control });
       return;
     }
     if (f.type === "textarea") {
@@ -270,13 +280,13 @@ function buildFeatureForm(props = {}) {
     (groups[group] ||= []).push({ key: f.key, html: control });
   });
 
-  // Now render each group; "Status" gets a custom inline row
   FEATURE_GROUP_ORDER.forEach(g => {
     const items = groups[g];
     if (!items || items.length === 0) return;
 
     const block = document.createElement("div");
-    block.className = "form-group";
+    const isFull = (g === "Notes" || g === "Links");
+    block.className = `form-group ${isFull ? "fullwidth" : "compact"}`;
     block.setAttribute("data-group", g);
 
     if (g === "Status") {
@@ -285,9 +295,7 @@ function buildFeatureForm(props = {}) {
       const pedOnly = items.find(x => x.key === "pedestrian_only")?.html || "";
       block.innerHTML = `
         <h4>${g}</h4>
-        <div class="form-row">
-          ${statusRow}
-        </div>
+        <div class="form-row" style="grid-column:1 / -1">${statusRow}</div>
         <div class="status-inline">
           <div></div>
           <div class="cb">${covered.replace('class="form-row cb-row"', '')}</div>
@@ -349,15 +357,14 @@ btnSaveFeature?.addEventListener("click", async () => {
       else { featureMsg.textContent = "❌ No geometry on feature."; return; }
     }
     const wkt = wktFromGeom(geom);
-
     const id = props.id || currentEdit.feature?.properties?.id || null;
 
+    // Create a slug if missing
     if (!props.slug) {
       props.slug = (props.name_en || props.name_jp || "sg")
-        .toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-_]/g, "")
-        .replace(/--+/g, "-").slice(0, 50);
+        .toLowerCase()
+        .replace(/\s+/g, "-").replace(/[^a-z0-9-_]/g, "").replace(/--+/g, "-").slice(0, 50);
     }
-
 
     const { data, error } = await sbClient.rpc("upsert_shotengai", {
       p_geom_wkt: wkt,
@@ -371,9 +378,8 @@ btnSaveFeature?.addEventListener("click", async () => {
         ? (data[0]?.out_id ?? data[0]?.id ?? data[0])
         : (data?.out_id ?? data?.id);
 
-    if (!newId) console.warn("[save] RPC returned no id");
     featureMsg.textContent = "✅ Saved";
-    setTimeout(() => { closeFeatureModal(); }, 300);
+    setTimeout(() => { closeFeatureModal(); }, 250);
 
     // Update map/index
     if (currentEdit.mode === "new" && currentEdit.layer) {
@@ -384,12 +390,18 @@ btnSaveFeature?.addEventListener("click", async () => {
       featureIndexById.set(newId, currentEdit.layer);
       editableGroup.addLayer(currentEdit.layer);
       showInfo(newFeature);
+      allFeatures.push(newFeature);
+      applyFilters();
     } else {
       const lyr = currentEdit.layer || featureIndexById.get(newId || id);
       if (lyr) {
         const updated = { type: "Feature", properties: { ...props, id: newId || id }, geometry: geom };
         lyr.feature = updated;
         showInfo(updated);
+        // refresh filters list display
+        const i = allFeatures.findIndex(f => f.properties.id === (newId || id));
+        if (i >= 0) allFeatures[i] = updated;
+        applyFilters();
       }
     }
   } catch (err) {
@@ -426,40 +438,78 @@ map.on(L.Draw.Event.DELETED, async (e) => {
     const { error } = await sbClient.from("shotengai").delete().eq("id", id);
     if (error) alert("Delete failed: " + error.message);
     featureIndexById.delete(id);
+    allFeatures = allFeatures.filter(f => f.properties.id !== id);
+    applyFilters();
   });
 });
+
+/* ===== Filtering (globals + helper) ===== */
+const searchInput = document.getElementById("search");
+const prefFilter = document.getElementById("prefFilter");
+let allFeatures = [];   // populated after load
+
+function applyFilters() {
+  const q = (searchInput?.value || "").trim().toLowerCase();
+  const pf = prefFilter?.value || "";
+
+  const matches = [];
+  allFeatures.forEach(f => {
+    const p = f.properties || {};
+    const inPref = !pf || (p.prefecture === pf);
+    const inText = !q || [
+      p.name_en, p.name_jp, p.city, p.prefecture, p.slug, p.type, p.classification
+    ].filter(Boolean).some(v => String(v).toLowerCase().includes(q));
+    const ok = inPref && inText;
+
+    const lyr = featureIndexById.get(p.id);
+    if (lyr) lyr.setStyle(ok ? lineStyle : { ...lineStyle, opacity: 0.15 });
+    if (ok) matches.push(f);
+  });
+
+  const resultsContainer = document.getElementById("results");
+  const resultCount = document.getElementById("resultCount");
+  if (resultCount) resultCount.textContent = matches.length;
+
+  if (resultsContainer) {
+    resultsContainer.innerHTML = matches.map(f => {
+      const p = f.properties;
+      const name = p.name_en || p.name_jp || "Unnamed Shotengai";
+      const status = (p.status || "").toString().toLowerCase();
+      const color =
+        status === "active" ? "#22c55e" :
+          status === "declining" ? "#f59e0b" :
+            status === "closed" ? "#ef4444" : "#9ca3af";
+      return `<div class="result-item" data-id="${p.id}" style="border-left:4px solid ${color}">
+        <div class="result-name">${name}</div>
+        <div class="result-meta">${[p.city, p.prefecture].filter(Boolean).join(" · ")}</div>
+      </div>`;
+    }).join("");
+
+    resultsContainer.querySelectorAll(".result-item").forEach(el => {
+      el.addEventListener("click", () => {
+        const id = el.dataset.id;
+        const lyr = featureIndexById.get(id);
+        if (!lyr) return;
+        map.fitBounds(lyr.getBounds(), { padding: [50, 50] });
+        const feat = lyr.feature || allFeatures.find(f => String(f.properties.id) === id);
+        if (feat) { currentEdit = { mode: "edit", layer: lyr, feature: feat }; showInfo(feat); }
+      });
+    });
+  }
+}
 
 /* ===== Init: Supabase + load data ===== */
 (async function init() {
   try {
-    // Load supabase-js from a reliable CDN (with fallback)
-    async function loadSupabaseClient() {
-      try {
-        const mod = await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm");
-        return mod.createClient;
-      } catch (e1) {
-        try {
-          const mod = await import("https://unpkg.com/@supabase/supabase-js@2.45.1/+esm");
-          return mod.createClient;
-        } catch (e2) {
-          throw new Error("Could not load supabase-js from any CDN (blocked or offline).");
-        }
-      }
-    }
-
-    // Get createClient from the CDN loader
     const createClient = await loadSupabaseClient();
 
-    // Optional: quick connectivity probe to your project's REST endpoint
+    // Optional connectivity probe (clearer error than generic NetworkError)
     await fetch(`${SUPABASE_URL.replace(/\/$/, "")}/rest/v1/`, { method: "HEAD" });
 
-    // Create client
     sbClient = createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
 
     // Auth state
-    sbClient.auth.onAuthStateChange((_e, session) => {
-      currentUser = session?.user || null;
-    });
+    sbClient.auth.onAuthStateChange((_e, session) => { currentUser = session?.user || null; });
     {
       const { data: { user } } = await sbClient.auth.getUser();
       currentUser = user || null;
@@ -471,9 +521,7 @@ map.on(L.Draw.Event.DELETED, async (e) => {
 
     const features = (data || []).map((r) => {
       let geom = r.geomjson;
-      if (typeof geom === "string") {
-        try { geom = JSON.parse(geom); } catch { geom = null; }
-      }
+      if (typeof geom === "string") { try { geom = JSON.parse(geom); } catch { geom = null; } }
       return {
         type: "Feature",
         properties: {
@@ -481,7 +529,9 @@ map.on(L.Draw.Event.DELETED, async (e) => {
           city: r.city, prefecture: r.prefecture, status: r.status,
           covered: r.covered, pedestrian_only: r.pedestrian_only,
           type: r.type, classification: r.classification, theme: r.theme,
-          length_m: r.length_m, nearest_station: r.nearest_station, walk_min: r.walk_min,
+          length_m: r.length_m, width_avg: r.width_avg, shops_est: r.shops_est,
+          established: r.established, last_renov: r.last_renov,
+          nearest_station: r.nearest_station, walk_min: r.walk_min,
           association: r.association, url: r.url, image: r.image, source: r.source,
           accuracy: r.accuracy, last_update: r.last_update, description: r.description
         },
@@ -489,7 +539,6 @@ map.on(L.Draw.Event.DELETED, async (e) => {
       };
     });
 
-    // Add to map
     const layer = L.geoJSON({ type: "FeatureCollection", features }, {
       style: lineStyle,
       onEachFeature: (feat, lyr) => {
@@ -507,43 +556,27 @@ map.on(L.Draw.Event.DELETED, async (e) => {
       map.fitBounds(layer.getBounds(), { padding: [40, 40] });
     }
 
-    // Sidebar results
-    const resultsContainer = document.getElementById("results");
-    const resultCount = document.getElementById("resultCount");
-    resultCount.textContent = features.length;
+    // ====== Filter setup ======
+    allFeatures = features;
 
-    resultsContainer.innerHTML = features.map(f => {
-      const p = f.properties;
-      const name = p.name_en || p.name_jp || "Unnamed Shotengai";
-      const status = (p.status || "").toString().toLowerCase();
-      const color =
-        status === "active" ? "#22c55e" :
-          status === "declining" ? "#f59e0b" :
-            status === "closed" ? "#ef4444" : "#9ca3af";
+    // Prefecture dropdown from data
+    if (prefFilter) {
+      const prefs = Array.from(new Set(
+        allFeatures.map(f => f.properties.prefecture).filter(Boolean)
+      )).sort((a, b) => a.localeCompare(b, 'en'));
+      prefFilter.innerHTML = `<option value="">All prefectures</option>` +
+        prefs.map(p => `<option value="${p}">${p}</option>`).join("");
+    }
 
-      return `<div class="result-item" data-id="${p.id}" style="border-left:4px solid ${color}">
-        <div class="result-name">${name}</div>
-        <div class="result-meta">${[p.city, p.prefecture].filter(Boolean).join(" · ")}</div>
-      </div>`;
-    }).join("");
+    // Wire filter events
+    searchInput?.addEventListener("input", () => applyFilters());
+    prefFilter?.addEventListener("change", () => applyFilters());
 
-    resultsContainer.querySelectorAll(".result-item").forEach(el => {
-      el.addEventListener("click", () => {
-        const id = el.dataset.id;
-        const lyr = featureIndexById.get(id);
-        if (!lyr) return;
-        map.fitBounds(lyr.getBounds(), { padding: [50, 50] });
-        const feat = lyr.feature || features.find(f => String(f.properties.id) === id);
-        if (feat) {
-          currentEdit = { mode: "edit", layer: lyr, feature: feat };
-          showInfo(feat);
-        }
-      });
-    });
+    // Initial render
+    applyFilters();
 
   } catch (err) {
     console.error("[Atlas] init failed:", err);
     alert("Failed to load data from Supabase: " + (err.message || err));
   }
 })();
-

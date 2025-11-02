@@ -532,8 +532,129 @@ header .sub {
 }
 
 /* XXL modal width & roomier body */
-.auth-card.form-xxwide{ max-width: 1120px; }  /* was 980px */
-.form-body{ max-height: 68vh; }
+.auth-card.form-xxwide {
+  max-width: 1120px;
+}
+
+/* was 980px */
+.form-body {
+  max-height: 68vh;
+}
 
 /* Info card: a touch wider */
-.infocard{ width: 500px; }                    /* was 460px */
+.infocard {
+  width: 500px;
+}
+
+/* was 460px */
+
+/* === Layout tweaks === */
+.app {
+  grid-template-columns: 300px 1fr;
+}
+
+/* sidebar a bit slimmer */
+
+/* Edit modal: wider overall, but fields not overlong */
+.auth-card.form-xxwide {
+  max-width: 1200px;
+}
+
+/* was 1120px */
+.form-body {
+  max-height: 68vh;
+}
+
+/* Make most groups render in two columns (labels+inputs still full width within a cell) */
+.form-group.compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+
+.form-group.compact h4 {
+  grid-column: 1 / -1;
+  margin-bottom: 2px;
+}
+
+/* Keep long text areas spanning full width */
+.form-group.fullwidth .form-row {
+  grid-column: 1 / -1;
+}
+
+/* Inputs stay visually moderate inside wide modal */
+.form-row input,
+.form-row select {
+  max-width: 520px;
+}
+
+.form-row textarea {
+  max-width: none;
+}
+
+/* Status inline row still aligned in two columns container */
+.status-inline {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Sidebar a touch slimmer */
+.app {
+  grid-template-columns: 300px 1fr;
+}
+
+/* XXL modal width + comfortable body height */
+.auth-card.form-xxwide {
+  max-width: 1200px;
+}
+
+.form-body {
+  max-height: 68vh;
+  overflow-y: auto;
+  padding-right: 12px;
+  gap: 16px;
+}
+
+/* Two-column layout for most groups (keeps inputs from becoming too long) */
+.form-group.compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+
+.form-group.compact h4 {
+  grid-column: 1 / -1;
+  margin-bottom: 2px;
+}
+
+/* Notes/Links remain full width */
+.form-group.fullwidth .form-row {
+  grid-column: 1 / -1;
+}
+
+/* Cap input/select width so they don't stretch across the entire modal */
+.form-row input,
+.form-row select {
+  max-width: 520px;
+}
+
+.form-row textarea {
+  max-width: none;
+}
+
+/* Inline checkboxes row within Status group, spanning width */
+.status-inline {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Info card a bit wider */
+.infocard {
+  width: 500px;
+}
