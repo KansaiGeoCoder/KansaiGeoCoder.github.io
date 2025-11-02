@@ -364,10 +364,14 @@ btnSaveFeature?.addEventListener("click", async () => {
       p_id: id,
       p_props: props
     });
-
     if (error) throw error;
 
-    const newId = Array.isArray(data) ? (data[0]?.id || data[0]) : (data?.id || data);
+    const newId =
+      Array.isArray(data)
+        ? (data[0]?.out_id ?? data[0]?.id ?? data[0])
+        : (data?.out_id ?? data?.id);
+
+    if (!newId) console.warn("[save] RPC returned no id");
     featureMsg.textContent = "✅ Saved";
     setTimeout(() => { closeFeatureModal(); }, 300);
 
