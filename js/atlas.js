@@ -33,9 +33,15 @@ function showInfo(feature) {
   const name = p.name_en || p.name_jp || "Unnamed Shotengai";
   const canEdit = !!currentUser && editMode;
 
-  const statusChip = p.status ? `<span class="pill pill-${String(p.status).toLowerCase()}">${p.status}</span>` : "";
+  const status = (p.status || "").toString().toLowerCase();
+  const statusChip = p.status ? `<span class="pill pill-${status}">${p.status}</span>` : "";
   const coveredChip = (p.covered === true || p.covered === false)
     ? `<span class="pill">${p.covered ? "Covered" : "Open-air"}</span>` : "";
+  const pedChip = (p.pedestrian_only === true || p.pedestrian_only === false)
+    ? `<span class="pill">${p.pedestrian_only ? "Pedestrian-only" : "Mixed traffic"}</span>` : "";
+  const typeChip = p.type ? `<span class="pill">${p.type}</span>` : "";
+
+  const kv = (k, v) => v ? `<div class="k">${k}</div><div class="v">${v}</div>` : "";
 
   infoCard.innerHTML = `
     <div class="card-head">
@@ -45,27 +51,36 @@ function showInfo(feature) {
         <button class="close" onclick="(window._hideInfo && window._hideInfo())">×</button>
       </div>
     </div>
-    <div class="chips">${statusChip}${coveredChip}</div>
-    <div class="meta">
-      ${[p.city, p.prefecture].filter(Boolean).join(" · ")}${p.length_m ? ` · ${Math.round(p.length_m)} m` : ""}
+
+    <div class="chips">
+      ${statusChip}${coveredChip}${pedChip}${typeChip}
+      ${p.classification ? `<span class="pill">${p.classification}</span>` : ""}
+      ${p.theme ? `<span class="pill">${p.theme}</span>` : ""}
     </div>
-    ${p.url ? `<div class="link"><a href="${p.url}" target="_blank" rel="noopener">Website ↗</a></div>` : ""}
-    ${p.description ? `<div class="desc" style="margin-top:8px">${p.description}</div>` : ""}
-    <div class="footer" style="margin-top:8px;color:#9aa4b2">
-      ${p.accuracy ? `Accuracy: ${p.accuracy} · ` : ""}Last updated: ${p.last_update ? new Date(p.last_update).toLocaleDateString() : "—"}
+
+    <div class="kv">
+      ${kv("City / Pref.", [p.city, p.prefecture].filter(Boolean).join(" · "))}
+      ${kv("Length", p.length_m ? `${Math.round(p.length_m)} m` : "")}
+      ${kv("Station", p.nearest_station ? `${p.nearest_station}${p.walk_min ? ` · ${p.walk_min} min` : ""}` : "")}
+      ${kv("Association", p.association || "")}
+      ${kv("Website", p.url ? `<a href="${p.url}" target="_blank" rel="noopener">Open ↗</a>` : "")}
+      ${kv("Source", p.source || "")}
+      ${kv("Accuracy", p.accuracy || "")}
+      ${kv("Updated", p.last_update ? new Date(p.last_update).toLocaleDateString() : "—")}
     </div>
+
+    ${p.description ? `<div class="desc" style="margin-top:10px;line-height:1.45">${p.description}</div>` : ""}
   `;
   infoPanel.style.display = "block";
 
-  // make edit button functional
   window._openFeatureForm = async () => {
     if (!currentUser) { const u = await ensureAuth(); if (!u) return; }
     if (!editMode) enterEditMode();
-    // use last-clicked feature as current feature
     currentEdit = { mode: "edit", layer: featureIndexById.get(p.id) || null, feature };
     openFeatureForm(feature, "Edit Shotengai");
   };
 }
+
 function hideInfo() { infoPanel.style.display = "none"; }
 window._hideInfo = hideInfo;
 

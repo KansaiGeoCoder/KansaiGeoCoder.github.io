@@ -397,3 +397,69 @@ header .sub {
     grid-column: 1
   }
 }
+
+/* --- Wider edit panel + better scrolling --- */
+.auth-card.form-wide {
+  max-width: 720px;
+}
+
+/* was 520px */
+.auth-card {
+  max-height: 86vh;
+  overflow: hidden;
+}
+
+.form-body {
+  max-height: 62vh;
+  overflow-y: auto;
+  padding-right: 8px;
+  gap: 14px;
+}
+
+/* Two-column rows (already used) keep as-is; just ensure spacing */
+.form-row.two {
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* --- Nicer checkbox look & alignment --- */
+.form-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-row input[type="checkbox"]+label {
+  cursor: pointer;
+}
+
+/* --- Info card slightly wider with key/value layout support --- */
+.infocard {
+  width: 420px;
+}
+
+/* was 320px */
+.kv {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 6px 10px;
+  margin-top: 8px;
+}
+
+.kv .k {
+  color: var(--muted);
+}
+
+.kv .v {
+  color: var(--text);
+}
+
+/* Chips row spacing */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
