@@ -2,6 +2,11 @@
    Shotengai Atlas (Supabase)
    ========================= */
 
+/* ===== Supabase config =====
+   Replace with your real values (you said it's working now). */
+const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR_ANON_PUBLIC_KEY";
+
 /* ===== MAP SETUP ===== */
 const basemaps = {
   light: L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -10,11 +15,7 @@ const basemaps = {
     { maxZoom: 19, attribution: "&copy; OpenStreetMap &copy; CARTO" })
 };
 
-const map = L.map("map", {
-  center: [36.2048, 137.2529],
-  zoom: 5,
-  layers: [basemaps.dark]
-});
+const map = L.map("map", { center: [36.2048, 137.2529], zoom: 5, layers: [basemaps.dark] });
 L.control.layers({ "Light": basemaps.light, "Dark": basemaps.dark }).addTo(map);
 L.Control.geocoder({ defaultMarkGeocode: false })
   .on("markgeocode", (e) => map.fitBounds(e.geocode.bbox))
@@ -30,11 +31,7 @@ const infoCard = document.getElementById("info");
 function showInfo(feature) {
   const p = feature.properties || {};
   const name = p.name_en || p.name_jp || "Unnamed Shotengai";
-
   const canEdit = !!currentUser && editMode;
-  const editBtnHtml = canEdit
-    ? `<button class="btn btn-ghost" onclick="(window._openFeatureForm && window._openFeatureForm())">Edit</button>`
-    : "";
 
   const statusChip = p.status ? `<span class="pill pill-${String(p.status).toLowerCase()}">${p.status}</span>` : "";
   const coveredChip = (p.covered === true || p.covered === false)
@@ -44,7 +41,7 @@ function showInfo(feature) {
     <div class="card-head">
       <div class="title">${name}</div>
       <div style="display:flex;gap:6px;align-items:center">
-        ${editBtnHtml}
+        ${canEdit ? `<button class="btn btn-ghost" onclick="(window._openFeatureForm && window._openFeatureForm())">Edit</button>` : ""}
         <button class="close" onclick="(window._hideInfo && window._hideInfo())">×</button>
       </div>
     </div>
@@ -53,36 +50,29 @@ function showInfo(feature) {
       ${[p.city, p.prefecture].filter(Boolean).join(" · ")}${p.length_m ? ` · ${Math.round(p.length_m)} m` : ""}
     </div>
     ${p.url ? `<div class="link"><a href="${p.url}" target="_blank" rel="noopener">Website ↗</a></div>` : ""}
-    ${p.description ? `<div class="desc">${p.description}</div>` : ""}
-    <div class="footer">
+    ${p.description ? `<div class="desc" style="margin-top:8px">${p.description}</div>` : ""}
+    <div class="footer" style="margin-top:8px;color:#9aa4b2">
       ${p.accuracy ? `Accuracy: ${p.accuracy} · ` : ""}Last updated: ${p.last_update ? new Date(p.last_update).toLocaleDateString() : "—"}
     </div>
   `;
   infoPanel.style.display = "block";
 
+  // make edit button functional
   window._openFeatureForm = async () => {
     if (!currentUser) { const u = await ensureAuth(); if (!u) return; }
     if (!editMode) enterEditMode();
+    // use last-clicked feature as current feature
+    currentEdit = { mode: "edit", layer: featureIndexById.get(p.id) || null, feature };
     openFeatureForm(feature, "Edit Shotengai");
   };
 }
 function hideInfo() { infoPanel.style.display = "none"; }
 window._hideInfo = hideInfo;
 
-/* ===== SUPABASE CONFIG ===== */
-const SUPABASE_URL = "https://qdykenvvtqnzdgtzcmhe.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFkeWtlbnZ2dHFuemRndHpjbWhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE4MDg0MDEsImV4cCI6MjA3NzM4NDQwMX0.zN6Mpfnxr5_ufc6dMDO89LZBXSFYa4ex4vbiu1Q813U"; // make sure this is the real key in production
-
+/* ===== SUPABASE client & auth ===== */
 let sbClient = null;
 let currentUser = null;
 
-/* ===== Edit mode state ===== */
-let editableGroup;
-let drawControl;
-let editMode = false;
-let featureIndexById = new Map();
-
-// Auth modal + controls
 const authModal = document.getElementById("authModal");
 const authEmail = document.getElementById("authEmail");
 const authPass = document.getElementById("authPass");
@@ -112,6 +102,31 @@ btnLogin?.addEventListener("click", async () => {
 });
 btnCloseAuth?.addEventListener("click", closeAuth);
 
+/* ===== Edit mode state ===== */
+let editableGroup;
+let drawControl;
+let editMode = false;
+let featureIndexById = new Map();
+
+function enterEditMode() {
+  editMode = true;
+  if (btnEditMode) btnEditMode.textContent = "Exit Edit Mode";
+  if (editStatus) editStatus.textContent = "You can draw / edit / delete lines.";
+  if (!editableGroup) editableGroup = new L.FeatureGroup().addTo(map);
+  if (!drawControl) {
+    drawControl = new L.Control.Draw({
+      draw: { polygon: false, marker: false, circle: false, rectangle: false, circlemarker: false, polyline: true },
+      edit: { featureGroup: editableGroup }
+    });
+  }
+  map.addControl(drawControl);
+}
+function exitEditMode() {
+  editMode = false;
+  if (btnEditMode) btnEditMode.textContent = "Enter Edit Mode";
+  if (editStatus) editStatus.textContent = "";
+  if (drawControl) map.removeControl(drawControl);
+}
 btnEditMode?.addEventListener("click", async () => {
   if (!editMode) {
     const user = await ensureAuth();
@@ -134,57 +149,239 @@ function wktFromGeom(geom) {
   return `MULTILINESTRING(${parts})`;
 }
 
-/* ===== Edit mode toggles ===== */
-function enterEditMode() {
-  editMode = true;
-  if (btnEditMode) btnEditMode.textContent = "Exit Edit Mode";
-  if (editStatus) editStatus.textContent = "You can draw / edit / delete lines.";
-  if (!editableGroup) editableGroup = new L.FeatureGroup().addTo(map);
-  if (!drawControl) {
-    drawControl = new L.Control.Draw({
-      draw: { polygon: false, marker: false, circle: false, rectangle: false, circlemarker: false, polyline: true },
-      edit: { featureGroup: editableGroup }
-    });
+/* ===== Feature form definitions ===== */
+const FEATURE_FIELDS = [
+  { key: "id", label: "ID", type: "hidden" },
+  { key: "slug", label: "Slug", type: "text", group: "Identification" },
+
+  { key: "name_en", label: "Name (EN)", type: "text", group: "Names", required: true },
+  { key: "name_jp", label: "Name (JP)", type: "text", group: "Names" },
+
+  { key: "city", label: "City", type: "text", group: "Location" },
+  { key: "prefecture", label: "Prefecture", type: "text", group: "Location" },
+
+  { key: "status", label: "Status", type: "select", group: "Status", options: ["active", "declining", "closed", "planned", "unknown"] },
+  { key: "covered", label: "Covered arcade", type: "checkbox", group: "Status" },
+  { key: "pedestrian_only", label: "Pedestrian only", type: "checkbox", group: "Status" },
+
+  { key: "type", label: "Type", type: "text", group: "Classification" },
+  { key: "classification", label: "Classification (detail)", type: "text", group: "Classification" },
+  { key: "theme", label: "Theme", type: "text", group: "Classification" },
+
+  { key: "length_m", label: "Length (m)", type: "number", step: "1", group: "Metrics" },
+  { key: "nearest_station", label: "Nearest station", type: "text", group: "Metrics" },
+  { key: "walk_min", label: "Walk (min)", type: "number", step: "1", group: "Metrics" },
+
+  { key: "association", label: "Association", type: "text", group: "Links" },
+  { key: "url", label: "Website URL", type: "url", group: "Links" },
+  { key: "image", label: "Image URL", type: "url", group: "Links" },
+  { key: "source", label: "Data source", type: "text", group: "Links" },
+
+  { key: "description", label: "Description", type: "textarea", rows: 3, group: "Notes" },
+  { key: "accuracy", label: "Accuracy note", type: "text", group: "Notes" }
+];
+const FEATURE_GROUP_ORDER = ["Identification", "Names", "Location", "Status", "Classification", "Metrics", "Links", "Notes"];
+
+let currentEdit = { mode: "new", layer: null, feature: null };
+
+const featureModal = document.getElementById("featureModal");
+const featureFormBody = document.getElementById("featureFormBody");
+const featureFormTitle = document.getElementById("featureFormTitle");
+const btnSaveFeature = document.getElementById("btnSaveFeature");
+const btnCancelFeature = document.getElementById("btnCancelFeature");
+const featureMsg = document.getElementById("featureMsg");
+
+function openFeatureModal() { featureModal.style.display = "flex"; }
+function closeFeatureModal() { featureModal.style.display = "none"; if (featureMsg) featureMsg.textContent = ""; }
+btnCancelFeature?.addEventListener("click", closeFeatureModal);
+
+// build grouped form
+function buildFeatureForm(props = {}) {
+  featureFormBody.innerHTML = "";
+  const groups = {};
+  FEATURE_GROUP_ORDER.forEach(g => groups[g] = []);
+  FEATURE_FIELDS.forEach(f => {
+    const group = f.group || "Other";
+    const val = props[f.key];
+    let control = "";
+    const id = "f_" + f.key;
+
+    if (f.type === "hidden") {
+      control = `<input id="${id}" type="hidden" value="${val ?? ""}">`;
+      (groups[FEATURE_GROUP_ORDER[0]] ||= []).push(control);
+      return;
+    }
+    if (f.type === "textarea") {
+      control = `
+        <div class="form-row">
+          <label for="${id}">${f.label}${f.required ? " *" : ""}</label>
+          <textarea id="${id}" rows="${f.rows || 3}">${val ?? ""}</textarea>
+        </div>`;
+    } else if (f.type === "checkbox") {
+      control = `
+        <div class="form-row" style="display:flex;align-items:center;gap:8px">
+          <input id="${id}" type="checkbox" ${val ? "checked" : ""}>
+          <label for="${id}" style="margin:0">${f.label}</label>
+        </div>`;
+    } else if (f.type === "select") {
+      const opts = (f.options || []).map(o => `<option value="${o}" ${val === o ? "selected" : ""}>${o}</option>`).join("");
+      control = `
+        <div class="form-row">
+          <label for="${id}">${f.label}${f.required ? " *" : ""}</label>
+          <select id="${id}"><option value="">—</option>${opts}</select>
+        </div>`;
+    } else {
+      control = `
+        <div class="form-row">
+          <label for="${id}">${f.label}${f.required ? " *" : ""}</label>
+          <input id="${id}" type="${f.type}" ${f.step ? `step="${f.step}"` : ""} value="${val ?? ""}">
+        </div>`;
+    }
+    (groups[group] ||= []).push(control);
+  });
+
+  FEATURE_GROUP_ORDER.forEach(g => {
+    const items = groups[g];
+    if (!items || items.length === 0) return;
+    const block = document.createElement("div");
+    block.className = "form-group";
+    block.innerHTML = `<h4>${g}</h4>${items.join("")}`;
+    featureFormBody.appendChild(block);
+  });
+}
+function readFeatureForm() {
+  const obj = {};
+  FEATURE_FIELDS.forEach(f => {
+    const id = "f_" + f.key;
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (f.type === "checkbox") obj[f.key] = el.checked;
+    else if (f.type === "number") obj[f.key] = el.value === "" ? null : Number(el.value);
+    else obj[f.key] = el.value === "" ? null : el.value;
+  });
+  return obj;
+}
+
+/* ===== Open form for new/existing ===== */
+function openFeatureForm(feature, title) {
+  currentEdit.mode = feature?.properties?.id ? "edit" : "new";
+  currentEdit.feature = feature || null;
+  if (feature?.properties?.id) {
+    const lyr = featureIndexById.get(feature.properties.id);
+    currentEdit.layer = lyr || null;
   }
-  map.addControl(drawControl);
+  featureFormTitle.textContent = title || (currentEdit.mode === "edit" ? "Edit Shotengai" : "New Shotengai");
+  buildFeatureForm(feature?.properties || {});
+  openFeatureModal();
 }
-function exitEditMode() {
-  editMode = false;
-  if (btnEditMode) btnEditMode.textContent = "Enter Edit Mode";
-  if (editStatus) editStatus.textContent = "";
-  if (drawControl) map.removeControl(drawControl);
-}
+window._openFeatureForm = () => openFeatureForm(currentEdit.feature || null, "Edit Shotengai");
 
-/* ===== Feature form (scaffold kept as in your file) ===== */
-// (… keep your FIELD_DEFS and form wiring here unchanged …)
+/* ===== Save (insert or update) ===== */
+btnSaveFeature?.addEventListener("click", async () => {
+  try {
+    if (!currentUser) { await ensureAuth(); if (!currentUser) return; }
 
-/* ===== INIT: Supabase + load data ===== */
+    const props = readFeatureForm();
+    if (!props.name_en && !props.name_jp) {
+      featureMsg.textContent = "❌ Please provide at least a name (EN or JP).";
+      return;
+    }
+
+    let geom = null;
+    if (currentEdit.mode === "new") {
+      if (!currentEdit.layer) { featureMsg.textContent = "❌ No geometry. Draw a line first."; return; }
+      geom = currentEdit.layer.toGeoJSON().geometry;
+    } else {
+      if (currentEdit.layer) geom = currentEdit.layer.toGeoJSON().geometry;
+      else if (currentEdit.feature?.geometry) geom = currentEdit.feature.geometry;
+      else { featureMsg.textContent = "❌ No geometry on feature."; return; }
+    }
+    const wkt = wktFromGeom(geom);
+
+    const id = props.id || currentEdit.feature?.properties?.id || null;
+
+    const { data, error } = await sbClient.rpc("upsert_shotengai", {
+      p_id: id,
+      p_geom_wkt: wkt,
+      p_props: props
+    });
+    if (error) throw error;
+
+    const newId = Array.isArray(data) ? (data[0]?.id || data[0]) : (data?.id || data);
+    featureMsg.textContent = "✅ Saved";
+    setTimeout(() => { closeFeatureModal(); }, 300);
+
+    // Update map/index
+    if (currentEdit.mode === "new" && currentEdit.layer) {
+      const newFeature = { type: "Feature", properties: { ...props, id: newId }, geometry: geom };
+      currentEdit.layer.feature = newFeature;
+      currentEdit.layer.setStyle(lineStyle);
+      currentEdit.layer.on("click", () => showInfo(newFeature));
+      featureIndexById.set(newId, currentEdit.layer);
+      editableGroup.addLayer(currentEdit.layer);
+      showInfo(newFeature);
+    } else {
+      const lyr = currentEdit.layer || featureIndexById.get(newId || id);
+      if (lyr) {
+        const updated = { type: "Feature", properties: { ...props, id: newId || id }, geometry: geom };
+        lyr.feature = updated;
+        showInfo(updated);
+      }
+    }
+  } catch (err) {
+    console.error("[save] failed", err);
+    featureMsg.textContent = "❌ " + (err?.message || err);
+  }
+});
+
+/* ===== Draw events ===== */
+map.on(L.Draw.Event.CREATED, (e) => {
+  if (!editMode) { alert("Enter Edit Mode to create features."); return; }
+  currentEdit = { mode: "new", layer: e.layer, feature: null };
+  editableGroup.addLayer(e.layer);
+  e.layer.setStyle(lineStyle);
+  openFeatureForm(null, "New Shotengai");
+});
+
+map.on(L.Draw.Event.EDITED, async (e) => {
+  if (!currentUser) return;
+  e.layers.eachLayer(async (layer) => {
+    const id = layer?.feature?.properties?.id;
+    if (!id) return; // unsaved
+    const wkt = wktFromGeom(layer.toGeoJSON().geometry);
+    const { error } = await sbClient.rpc("update_shotengai_geom", { p_id: id, p_geom_wkt: wkt });
+    if (error) alert("Update geometry failed: " + error.message);
+  });
+});
+
+map.on(L.Draw.Event.DELETED, async (e) => {
+  if (!currentUser) return;
+  e.layers.eachLayer(async (layer) => {
+    const id = layer?.feature?.properties?.id;
+    if (!id) return;
+    const { error } = await sbClient.from("shotengai").delete().eq("id", id);
+    if (error) alert("Delete failed: " + error.message);
+    featureIndexById.delete(id);
+  });
+});
+
+/* ===== Init: Supabase + load data ===== */
 (async function init() {
   try {
     const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-    sbClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    sbClient = createClient(SUPABASE_URL.trim(), SUPABASE_ANON_KEY.trim());
 
-    // Auth listeners (only after client exists)
     sbClient.auth.onAuthStateChange((_e, session) => {
       currentUser = session?.user || null;
-      console.log("[Auth] currentUser:", currentUser ? currentUser.email : "none");
     });
     const { data: { user } } = await sbClient.auth.getUser();
     currentUser = user || null;
 
-    // Query
-    console.log("[Atlas] Querying v_shotengai_geojson …");
     const { data, error } = await sbClient.from("v_shotengai_geojson").select("*");
     if (error) throw error;
-    if (!Array.isArray(data)) throw new Error("Unexpected response shape");
-    console.log(`[Atlas] Rows: ${data.length}`);
-
-    // Build FeatureCollection (handles stringified geomjson too)
-    const features = data.map((r, i) => {
+    const features = (data || []).map((r) => {
       let geom = r.geomjson;
-      if (typeof geom === "string") {
-        try { geom = JSON.parse(geom); } catch { console.warn(`[Atlas] Row ${i} bad geomjson string`); geom = null; }
-      }
+      if (typeof geom === "string") { try { geom = JSON.parse(geom); } catch { geom = null; } }
       return {
         type: "Feature",
         properties: {
@@ -194,28 +391,33 @@ function exitEditMode() {
           type: r.type, classification: r.classification, theme: r.theme,
           length_m: r.length_m, nearest_station: r.nearest_station, walk_min: r.walk_min,
           association: r.association, url: r.url, image: r.image, source: r.source,
-          accuracy: r.accuracy, last_update: r.last_update
+          accuracy: r.accuracy, last_update: r.last_update, description: r.description
         },
         geometry: geom
       };
     });
-    const geojson = { type: "FeatureCollection", features };
-    document.getElementById("resultCount").textContent = features.length;
 
-    // Add to map (lines only shown for now; plug in points if you add them)
-    const layer = L.geoJSON(geojson, {
+    const layer = L.geoJSON({ type: "FeatureCollection", features }, {
       style: lineStyle,
       onEachFeature: (feat, lyr) => {
-        lyr.on("click", () => showInfo(feat));
+        lyr.on("click", () => {
+          currentEdit = { mode: "edit", layer: lyr, feature: feat };
+          showInfo(feat);
+        });
         lyr.on("mouseover", () => lyr.setStyle(lineStyleHover));
         lyr.on("mouseout", () => lyr.setStyle(lineStyle));
         if (feat?.properties?.id) featureIndexById.set(feat.properties.id, lyr);
       }
     }).addTo(map);
-    map.fitBounds(layer.getBounds(), { padding: [40, 40] });
 
-    // Results list
+    if (layer.getLayers().length) {
+      map.fitBounds(layer.getBounds(), { padding: [40, 40] });
+    }
+
+    // Sidebar results
     const resultsContainer = document.getElementById("results");
+    const resultCount = document.getElementById("resultCount");
+    resultCount.textContent = features.length;
     resultsContainer.innerHTML = features.map(f => {
       const p = f.properties;
       const name = p.name_en || p.name_jp || "Unnamed Shotengai";
@@ -228,71 +430,17 @@ function exitEditMode() {
     }).join("");
     resultsContainer.querySelectorAll(".result-item").forEach(el => {
       el.addEventListener("click", () => {
-        const f = features.find(x => String(x.properties.id) === el.dataset.id);
-        if (!f) return;
-        const tmp = L.geoJSON(f);
-        map.fitBounds(tmp.getBounds(), { padding: [50, 50] });
-        showInfo(f);
+        const id = el.dataset.id;
+        const lyr = featureIndexById.get(id);
+        if (!lyr) return;
+        map.fitBounds(lyr.getBounds(), { padding: [50, 50] });
+        const feat = lyr.feature || features.find(f => String(f.properties.id) === id);
+        if (feat) { currentEdit = { mode: "edit", layer: lyr, feature: feat }; showInfo(feat); }
       });
     });
-
-    // TODO: wire up Leaflet.draw save/update/delete handlers (unchanged from your file)
 
   } catch (err) {
     console.error("[Atlas] init failed:", err);
     alert("Failed to load data from Supabase: " + err.message);
   }
 })();
-
-// --- Persist drawings to Supabase (minimal example) ---
-map.on(L.Draw.Event.CREATED, async (e) => {
-  if (!currentUser) return;
-  const layer = e.layer;
-  editableGroup.addLayer(layer);
-  const gj = layer.toGeoJSON();
-  const wkt = wktFromGeom(gj.geometry);
-
-  const props = {
-    name_en: "New Shotengai",
-    city: "",
-    prefecture: "",
-    status: "planned",
-    covered: false,
-    url: "",
-    description: "",
-  };
-
-  const { data, error } = await sbClient.rpc("upsert_shotengai_line", {
-    p_geom_wkt: wkt,
-    p_props: props
-  });
-  if (error) { alert("Save failed: " + error.message); return; }
-
-  // attach returned id to layer for future edits
-  const id = data?.id || data?.[0]?.id;
-  if (id) { layer.feature = { type: "Feature", properties: { id }, geometry: gj.geometry }; }
-});
-
-map.on(L.Draw.Event.EDITED, async (e) => {
-  if (!currentUser) return;
-  const layers = e.layers;
-  layers.eachLayer(async (layer) => {
-    const id = layer?.feature?.properties?.id;
-    if (!id) return;
-    const gj = layer.toGeoJSON();
-    const wkt = wktFromGeom(gj.geometry);
-    const { error } = await sbClient.rpc("update_shotengai_geom", { p_id: id, p_geom_wkt: wkt });
-    if (error) alert("Update failed: " + error.message);
-  });
-});
-
-map.on(L.Draw.Event.DELETED, async (e) => {
-  if (!currentUser) return;
-  const layers = e.layers;
-  layers.eachLayer(async (layer) => {
-    const id = layer?.feature?.properties?.id;
-    if (!id) return;
-    const { error } = await sbClient.from("shotengai").delete().eq("id", id);
-    if (error) alert("Delete failed: " + error.message);
-  });
-});

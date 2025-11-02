@@ -28,7 +28,6 @@ header {
   grid-column: 1/3;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border);
@@ -58,11 +57,11 @@ header .badge {
 
 header .sub {
   font-size: 12px;
-  color: var(--muted)
+  color: var(--muted);
+  margin-right: auto
 }
 
 .edit-controls {
-  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 8px
@@ -112,22 +111,6 @@ header .sub {
   box-shadow: 0 0 0 3px rgba(51, 65, 85, .35)
 }
 
-.toggle-row {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 6px
-}
-
-.toggle-row input {
-  accent-color: var(--accent)
-}
-
-.mt8 {
-  margin-top: 8px
-}
-
 .results {
   max-height: 40vh;
   overflow: auto;
@@ -164,12 +147,47 @@ header .sub {
   color: var(--muted)
 }
 
+.pill {
+  display: inline-block;
+  background: #1f2b3a;
+  border-radius: 12px;
+  padding: 3px 8px;
+  margin-right: 6px;
+  font-size: .8rem;
+  color: #cfe2ff;
+  border: 1px solid #334155
+}
+
+.pill-active {
+  background: #153d27;
+  color: #a5f3bc;
+  border-color: #195e38
+}
+
+.pill-declining {
+  background: #3d2f0f;
+  color: #facc15;
+  border-color: #6b5111
+}
+
+.pill-closed {
+  background: #3d0f0f;
+  color: #f87171;
+  border-color: #7f1d1d
+}
+
+.pill-planned {
+  background: #1a2330;
+  color: #cfe2ff;
+  border-color: #2d4a7a
+}
+
 #map {
   width: 100%;
   height: 100%
 }
 
-/* Info panel (single definition) */
+/* Info panel */
 .infopanel {
   position: absolute;
   right: 20px;
@@ -210,42 +228,7 @@ header .sub {
   cursor: pointer
 }
 
-/* Pills (single definition) */
-.pill {
-  display: inline-block;
-  background: #1f2b3a;
-  border-radius: 12px;
-  padding: 3px 8px;
-  margin-right: 6px;
-  font-size: .8rem;
-  color: #cfe2ff;
-  border: 1px solid #334155
-}
-
-.pill-active {
-  background: #153d27;
-  color: #a5f3bc;
-  border-color: #195e38
-}
-
-.pill-declining {
-  background: #3d2f0f;
-  color: #facc15;
-  border-color: #6b5111
-}
-
-.pill-closed {
-  background: #3d0f0f;
-  color: #f87171;
-  border-color: #7f1d1d
-}
-
-.pill-planned {
-  background: #1a2330;
-  color: #cfe2ff;
-  border-color: #2d4a7a
-}
-
+/* Leaflet skin tweaks */
 .leaflet-control {
   filter: brightness(.94)
 }
@@ -268,7 +251,6 @@ header .sub {
   padding: 2px 6px
 }
 
-/* Ensure lines are clickable */
 .leaflet-interactive,
 .shotengai-line {
   pointer-events: auto !important;
@@ -302,7 +284,7 @@ header .sub {
   font-size: .9rem
 }
 
-/* Modal (auth + feature) */
+/* Modals (auth + feature) */
 .auth-modal {
   position: fixed;
   inset: 0;
@@ -320,7 +302,9 @@ header .sub {
   border-radius: 14px;
   padding: 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
-  color: #e5ebf5
+  color: #e5ebf5;
+  max-height: 84vh;
+  overflow: hidden
 }
 
 .auth-card input {
@@ -345,15 +329,57 @@ header .sub {
   color: #9fe2bf
 }
 
-.smallprint {
+/* Feature form layout */
+.form-body {
+  max-height: 56vh;
+  overflow-y: auto;
+  padding-right: 6px;
+  display: grid;
+  gap: 12px
+}
+
+.form-group {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: #0c1015
+}
+
+.form-group h4 {
+  margin: 0 0 6px 0;
+  font-size: 0.95rem;
+  color: #cbd5e1
+}
+
+.form-row {
+  display: grid;
+  gap: 8px
+}
+
+.form-row.two {
+  grid-template-columns: 1fr 1fr;
+  gap: 10px
+}
+
+.form-row label {
   font-size: 12px;
   color: var(--muted)
 }
 
-.smallprint-title {
-  font-weight: 600;
-  color: #cbd5e1;
-  margin-bottom: 6px
+.form-row input,
+.form-row select,
+.form-row textarea {
+  width: 100%;
+  background: #0b0f13;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none
+}
+
+.form-row textarea {
+  resize: vertical
 }
 
 @media (max-width:960px) {

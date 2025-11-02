@@ -11,11 +11,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Global styles -->
-  <link rel="stylesheet" href="../styles/style.css?v=2">
-  <link rel="stylesheet" href="../styles/atlas.css?v=2">
+  <!-- Styles -->
+  <link rel="stylesheet" href="../styles/atlas.css?v=3" />
 
-  <!-- Leaflet core + plugins actually used -->
+  <!-- Leaflet (core + geocoder + draw) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
 
@@ -30,12 +29,10 @@
   <div class="app" id="atlas-app">
     <header>
       <div class="title">
-        <img src="../assets/favicon.svg" alt="" width="20" height="20" style="opacity:.9" />
         <h1>Shotengai Atlas <span class="badge">beta</span></h1>
       </div>
-      <div class="sub">Explore & locate Shotengai (商店街) across Japan</div>
+      <div class="sub">Explore & edit Shotengai (商店街)</div>
 
-      <!-- moved from <head> -->
       <div class="edit-controls">
         <button id="btnEditMode" class="btn">Enter Edit Mode</button>
         <span id="editStatus" class="hint"></span>
@@ -44,26 +41,8 @@
 
     <aside class="sidebar">
       <div class="card controls">
-        <label for="search">Search by name / city / prefecture</label>
+        <label for="search">Search (name / city / prefecture)</label>
         <input id="search" type="text" placeholder="e.g., 錦市場, Teramachi, Kobe" autocomplete="off" />
-
-        <div class="toggle-row">
-          <label>Show points</label>
-          <input id="togglePoints" type="checkbox" checked />
-        </div>
-        <div class="toggle-row">
-          <label>Show centerlines</label>
-          <input id="toggleLines" type="checkbox" checked />
-        </div>
-        <div class="toggle-row">
-          <label>Cluster points</label>
-          <input id="toggleCluster" type="checkbox" checked />
-        </div>
-        <div class="toggle-row">
-          <label>Only active Shotengai</label>
-          <input id="toggleActive" type="checkbox" />
-        </div>
-
         <label for="prefFilter" class="mt8">Prefecture filter</label>
         <select id="prefFilter">
           <option value="">All prefectures</option>
@@ -80,19 +59,14 @@
 
       <div class="card smallprint">
         <div class="smallprint-title">About</div>
-        <p>
-          Data: <code>Supabase (v_shotengai_geojson)</code>.<br>
-          Fields read: <code>name_en</code>, <code>name_jp</code>,
-          <code>city</code>, <code>prefecture</code>, <code>status</code>,
-          <code>length_m</code>, <code>url</code>.
-        </p>
+        <p>Data from Supabase view <code>v_shotengai_geojson</code>.</p>
       </div>
     </aside>
 
     <main id="map"></main>
   </div>
 
-  <!-- Info panel -->
+  <!-- Floating info panel -->
   <div class="infopanel" id="infopanel" style="display:none">
     <div class="infocard" id="info"></div>
   </div>
@@ -111,64 +85,23 @@
     </div>
   </div>
 
-  <!-- Feature form modal -->
+  <!-- Feature form modal (scrollable, grouped) -->
   <div id="featureModal" class="auth-modal" style="display:none">
-    <div class="auth-card" style="max-width:420px">
+    <div class="auth-card" style="max-width:520px">
       <h3 id="featureFormTitle">Shotengai Details</h3>
-
-      <div class="form-row">
-        <label>Name (EN)</label>
-        <input id="f_name_en" type="text" placeholder="Teramachi-dori Shotengai">
-      </div>
-
-      <div class="form-row two">
-        <div>
-          <label>City</label>
-          <input id="f_city" type="text" placeholder="Kyoto">
-        </div>
-        <div>
-          <label>Prefecture</label>
-          <input id="f_prefecture" type="text" placeholder="Kyoto">
-        </div>
-      </div>
-
-      <div class="form-row two">
-        <div>
-          <label>Status</label>
-          <select id="f_status">
-            <option value="">—</option>
-            <option value="active">active</option>
-            <option value="declining">declining</option>
-            <option value="closed">closed</option>
-            <option value="planned">planned</option>
-          </select>
-        </div>
-        <div style="display:flex;align-items:flex-end;gap:6px">
-          <input id="f_covered" type="checkbox">
-          <label for="f_covered" style="margin:0">Covered</label>
-        </div>
-      </div>
-
-      <div class="form-row">
-        <label>Website URL</label>
-        <input id="f_url" type="url" placeholder="https://…">
-      </div>
-
-      <div class="form-row">
-        <label>Description</label>
-        <textarea id="f_description" rows="3" placeholder="Short description"></textarea>
-      </div>
-
+      <div id="featureFormBody" class="form-body"></div>
       <div class="auth-row" style="justify-content:space-between">
-        <button id="btnSaveFeature" class="btn">Save</button>
-        <button id="btnCancelFeature" class="btn btn-ghost">Cancel</button>
+        <div style="display:flex;gap:8px">
+          <button id="btnSaveFeature" class="btn">Save</button>
+          <button id="btnCancelFeature" class="btn btn-ghost">Cancel</button>
+        </div>
         <div id="featureMsg" class="auth-msg"></div>
       </div>
     </div>
   </div>
 
-  <!-- Unified atlas script -->
-  <script type="module" src="../js/atlas.js?v=2"></script>
+  <!-- App -->
+  <script type="module" src="../js/atlas.js?v=3"></script>
 </body>
 
 </html>
