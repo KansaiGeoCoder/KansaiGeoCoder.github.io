@@ -61,11 +61,15 @@ function showInfo(feature) {
     <div class="kv">
       ${kv("City / Pref.", [p.city, p.prefecture].filter(Boolean).join(" · "))}
       ${kv("Length", p.length_m ? `${Math.round(p.length_m)} m` : "")}
+      ${kv("Width avg", p.width_avg ? `${p.width_avg} m` : "")}
+      ${kv("Shops (est.)", p.shops_est)}
+      ${kv("Established", p.established)}
+      ${kv("Last renov.", p.last_renov)}
       ${kv("Station", p.nearest_station ? `${p.nearest_station}${p.walk_min ? ` · ${p.walk_min} min` : ""}` : "")}
-      ${kv("Association", p.association || "")}
+      ${kv("Association", p.association)}
       ${kv("Website", p.url ? `<a href="${p.url}" target="_blank" rel="noopener">Open ↗</a>` : "")}
-      ${kv("Source", p.source || "")}
-      ${kv("Accuracy", p.accuracy || "")}
+      ${kv("Source", p.source)}
+      ${kv("Accuracy", p.accuracy)}
       ${kv("Updated", p.last_update ? new Date(p.last_update).toLocaleDateString() : "—")}
     </div>
 
@@ -80,6 +84,7 @@ function showInfo(feature) {
     openFeatureForm(feature, "Edit Shotengai");
   };
 }
+
 
 function hideInfo() { infoPanel.style.display = "none"; }
 window._hideInfo = hideInfo;
@@ -176,6 +181,7 @@ const FEATURE_FIELDS = [
   { key: "prefecture", label: "Prefecture", type: "text", group: "Location" },
 
   { key: "status", label: "Status", type: "select", group: "Status", options: ["active", "declining", "closed", "planned", "unknown"] },
+  // covered & pedestrian_only will be rendered inline by a small custom block (below)
   { key: "covered", label: "Covered arcade", type: "checkbox", group: "Status" },
   { key: "pedestrian_only", label: "Pedestrian only", type: "checkbox", group: "Status" },
 
@@ -184,8 +190,14 @@ const FEATURE_FIELDS = [
   { key: "theme", label: "Theme", type: "text", group: "Classification" },
 
   { key: "length_m", label: "Length (m)", type: "number", step: "1", group: "Metrics" },
-  { key: "nearest_station", label: "Nearest station", type: "text", group: "Metrics" },
-  { key: "walk_min", label: "Walk (min)", type: "number", step: "1", group: "Metrics" },
+  { key: "width_avg", label: "Width avg (m)", type: "number", step: "0.1", group: "Metrics" },
+  { key: "shops_est", label: "Shops (est.)", type: "number", step: "1", group: "Metrics" },
+
+  { key: "established", label: "Established (year)", type: "number", step: "1", group: "History" },
+  { key: "last_renov", label: "Last renovation (year)", type: "number", step: "1", group: "History" },
+
+  { key: "nearest_station", label: "Nearest station", type: "text", group: "Access" },
+  { key: "walk_min", label: "Walk (min)", type: "number", step: "1", group: "Access" },
 
   { key: "association", label: "Association", type: "text", group: "Links" },
   { key: "url", label: "Website URL", type: "url", group: "Links" },
@@ -195,7 +207,8 @@ const FEATURE_FIELDS = [
   { key: "description", label: "Description", type: "textarea", rows: 3, group: "Notes" },
   { key: "accuracy", label: "Accuracy note", type: "text", group: "Notes" }
 ];
-const FEATURE_GROUP_ORDER = ["Identification", "Names", "Location", "Status", "Classification", "Metrics", "Links", "Notes"];
+const FEATURE_GROUP_ORDER = ["Identification", "Names", "Location", "Status", "Classification", "Metrics", "History", "Access", "Links", "Notes"];
+
 
 let currentEdit = { mode: "new", layer: null, feature: null };
 
@@ -215,11 +228,13 @@ function buildFeatureForm(props = {}) {
   featureFormBody.innerHTML = "";
   const groups = {};
   FEATURE_GROUP_ORDER.forEach(g => groups[g] = []);
+
+  // First, create plain controls
   FEATURE_FIELDS.forEach(f => {
     const group = f.group || "Other";
     const val = props[f.key];
-    let control = "";
     const id = "f_" + f.key;
+    let control = "";
 
     if (f.type === "hidden") {
       control = `<input id="${id}" type="hidden" value="${val ?? ""}">`;
@@ -234,7 +249,7 @@ function buildFeatureForm(props = {}) {
         </div>`;
     } else if (f.type === "checkbox") {
       control = `
-        <div class="form-row" style="display:flex;align-items:center;gap:8px">
+        <div class="form-row cb-row">
           <input id="${id}" type="checkbox" ${val ? "checked" : ""}>
           <label for="${id}" style="margin:0">${f.label}</label>
         </div>`;
@@ -252,18 +267,40 @@ function buildFeatureForm(props = {}) {
           <input id="${id}" type="${f.type}" ${f.step ? `step="${f.step}"` : ""} value="${val ?? ""}">
         </div>`;
     }
-    (groups[group] ||= []).push(control);
+    (groups[group] ||= []).push({ key: f.key, html: control });
   });
 
+  // Now render each group; "Status" gets a custom inline row
   FEATURE_GROUP_ORDER.forEach(g => {
     const items = groups[g];
     if (!items || items.length === 0) return;
+
     const block = document.createElement("div");
     block.className = "form-group";
-    block.innerHTML = `<h4>${g}</h4>${items.join("")}`;
+    block.setAttribute("data-group", g);
+
+    if (g === "Status") {
+      const statusRow = items.find(x => x.key === "status")?.html || "";
+      const covered = items.find(x => x.key === "covered")?.html || "";
+      const pedOnly = items.find(x => x.key === "pedestrian_only")?.html || "";
+      block.innerHTML = `
+        <h4>${g}</h4>
+        <div class="form-row">
+          ${statusRow}
+        </div>
+        <div class="status-inline">
+          <div></div>
+          <div class="cb">${covered.replace('class="form-row cb-row"', '')}</div>
+          <div class="cb">${pedOnly.replace('class="form-row cb-row"', '')}</div>
+        </div>`;
+    } else {
+      block.innerHTML = `<h4>${g}</h4>${items.map(x => x.html).join("")}`;
+    }
+
     featureFormBody.appendChild(block);
   });
 }
+
 function readFeatureForm() {
   const obj = {};
   FEATURE_FIELDS.forEach(f => {
@@ -315,11 +352,19 @@ btnSaveFeature?.addEventListener("click", async () => {
 
     const id = props.id || currentEdit.feature?.properties?.id || null;
 
+    if (!props.slug) {
+      props.slug = (props.name_en || props.name_jp || "sg")
+        .toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-_]/g, "")
+        .replace(/--+/g, "-").slice(0, 50);
+    }
+
+
     const { data, error } = await sbClient.rpc("upsert_shotengai", {
-      p_id: id,
       p_geom_wkt: wkt,
+      p_id: id,
       p_props: props
     });
+
     if (error) throw error;
 
     const newId = Array.isArray(data) ? (data[0]?.id || data[0]) : (data?.id || data);

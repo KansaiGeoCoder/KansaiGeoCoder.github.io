@@ -400,20 +400,20 @@ header .sub {
 
 /* --- Wider edit panel + better scrolling --- */
 .auth-card.form-wide {
-  max-width: 720px;
+  max-width: 880px;
 }
 
 /* was 520px */
 .auth-card {
-  max-height: 86vh;
+  max-height: 88vh;
   overflow: hidden;
 }
 
 .form-body {
-  max-height: 62vh;
+  max-height: 66vh;
   overflow-y: auto;
-  padding-right: 8px;
-  gap: 14px;
+  padding-right: 10px;
+  gap: 16px;
 }
 
 /* Two-column rows (already used) keep as-is; just ensure spacing */
@@ -422,7 +422,7 @@ header .sub {
   gap: 12px;
 }
 
-/* --- Nicer checkbox look & alignment --- */
+/* Crisper checkbox UI */
 .form-row input[type="checkbox"] {
   width: 18px;
   height: 18px;
@@ -437,7 +437,7 @@ header .sub {
 
 /* --- Info card slightly wider with key/value layout support --- */
 .infocard {
-  width: 420px;
+  width: 440px;
 }
 
 /* was 320px */
@@ -457,6 +457,73 @@ header .sub {
 }
 
 /* Chips row spacing */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* --- Extra wide modal + more scroll room --- */
+.auth-card.form-xxwide {
+  max-width: 980px;
+}
+
+/* was 520/720 → now nice & wide */
+.auth-card {
+  max-height: 88vh;
+  overflow: hidden;
+}
+
+.form-body {
+  max-height: 66vh;
+  overflow-y: auto;
+  padding-right: 12px;
+  gap: 16px;
+}
+
+/* --- Inline checkboxes in the Status group --- */
+.status-inline {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-inline .cb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-inline input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* --- Info card a bit wider + key/value grid --- */
+.infocard {
+  width: 460px;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 6px 12px;
+  margin-top: 10px;
+}
+
+.kv .k {
+  color: var(--muted);
+}
+
+.kv .v {
+  color: var(--text);
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;
