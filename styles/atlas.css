@@ -530,3 +530,10 @@ header .sub {
   gap: 6px;
   margin-top: 8px;
 }
+
+/* XXL modal width & roomier body */
+.auth-card.form-xxwide{ max-width: 1120px; }  /* was 980px */
+.form-body{ max-height: 68vh; }
+
+/* Info card: a touch wider */
+.infocard{ width: 500px; }                    /* was 460px */
