@@ -447,8 +447,10 @@ map.on(L.Draw.Event.DELETED, async (e) => {
 const searchInput = document.getElementById("search");
 const prefFilter = document.getElementById("prefFilter");
 let allFeatures = [];   // populated after load
+let allBounds = null;   // full bounds of all loaded features
 
-function applyFilters() {
+
+function applyFilters(triggerZoom = false) {
   const q = (searchInput?.value || "").trim().toLowerCase();
   const pf = prefFilter?.value || "";
 
@@ -459,6 +461,7 @@ function applyFilters() {
     const inText = !q || [
       p.name_en, p.name_jp, p.city, p.prefecture, p.slug, p.type, p.classification
     ].filter(Boolean).some(v => String(v).toLowerCase().includes(q));
+
     const ok = inPref && inText;
 
     const lyr = featureIndexById.get(p.id);
@@ -466,6 +469,7 @@ function applyFilters() {
     if (ok) matches.push(f);
   });
 
+  // Update sidebar list
   const resultsContainer = document.getElementById("results");
   const resultCount = document.getElementById("resultCount");
   if (resultCount) resultCount.textContent = matches.length;
@@ -485,6 +489,7 @@ function applyFilters() {
       </div>`;
     }).join("");
 
+    // Rebind clicks
     resultsContainer.querySelectorAll(".result-item").forEach(el => {
       el.addEventListener("click", () => {
         const id = el.dataset.id;
@@ -496,7 +501,24 @@ function applyFilters() {
       });
     });
   }
+
+  // ---- Auto-zoom behavior (only on prefecture changes) ----
+  if (triggerZoom) {
+    if (pf) {
+      // Zoom to bounds of matches in this prefecture
+      const b = L.latLngBounds([]);
+      matches.forEach(f => {
+        const lyr = featureIndexById.get(f.properties.id);
+        if (lyr) b.extend(lyr.getBounds());
+      });
+      if (b.isValid()) map.fitBounds(b, { padding: [40, 40] });
+    } else if (allBounds && allBounds.isValid()) {
+      // Prefecture cleared → zoom back to full extent
+      map.fitBounds(allBounds, { padding: [40, 40] });
+    }
+  }
 }
+
 
 /* ===== Init: Supabase + load data ===== */
 (async function init() {
@@ -554,6 +576,7 @@ function applyFilters() {
 
     if (layer.getLayers().length) {
       map.fitBounds(layer.getBounds(), { padding: [40, 40] });
+      allBounds = layer.getBounds();          // <-- remember full extent
     }
 
     // ====== Filter setup ======
@@ -572,8 +595,8 @@ function applyFilters() {
     searchInput?.addEventListener("input", () => applyFilters());
     prefFilter?.addEventListener("change", () => applyFilters());
 
-    // Initial render
-    applyFilters();
+    // Initial render (no zoom change)
+    applyFilters(false);
 
   } catch (err) {
     console.error("[Atlas] init failed:", err);
