@@ -444,20 +444,28 @@ map.on(L.Draw.Event.DELETED, async (e) => {
 });
 
 /* ===== Filtering (globals + helper) ===== */
-const searchInput = document.getElementById("search");
-const prefFilter = document.getElementById("prefFilter");
-let allFeatures = [];   // populated after load
-let allBounds = null;   // full bounds of all loaded features
+let searchInput, prefFilter;
+let allFeatures = [];
+let allBounds = null;            // full extent
 
 
 function applyFilters(triggerZoom = false) {
-  const q = (searchInput?.value || "").trim().toLowerCase();
-  const pf = prefFilter?.value || "";
+  // Lazy-grab in case the script ran before DOM was ready
+  searchInput = searchInput || document.getElementById("search");
+  prefFilter = prefFilter || document.getElementById("prefFilter");
+
+  const qRaw = (searchInput?.value ?? "");
+  const pfRaw = (prefFilter?.value ?? "");
+
+  const q = qRaw.trim().toLowerCase();
+  const pf = pfRaw.trim().toLowerCase();
 
   const matches = [];
   allFeatures.forEach(f => {
     const p = f.properties || {};
-    const inPref = !pf || (p.prefecture === pf);
+    const pPref = (p.prefecture || "").trim().toLowerCase();
+
+    const inPref = !pf || (pPref === pf);
     const inText = !q || [
       p.name_en, p.name_jp, p.city, p.prefecture, p.slug, p.type, p.classification
     ].filter(Boolean).some(v => String(v).toLowerCase().includes(q));
@@ -469,7 +477,7 @@ function applyFilters(triggerZoom = false) {
     if (ok) matches.push(f);
   });
 
-  // Update sidebar list
+  // Sidebar
   const resultsContainer = document.getElementById("results");
   const resultCount = document.getElementById("resultCount");
   if (resultCount) resultCount.textContent = matches.length;
@@ -489,7 +497,6 @@ function applyFilters(triggerZoom = false) {
       </div>`;
     }).join("");
 
-    // Rebind clicks
     resultsContainer.querySelectorAll(".result-item").forEach(el => {
       el.addEventListener("click", () => {
         const id = el.dataset.id;
@@ -502,23 +509,24 @@ function applyFilters(triggerZoom = false) {
     });
   }
 
-  // ---- Auto-zoom behavior (only on prefecture changes) ----
+  // Zoom only when prefecture changed
   if (triggerZoom) {
     if (pf) {
-      // Zoom to bounds of matches in this prefecture
       const b = L.latLngBounds([]);
       matches.forEach(f => {
         const lyr = featureIndexById.get(f.properties.id);
         if (lyr) b.extend(lyr.getBounds());
       });
-      if (b.isValid()) map.fitBounds(b, { padding: [40, 40] });
-    } else if (allBounds && allBounds.isValid()) {
-      // Prefecture cleared → zoom back to full extent
+      if (b.isValid()) {
+        map.fitBounds(b, { padding: [40, 40] });
+      } else if (allBounds?.isValid()) {
+        map.fitBounds(allBounds, { padding: [40, 40] });
+      }
+    } else if (allBounds?.isValid()) {
       map.fitBounds(allBounds, { padding: [40, 40] });
     }
   }
 }
-
 
 /* ===== Init: Supabase + load data ===== */
 (async function init() {
@@ -576,13 +584,13 @@ function applyFilters(triggerZoom = false) {
 
     if (layer.getLayers().length) {
       map.fitBounds(layer.getBounds(), { padding: [40, 40] });
-      allBounds = layer.getBounds();          // <-- remember full extent
+      allBounds = layer.getBounds();     // remember full extent
     }
 
-    // ====== Filter setup ======
     allFeatures = features;
 
-    // Prefecture dropdown from data
+    // Populate prefecture dropdown (values normalized exactly as displayed)
+    prefFilter = document.getElementById("prefFilter");
     if (prefFilter) {
       const prefs = Array.from(new Set(
         allFeatures.map(f => f.properties.prefecture).filter(Boolean)
@@ -591,12 +599,14 @@ function applyFilters(triggerZoom = false) {
         prefs.map(p => `<option value="${p}">${p}</option>`).join("");
     }
 
-    // Wire filter events
-    searchInput?.addEventListener("input", () => applyFilters());
-    prefFilter?.addEventListener("change", () => applyFilters());
+    // Wire events
+    searchInput = document.getElementById("search");
+    searchInput?.addEventListener("input", () => applyFilters(false));  // no zoom while typing
+    prefFilter?.addEventListener("change", () => applyFilters(true));   // zoom on prefecture change
 
-    // Initial render (no zoom change)
+    // First render
     applyFilters(false);
+
 
   } catch (err) {
     console.error("[Atlas] init failed:", err);
