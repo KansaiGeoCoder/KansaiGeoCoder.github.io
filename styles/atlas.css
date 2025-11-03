@@ -1,3 +1,11 @@
+/* =========================================================
+   Shotengai Atlas — Clean CSS (2025-11-03)
+   - Consolidated rules (removed duplicates/overrides)
+   - Fixed sidebar nested scrolling (results list scrolls)
+   - FIXED: Summary card fills remaining space
+   ========================================================= */
+
+/* ---------- Theme ---------- */
 :root {
   --bg: #0b0d10;
   --panel: #12161b;
@@ -8,42 +16,45 @@
   --border: #1f2937;
 }
 
+/* ---------- Base ---------- */
 html,
 body {
   height: 100%;
   margin: 0;
   font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   background: var(--bg);
-  color: var(--text)
+  color: var(--text);
 }
 
+/* App grid */
 .app {
   display: grid;
-  grid-template-columns: 360px 1fr;
+  grid-template-columns: 300px 1fr;
   grid-template-rows: auto 1fr;
-  min-height: 100vh
+  min-height: 100vh;
 }
 
+/* Header */
 header {
-  grid-column: 1/3;
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, #0c1015, rgba(12, 16, 21, .6))
+  background: linear-gradient(180deg, #0c1015, rgba(12, 16, 21, .6));
 }
 
 header .title {
   display: flex;
   align-items: center;
-  gap: 12px
+  gap: 12px;
 }
 
 header h1 {
   font-size: 18px;
   letter-spacing: .3px;
-  margin: 0
+  margin: 0;
 }
 
 header .badge {
@@ -52,46 +63,52 @@ header .badge {
   background: #0e1b33;
   border: 1px solid #1e3a8a;
   padding: 2px 8px;
-  border-radius: 999px
+  border-radius: 999px;
 }
 
 header .sub {
   font-size: 12px;
   color: var(--muted);
-  margin-right: auto
+  margin-right: auto;
 }
 
 .edit-controls {
   display: flex;
   align-items: center;
-  gap: 8px
+  gap: 8px;
 }
 
-.sidebar {
+/* ---------- Sidebar & Cards ---------- */
+aside.sidebar {
   background: var(--panel);
   border-right: 1px solid var(--border);
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  overflow: auto
+
+  /* Critical for nested scroll inside grid areas */
+  min-height: 0;
+  overflow: hidden;
+  /* sidebar itself does NOT scroll */
 }
 
 .card {
   background: #0e1318;
   border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 12px
+  padding: 12px;
 }
 
+/* Controls card */
 .controls {
   display: grid;
-  gap: 8px
+  gap: 8px;
 }
 
 .controls label {
   font-size: 12px;
-  color: var(--muted)
+  color: var(--muted);
 }
 
 .controls input[type="text"],
@@ -102,28 +119,51 @@ header .sub {
   color: var(--text);
   border-radius: 10px;
   padding: 10px 12px;
-  outline: none
+  outline: none;
 }
 
 .controls input[type="text"]:focus,
 .controls select:focus {
   border-color: #334155;
-  box-shadow: 0 0 0 3px rgba(51, 65, 85, .35)
+  box-shadow: 0 0 0 3px rgba(51, 65, 85, .35);
 }
 
-.results {
-  max-height: 40vh;
-  overflow: auto;
+/* Compact input height (integrated from earlier patch) */
+.card.controls input[type="text"],
+.card.controls select {
+  box-sizing: border-box;
+  max-width: 100%;
+  height: 36px;
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+
+/* ---------- Results (scrollable list) ---------- */
+.results-card {
   display: flex;
   flex-direction: column;
-  gap: 6px
+  /* FIX: Do not grow, allow Summary to grow instead */
+  flex: 0 1 auto;
 }
 
 .results-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px
+  margin-bottom: 6px;
+  flex: 0 0 auto;
+}
+
+.results {
+  /* FIX: Cap height to around 10 items (40px*10) to keep summary/button visible */
+  max-height: 500px;
+  min-height: 0;
+  overflow: auto;
+  /* <-- scrolling happens here */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .result-item {
@@ -131,22 +171,29 @@ header .sub {
   border: 1px solid var(--border);
   border-radius: 10px;
   background: #0c1015;
-  cursor: pointer
+  cursor: pointer;
 }
 
 .result-item:hover {
-  border-color: #264b77
+  border-color: #264b77;
 }
 
 .result-name {
-  font-weight: 600
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .result-meta {
   font-size: 12px;
-  color: var(--muted)
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
+/* Pills */
 .pill {
   display: inline-block;
   background: #1f2b3a;
@@ -155,46 +202,104 @@ header .sub {
   margin-right: 6px;
   font-size: .8rem;
   color: #cfe2ff;
-  border: 1px solid #334155
+  border: 1px solid #334155;
 }
 
 .pill-active {
   background: #153d27;
   color: #a5f3bc;
-  border-color: #195e38
+  border-color: #195e38;
 }
 
 .pill-declining {
   background: #3d2f0f;
   color: #facc15;
-  border-color: #6b5111
+  border-color: #6b5111;
 }
 
 .pill-closed {
   background: #3d0f0f;
   color: #f87171;
-  border-color: #7f1d1d
+  border-color: #7f1d1d;
 }
 
 .pill-planned {
   background: #1a2330;
   color: #cfe2ff;
-  border-color: #2d4a7a
+  border-color: #2d4a7a;
 }
 
+/* ---------- Sidebar: Data summary (The new filling element) ---------- */
+.card.summary {
+  position: relative;
+  background: #0e1118;
+
+  /* CRITICAL FIX: Make this card take up all remaining vertical space */
+  flex: 1 1 auto;
+  min-height: 0;
+
+  overflow: auto;
+  padding: 0 12px 12px 12px;
+  /* Adjusted padding for sticky header */
+}
+
+.summary-title {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+
+  background: #0e1118;
+  margin: 0;
+  padding: 12px 0 6px 0;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .06);
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.summary-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  min-width: 0;
+}
+
+.summary-block.muted {
+  opacity: .85;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, .06);
+  padding-top: 8px;
+}
+
+.summary-k {
+  color: #aab3c2;
+  font-size: 0.85rem;
+}
+
+.summary-v {
+  text-align: right;
+  font-size: 0.85rem;
+}
+
+/* Keep About button visible at the bottom of the sidebar */
+#btnAbout {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+/* ---------- Map ---------- */
 #map {
   width: 100%;
-  height: 100%
+  height: 100%;
 }
 
-/* Info panel */
+/* Floating info panel */
 .infopanel {
   position: absolute;
   right: 20px;
   bottom: 20px;
   z-index: 450;
   display: none;
-  pointer-events: none
+  pointer-events: none;
 }
 
 .infocard {
@@ -203,21 +308,21 @@ header .sub {
   border: 1px solid #1f2937;
   border-radius: 14px;
   padding: 16px;
-  width: 320px;
+  width: 640px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
-  color: #e5ebf5
+  color: #e5ebf5;
 }
 
 .infocard .card-head {
   display: flex;
   align-items: center;
-  justify-content: space-between
+  justify-content: space-between;
 }
 
 .infocard .title {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #fff
+  color: #fff;
 }
 
 .infocard .close {
@@ -225,679 +330,45 @@ header .sub {
   border: none;
   color: #9aa4b2;
   font-size: 20px;
-  cursor: pointer
-}
-
-/* Leaflet skin tweaks */
-.leaflet-control {
-  filter: brightness(.94)
-}
-
-.leaflet-bar a {
-  background: #0b0f13;
-  border-color: #202833;
-  color: #cbd5e1
-}
-
-.leaflet-bar a:hover {
-  background: #10161d
-}
-
-.leaflet-control-attribution {
-  background: #0b0f13;
-  color: #94a3b8;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 2px 6px
-}
-
-.leaflet-interactive,
-.shotengai-line {
-  pointer-events: auto !important;
-  cursor: pointer
-}
-
-/* Buttons */
-.btn {
-  display: inline-block;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1px solid #2a3543;
-  background: #121821;
-  color: #e5ebf5;
-  text-decoration: none;
-  font-size: 14px
-}
-
-.btn:hover {
-  background: #171f2a
-}
-
-.btn-ghost {
-  background: transparent;
-  border-color: #2a3543;
-  color: #b3bfd0
-}
-
-.hint {
-  color: #9aa4b2;
-  font-size: .9rem
-}
-
-/* Modals (auth + feature) */
-.auth-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, .5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000
-}
-
-.auth-card {
-  width: 320px;
-  background: #0e1318;
-  border: 1px solid #1f2937;
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
-  color: #e5ebf5;
-  max-height: 84vh;
-  overflow: hidden
-}
-
-.auth-card input {
-  width: 100%;
-  margin: 6px 0;
-  padding: 8px;
-  background: #121821;
-  color: #e5ebf5;
-  border: 1px solid #2a3543;
-  border-radius: 8px
-}
-
-.auth-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px
-}
-
-.auth-msg {
-  margin-top: 6px;
-  font-size: .85rem;
-  color: #9fe2bf
-}
-
-/* Feature form layout */
-.form-body {
-  max-height: 56vh;
-  overflow-y: auto;
-  padding-right: 6px;
-  display: grid;
-  gap: 12px
-}
-
-.form-group {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px;
-  background: #0c1015
-}
-
-.form-group h4 {
-  margin: 0 0 6px 0;
-  font-size: 0.95rem;
-  color: #cbd5e1
-}
-
-.form-row {
-  display: grid;
-  gap: 8px
-}
-
-.form-row.two {
-  grid-template-columns: 1fr 1fr;
-  gap: 10px
-}
-
-.form-row label {
-  font-size: 12px;
-  color: var(--muted)
-}
-
-.form-row input,
-.form-row select,
-.form-row textarea {
-  width: 100%;
-  background: #0b0f13;
-  border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 10px;
-  padding: 10px 12px;
-  outline: none
-}
-
-.form-row textarea {
-  resize: vertical
-}
-
-@media (max-width:960px) {
-  .app {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr
-  }
-
-  .sidebar {
-    grid-row: 2;
-    order: 2
-  }
-
-  header {
-    grid-column: 1
-  }
-}
-
-/* --- Wider edit panel + better scrolling --- */
-.auth-card.form-wide {
-  max-width: 880px;
-}
-
-/* was 520px */
-.auth-card {
-  max-height: 88vh;
-  overflow: hidden;
-}
-
-.form-body {
-  max-height: 66vh;
-  overflow-y: auto;
-  padding-right: 10px;
-  gap: 16px;
-}
-
-/* Two-column rows (already used) keep as-is; just ensure spacing */
-.form-row.two {
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-/* Crisper checkbox UI */
-.form-row input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--accent);
-  border-radius: 4px;
   cursor: pointer;
 }
 
-.form-row input[type="checkbox"]+label {
-  cursor: pointer;
-}
-
-/* --- Info card slightly wider with key/value layout support --- */
-.infocard {
-  width: 440px;
-}
-
-/* was 320px */
+/* Key/Value grid + info content (text + photo) */
 .kv {
   display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 6px 10px;
-  margin-top: 8px;
-}
-
-.kv .k {
-  color: var(--muted);
-}
-
-.kv .v {
-  color: var(--text);
-}
-
-/* Chips row spacing */
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-/* --- Extra wide modal + more scroll room --- */
-.auth-card.form-xxwide {
-  max-width: 980px;
-}
-
-/* was 520/720 → now nice & wide */
-.auth-card {
-  max-height: 88vh;
-  overflow: hidden;
-}
-
-.form-body {
-  max-height: 66vh;
-  overflow-y: auto;
-  padding-right: 12px;
-  gap: 16px;
-}
-
-/* --- Inline checkboxes in the Status group --- */
-.status-inline {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  align-items: center;
-  gap: 10px;
-}
-
-.status-inline .cb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.status-inline input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--accent);
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-/* --- Info card a bit wider + key/value grid --- */
-.infocard {
-  width: 460px;
-}
-
-.kv {
-  display: grid;
-  grid-template-columns: 140px 1fr;
-  gap: 6px 12px;
+  grid-template-columns: 100px 1fr;
+  gap: 6px 6px;
   margin-top: 10px;
 }
 
 .kv .k {
   color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .kv .v {
   color: var(--text);
 }
 
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-/* XXL modal width & roomier body */
-.auth-card.form-xxwide {
-  max-width: 1120px;
-}
-
-/* was 980px */
-.form-body {
-  max-height: 68vh;
-}
-
-/* Info card: a touch wider */
-.infocard {
-  width: 500px;
-}
-
-/* was 460px */
-
-/* === Layout tweaks === */
-.app {
-  grid-template-columns: 300px 1fr;
-}
-
-/* sidebar a bit slimmer */
-
-/* Edit modal: wider overall, but fields not overlong */
-.auth-card.form-xxwide {
-  max-width: 1200px;
-}
-
-/* was 1120px */
-.form-body {
-  max-height: 68vh;
-}
-
-/* Make most groups render in two columns (labels+inputs still full width within a cell) */
-.form-group.compact {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px 16px;
-}
-
-.form-group.compact h4 {
-  grid-column: 1 / -1;
-  margin-bottom: 2px;
-}
-
-/* Keep long text areas spanning full width */
-.form-group.fullwidth .form-row {
-  grid-column: 1 / -1;
-}
-
-/* Inputs stay visually moderate inside wide modal */
-.form-row input,
-.form-row select {
-  max-width: 520px;
-}
-
-.form-row textarea {
-  max-width: none;
-}
-
-/* Status inline row still aligned in two columns container */
-.status-inline {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Sidebar a touch slimmer */
-.app {
-  grid-template-columns: 300px 1fr;
-}
-
-/* XXL modal width + comfortable body height */
-.auth-card.form-xxwide {
-  max-width: 1200px;
-}
-
-.form-body {
-  max-height: 68vh;
-  overflow-y: auto;
-  padding-right: 12px;
-  gap: 16px;
-}
-
-/* Two-column layout for most groups (keeps inputs from becoming too long) */
-.form-group.compact {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px 16px;
-}
-
-.form-group.compact h4 {
-  grid-column: 1 / -1;
-  margin-bottom: 2px;
-}
-
-/* Notes/Links remain full width */
-.form-group.fullwidth .form-row {
-  grid-column: 1 / -1;
-}
-
-/* Cap input/select width so they don't stretch across the entire modal */
-.form-row input,
-.form-row select {
-  max-width: 520px;
-}
-
-.form-row textarea {
-  max-width: none;
-}
-
-/* Inline checkboxes row within Status group, spanning width */
-.status-inline {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Info card a bit wider */
-.infocard {
-  width: 500px;
-}
-
-/* Make all form controls respect their containers */
-.form-row,
-.card .form-row,
-.auth-card .form-row {
-  min-width: 0;
-}
-
-/* critical for CSS grid overflow */
-.form-row label {
-  display: block;
-  margin: 0 0 6px;
-  line-height: 1.2;
-}
-
-.form-row input,
-.form-row select,
-.form-row textarea,
-.card input,
-.card select,
-.card textarea,
-.auth-card input,
-.auth-card select,
-.auth-card textarea {
-  box-sizing: border-box;
-  width: 100%;
-  /* fill the grid cell, not beyond */
-  max-width: none;
-  /* override older caps */
-  min-width: 0;
-  /* prevent min-content overflow */
-}
-
-/* Number inputs behave, no weird overshoot from spinners */
-.form-row input[type="number"] {
-  padding-right: 8px;
-}
-
-/* Two-column groups that never overflow */
-.form-group.compact {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  /* minmax(0,1fr) prevents overflow */
-  gap: 14px 16px;
-}
-
-.form-group.compact h4 {
-  grid-column: 1 / -1;
-  margin-bottom: 2px;
-}
-
-/* Full-width groups (e.g., Notes / Links) */
-.form-group.fullwidth .form-row {
-  grid-column: 1 / -1;
-}
-
-/* On narrow viewports, stack to one column */
-@media (max-width: 980px) {
-  .form-group.compact {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Big but not silly wide; smooth scroll area */
-.auth-card.form-xxwide {
-  max-width: 1200px;
-}
-
-.form-body {
-  max-height: 68vh;
-  overflow-y: auto;
-  padding-right: 12px;
-  gap: 16px;
-}
-
-/* Ensure the modal content can’t bleed horizontally */
-.auth-card {
-  overflow: hidden;
-}
-
-/* Base checkbox visuals */
-input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--accent);
-  /* uses your theme */
-  border-radius: 4px;
-  cursor: pointer;
-  flex: 0 0 auto;
-}
-
-/* Inline checkbox + label pair */
-.cb {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-}
-
-.cb label {
-  cursor: pointer;
-  margin: 0;
-}
-
-/* Status row (two checkboxes side-by-side) */
-.status-inline {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: auto 1fr 1fr;
-  /* spacer + two checkboxes */
-  align-items: center;
-  gap: 10px 16px;
-}
-
-@media (max-width: 980px) {
-  .status-inline {
-    grid-template-columns: auto 1fr;
-  }
-
-  /* wraps nicely on small screens */
-}
-
-/* Slimmer sidebar columns (already set earlier, keep) */
-.app {
-  grid-template-columns: 300px 1fr;
-}
-
-/* Sidebar controls respect card width */
-.card input,
-.card select,
-.card textarea {
-  width: 100%;
-}
-
-/* Optional: result list trims long names cleanly */
-.result-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.result-meta {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* ===== Checkbox Styling (global fix for forms) ===== */
-
-/* Make sure checkboxes look consistent with text fields */
-input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent, #6aa5a5);
-  border-radius: 4px;
-  cursor: pointer;
-  vertical-align: middle;
-  flex: 0 0 auto;
-}
-
-/* Inline checkbox container */
-.cb {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  white-space: normal;
-}
-
-/* Label text matches form text size */
-.cb label,
-.form-row.cb-row label,
-.status-inline label {
-  font-size: 0.8rem;
-  /* same as other labels */
-  font-weight: 400;
-  line-height: 1.3;
-  color: var(--text-color, #e5e7eb);
-  margin: 0;
-  cursor: pointer;
-}
-
-/* Inline group layout (e.g., "Covered / Pedestrian only") */
-.status-inline {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: auto 1fr 1fr;
-  align-items: center;
-  gap: 8px 16px;
-}
-
-@media (max-width: 980px) {
-  .status-inline {
-    grid-template-columns: auto 1fr;
-  }
-}
-
-/* Sidebar "About" / Smallprint card */
-.card.smallprint {
-  font-size: 0.9rem;
-  line-height: 1.4;
-  color: var(--text-color, #e5e7eb);
-}
-
-.smallprint-title {
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: var(--accent, #7aa2ff);
-}
-
-.card.smallprint p {
-  margin-bottom: 8px;
-}
-
-/* ===== Info card with photo ===== */
-/* ===== Info card with wider layout ===== */
 .info-content {
   display: flex;
   align-items: flex-start;
-  gap: 20px;
-  /* allow it to grow wider */
-  max-width: 720px;
-  /* was likely around 500px */
+  gap: 12px;
   width: 100%;
   margin-top: 8px;
 }
 
-/* left text area */
 .info-text {
   flex: 1 1 auto;
   min-width: 0;
   line-height: 1.45;
+  font-size: 0.9rem;
 }
 
-/* photo column on the right */
 .photo-viewer {
   position: relative;
-  flex: 0 0 200px;
-  /* was 180px */
-  height: 260px;
-  /* slight increase for better proportion */
+  flex: 0 0 clamp(190px, 28%, 240px);
+  height: clamp(220px, 32vh, 300px);
   overflow: hidden;
   border-radius: 8px;
   background: #0e1118;
@@ -906,7 +377,6 @@ input[type="checkbox"] {
   align-items: center;
 }
 
-/* maintain aspect ratio, prevent overflow */
 .photo-viewer img {
   height: 100%;
   width: auto;
@@ -915,14 +385,6 @@ input[type="checkbox"] {
   user-select: none;
 }
 
-.photo-viewer.placeholder {
-  font-size: 0.85rem;
-  color: #888;
-  text-align: center;
-  padding: 0 4px;
-}
-
-/* slideshow nav stays subtle */
 .photo-nav {
   position: absolute;
   bottom: 8px;
@@ -932,193 +394,6 @@ input[type="checkbox"] {
 }
 
 .photo-btn {
-  border: none;
-  background: rgba(0, 0, 0, 0.4);
-  color: white;
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  line-height: 20px;
-  padding: 0;
-}
-
-.photo-btn:hover {
-  background: rgba(0, 0, 0, 0.6);
-}
-
-/* On narrow viewports stack the photo below text */
-@media (max-width: 700px) {
-  .info-content {
-    flex-direction: column;
-    max-width: 100%;
-  }
-
-  .photo-viewer {
-    width: 100%;
-    height: 220px;
-  }
-}
-
-
-/* Photos block */
-.photos-group h4 {
-  margin-bottom: 6px;
-}
-
-.dropzone {
-  border: 1.5px dashed #3a4453;
-  border-radius: 10px;
-  padding: 14px;
-  background: #0e1118;
-  text-align: center;
-  cursor: pointer;
-  user-select: none;
-}
-
-.dropzone.drag {
-  background: #111826;
-  border-color: #7aa2ff;
-}
-
-.dropzone input[type=file] {
-  display: none;
-}
-
-.drop-hint {
-  font-size: .9rem;
-  color: #aab3c2;
-}
-
-.thumb-list {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
-
-.thumb {
-  width: 70px;
-  height: 100px;
-  border-radius: 6px;
-  overflow: hidden;
-  position: relative;
-  background: #0b0f16;
-}
-
-.thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.thumb .x {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 18px;
-  height: 18px;
-  border: none;
-  border-radius: 3px;
-  background: rgba(0, 0, 0, .5);
-  color: #fff;
-  cursor: pointer;
-}
-
-.progress {
-  height: 4px;
-  background: #1f2937;
-  border-radius: 2px;
-  overflow: hidden;
-  margin-top: 8px;
-  display: none;
-}
-
-.progress>i {
-  display: block;
-  height: 100%;
-  width: 0;
-  background: #7aa2ff;
-}
-
-/* ===== Info card: wider container + wider text/photo split ===== */
-
-/* Force the card itself to be wider */
-#info,
-.infocard {
-  width: 640px !important;
-  /* bump overall card width */
-  max-width: min(92vw, 760px) !important;
-  /* keep it responsive */
-}
-
-/* Make the inner two-column content expand fully */
-#info .info-content,
-.infocard .info-content {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  width: 100%;
-  max-width: none;
-  /* remove old caps */
-  margin-top: 8px;
-}
-
-/* Left text column gets more room */
-#info .info-text,
-.infocard .info-text {
-  flex: 1 1 auto;
-  min-width: 0;
-  line-height: 1.45;
-}
-
-/* Right photo column fixed but a bit larger; scales within bounds */
-#info .photo-viewer,
-.infocard .photo-viewer {
-  position: relative;
-  flex: 0 0 clamp(190px, 28%, 240px);
-  /* ~200px on typical screens */
-  height: clamp(220px, 32vh, 300px);
-  /* proportional height */
-  overflow: hidden;
-  border-radius: 8px;
-  background: #0e1118;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#info .photo-viewer img,
-.infocard .photo-viewer img {
-  height: 100%;
-  width: auto;
-  object-fit: cover;
-  border-radius: 6px;
-  user-select: none;
-}
-
-#info .photo-viewer.placeholder,
-.infocard .photo-viewer.placeholder {
-  font-size: 0.85rem;
-  color: #888;
-  text-align: center;
-  padding: 0 4px;
-}
-
-/* Slideshow buttons */
-#info .photo-nav,
-.infocard .photo-nav {
-  position: absolute;
-  bottom: 8px;
-  right: 6px;
-  display: flex;
-  gap: 4px;
-}
-
-#info .photo-btn,
-.infocard .photo-btn {
   border: none;
   background: rgba(0, 0, 0, .4);
   color: #fff;
@@ -1131,298 +406,460 @@ input[type="checkbox"] {
   padding: 0;
 }
 
-#info .photo-btn:hover,
-.infocard .photo-btn:hover {
+.photo-btn:hover {
   background: rgba(0, 0, 0, .6);
 }
 
-/* Stack vertically on narrow screens */
-@media (max-width: 700px) {
-
-  #info,
-  .infocard {
-    width: 92vw !important;
-  }
-
-  #info .info-content,
-  .infocard .info-content {
-    flex-direction: column;
-  }
-
-  #info .photo-viewer,
-  .infocard .photo-viewer {
-    width: 100%;
-    height: 220px;
-  }
+/* ---------- Buttons ---------- */
+.btn {
+  display: inline-block;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #2a3543;
+  background: #121821;
+  color: #e5ebf5;
+  text-decoration: none;
+  font-size: 14px;
 }
 
-/* === Sidebar: Data summary === */
-.card.summary { font-size: 0.9rem; line-height: 1.35; }
-.summary-title { font-weight: 600; margin-bottom: 6px; color: var(--accent, #7aa2ff); }
-.summary-block { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
-.summary-block.muted { opacity: .85; margin-top: 8px; border-top: 1px solid rgba(255,255,255,.06); padding-top: 8px; }
-.summary-k { color: #aab3c2; }  /* key */
-.summary-v { text-align: right; }
-@media (max-width: 1100px){ .summary-block{ grid-template-columns: 1fr 1fr; } }
+.btn:hover {
+  background: #171f2a;
+}
 
-/* About modal tweaks */
-#aboutModal .form-body p { margin-bottom: 10px; line-height: 1.45; }
-#aboutModal h4 { margin: 10px 0 6px; font-weight: 600; }
-#aboutModal ul { margin: 6px 0 10px 18px; }
-#aboutModal .muted { opacity: .8; }
+.btn-ghost {
+  background: transparent;
+  border-color: #2a3543;
+  color: #b3bfd0;
+}
 
-/* === Modal overlay (global) === */
-.modal {
-  position: fixed;       /* overlay */
-  inset: 0;              /* top/right/bottom/left: 0 */
-  display: none;         /* toggled by JS */
+.hint {
+  color: #9aa4b2;
+  font-size: .9rem;
+}
+
+/* ---------- Modals & Forms ---------- */
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .5);
+  display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0,0,0,0.45);
-  z-index: 4000;         /* above Leaflet popups/controls */
+  z-index: 10000;
   padding: 20px;
 }
 
-/* Ensure the inner card can't overflow the viewport */
+.auth-card {
+  width: min(720px, 92vw);
+  background: #0e1318;
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
+  color: #e5ebf5;
+  max-height: 88vh;
+  overflow: hidden;
+  /* Enforce structural control for inner elements */
+  display: flex;
+  flex-direction: column;
+}
+
+.form-body {
+  max-height: 68vh;
+  /* FIX: Ensure horizontal overflow is clipped */
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  padding-right: 0;
+  width: 100%;
+  box-sizing: border-box;
+
+  display: grid;
+  gap: 12px;
+}
+
+.form-group {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-sizing: border-box;
+  /* Standardized padding (was 8px) */
+  padding: 8px 10px;
+  background: #0c1015;
+  /* Prevents the group itself from expanding beyond its bounds */
+  min-width: 0;
+}
+
+.form-group h4 {
+  /* Tighter spacing below heading */
+  margin: 0 0 4px 0;
+  font-size: 0.95rem;
+  color: #cbd5e1;
+}
+
+.form-row {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.form-row.two {
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-row label {
+  display: block;
+  /* FIX: Correct label margin for flow (8px above, 4px below) */
+  margin: 16px 5px 0px;
+  line-height: 1.2;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.form-row input,
+.form-row select,
+.form-row textarea {
+  /* This is correct: includes padding/border in the 100% width */
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  background: #0b0f13;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+}
+
+.form-row textarea {
+  resize: vertical;
+}
+
+input[type="checkbox"] {
+  width: 16-18px;
+  height: 16-18px;
+  accent-color: var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cb {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  padding-top: 16px;
+}
+
+.status-inline {
+  display: grid;
+  grid-template-columns: auto 1fr 1fr;
+  align-items: center;
+  gap: 10px 16px;
+}
+
+.auth-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.auth-msg {
+  margin-top: 6px;
+  font-size: .85rem;
+  color: #9fe2bf;
+}
+
+/* ---------- Map / Leaflet tweaks ---------- */
+.leaflet-control {
+  filter: brightness(.94);
+}
+
+.leaflet-bar a {
+  background: #0b0f13;
+  border-color: #202833;
+  color: #cbd5e1;
+}
+
+.leaflet-bar a:hover {
+  background: #10161d;
+}
+
+.leaflet-control-attribution {
+  background: #0b0f13;
+  color: #94a3b8;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px 6px;
+}
+
+.leaflet-interactive,
+.shotengai-line {
+  pointer-events: auto !important;
+  cursor: pointer;
+}
+
+/* ---------- Modal overlay (About) ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, .45);
+  z-index: 4000;
+  padding: 20px;
+}
+
 .modal .auth-card {
   max-width: 720px;
   width: min(720px, 92vw);
   max-height: 80vh;
   overflow: hidden;
 }
+
 .modal .form-body {
   max-height: 60vh;
   overflow-y: auto;
 }
 
-/* Optional: typography for About modal */
-#aboutModal .form-body p { margin-bottom: 10px; line-height: 1.45; }
-#aboutModal h4 { margin: 10px 0 6px; font-weight: 600; }
-#aboutModal ul { margin: 6px 0 10px 18px; }
-#aboutModal .muted { opacity: .8; }
+/* ---------- Responsive ---------- */
+@media (max-width: 960px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+  }
 
-/* Lock page scroll when any modal is open */
-body.modal-open { overflow: hidden; }
+  .sidebar {
+    grid-row: 2;
+  }
 
-/* ==== Sidebar: keep things within viewport ==== */
-aside.sidebar{
-  display:flex;
-  flex-direction:column;
-  gap: 10px;
-  /* ensure the whole sidebar never exceeds the viewport */
-  max-height: 100vh;
-  overflow: hidden;                 /* children decide their own scroll */
+  header {
+    grid-column: 1;
+  }
 }
 
-/* Results card should keep most of the vertical space */
-.card .results{
-  max-height: none;                 /* let flex control it */
-  overflow: auto;
+@media (max-width: 700px) {
+  .infocard {
+    width: min(92vw, 640px);
+  }
+
+  .info-content {
+    flex-direction: column;
+  }
+
+  .photo-viewer {
+    width: 100%;
+    max-height: 400px;
+    /* Example large size - adjust as needed */
+    min-height: 200px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    position: relative;
+    background: #1f2937;
+    border-radius: 12px;
+  }
+
+  .auth-card {
+    max-width: 94vw;
+  }
 }
 
-/* Make the results card flex and the summary card NOT push below */
-aside.sidebar .card {
-  /* default: not flexing; results card can be set to flex below if you want */
+.photo-viewer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-/* If your results card wrapper is .card (with .results inside), let it flex: */
-aside.sidebar .card:has(#results){
-  flex: 1 1 auto;                   /* this card grows/shrinks */
-  min-height: 0;                    /* critical for nested scroll */
+.auth-card .photo-viewer {
+
+  /* Enforce a small, square size ONLY inside the modal */
+  /* === Photo upload section in edit form === */
+  .auth-card .photos-group {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: #0c1015;
+    padding: 12px;
+  }
+
+  .auth-card .photos-group h4 {
+    margin: 0 0 8px 0;
+    font-size: 0.95rem;
+    color: #cbd5e1;
+  }
+
+  /* Drop zone */
+  .auth-card .dropzone {
+    border: 1.5px dashed #3a4453;
+    border-radius: 8px;
+    padding: 10px;
+    background: #0e1118;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.85rem;
+    color: #aab3c2;
+    transition: background .15s ease, border-color .15s ease;
+  }
+
+  .auth-card .dropzone.drag {
+    background: #111826;
+    border-color: var(--accent);
+  }
+
+  .auth-card .dropzone input[type="file"] {
+    display: none;
+  }
+
+  /* Thumbnails list */
+  .auth-card .thumb-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  /* Small, square preview images */
+  .auth-card .thumb {
+    width: 80px;
+    height: 80px;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+    background: #0b0f16;
+    flex: 0 0 auto;
+  }
+
+  .auth-card .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Remove (×) button on each thumb */
+  .auth-card .thumb .x {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 18px;
+    height: 18px;
+    border: none;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, .5);
+    color: #fff;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 18px;
+    padding: 0;
+  }
+
+  /* Progress bar for uploads */
+  .auth-card .progress {
+    height: 4px;
+    background: #1f2937;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 8px;
+    display: none;
+  }
+
+  .auth-card .progress>i {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: var(--accent);
+  }
+
+  /* Prevent large viewer from overriding inside the edit form */
+  .auth-card .photo-viewer {
+    width: 100px !important;
+    height: 100px !important;
+    min-height: 100px !important;
+    max-height: 100px !important;
+    margin: 8px 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0e1118;
+    box-shadow: none;
+  }
+
+  .auth-card .photo-viewer img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .auth-card .photo-viewer .photo-nav {
+    display: none !important;
+  }
 }
 
-/* ==== Summary card: fixed height + internal scroll ==== */
-.card.summary{
-  max-height: 170px;                /* adjust to taste */
-  overflow: auto;                   /* scrolls internally when too long */
-  min-height: 120px;                /* keep some presence even with few rows */
+/* Edit modal — Photos section: keep dropzone compact, thumbnails small */
+.auth-card .photos-group { --thumb: 90px; }
+
+/* 1) Never render a big image inside the dropzone itself */
+.auth-card .photos-group .dropzone img {
+  display: none !important;            /* hide any accidental preview there */
 }
 
-/* Sticky title in the summary so labels stay visible while scrolling */
-.card.summary .summary-title{
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--panel-bg, rgba(16,21,28,.96));
-  padding-top: 6px;
-  padding-bottom: 4px;
-  /* optional subtle divider under the sticky header */
-  box-shadow: 0 1px 0 rgba(255,255,255,.06);
+/* Keep the dropzone tidy */
+.auth-card .photos-group .dropzone {
+  min-height: 64px;
+  padding: 10px;
+  border: 1.5px dashed #3a4453;
+  border-radius: 8px;
+  background: #0e1118;
+  text-align: center;
+  color: #aab3c2;
 }
 
-/* Ensure summary grid doesn’t cause horizontal overflow */
-.summary-block{
-  min-width: 0;
+/* 2) Thumbnails: small, square previews */
+.auth-card .photos-group .thumb-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
 }
 
-/* Keep the About button always visible under the scrollable cards */
-#btnAbout{
-  flex: 0 0 auto;                   /* never shrinks away */
-}
-
-/* Summary card: ensure sticky header covers scrolled content */
-.card.summary {
+.auth-card .photos-group .thumb {
+  width: var(--thumb);
+  height: var(--thumb);
+  border-radius: 6px;
+  overflow: hidden;
   position: relative;
-  background: var(--panel-bg, #0e1118);
+  background: #0b0f16;
+  flex: 0 0 auto;
 }
 
-.card.summary .summary-title {
-  position: sticky;
-  top: 0;
-  z-index: 3; /* above rows */
-  background: var(--panel-bg, #0e1118); /* solid bg to prevent bleed-through */
-  padding-top: 6px;
-  padding-bottom: 4px;
-  box-shadow: 0 1px 0 rgba(255,255,255,.06);
+.auth-card .photos-group .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
-/* Small footer under result list */
-.results-footer {
-  margin-top: 6px;
-  padding: 6px 8px;
-  font-size: 0.85rem;
-  opacity: .8;
-  border-top: 1px solid rgba(255,255,255,.06);
+.auth-card .photos-group .thumb .x {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 3px;
+  background: rgba(0,0,0,.5);
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 18px;
+  padding: 0;
 }
 
-/* Sidebar layout stays within the viewport */
-aside.sidebar{
-  display:flex; flex-direction:column; gap:10px;
-  max-height:100vh; overflow:hidden;
+/* 3) If any generic image sneaks into the Photos group, size it down */
+.auth-card .photos-group > img {
+  width: var(--thumb) !important;
+  height: var(--thumb) !important;
+  object-fit: cover !important;
+  display: block;
 }
-
-/* Results card: becomes a flex column; the list itself scrolls */
-.results-card{ display:flex; flex-direction:column; flex:1 1 auto; min-height:0; }
-.results-card .results{ flex:1 1 auto; min-height:0; overflow:auto; }
-
-/* ------- Data summary: fixed height + clean sticky header ------- */
-.card.summary{
-  position:relative;
-  background-color: var(--panel-bg, #0e1118); /* SOLID bg to avoid bleed */
-  max-height: 170px; /* adjust as you like */
-  overflow:auto;      /* internal scroll */
-}
-
-/* Sticky header with solid background and higher z-index */
-.card.summary .summary-title{
-  position: sticky; top: 0; z-index: 3;
-  background-color: var(--panel-bg, #0e1118);  /* SOLID bg */
-  box-shadow: 0 1px 0 rgba(255,255,255,.06);
-  padding-top: 6px; padding-bottom: 6px;
-  margin: 0; 
-}
-
-/* Give the content a little breathing room so it doesn't tuck under the sticky bar */
-.card.summary .summary-block:first-of-type{ padding-top: 6px; }
-
-.summary-block{ min-width:0; display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; }
-.summary-k{ color:#aab3c2; }
-.summary-v{ text-align:right; }
-
-/* Keep the About button visible */
-#btnAbout{ flex:0 0 auto; }
-
-/* Ensure the app fills the viewport so flex math works */
-.app{ height:100vh; }
-
-/* Sidebar is a vertical flex stack that never exceeds the viewport */
-aside.sidebar{
-  display:flex !important;
-  flex-direction:column !important;
-  gap:10px;
-  max-height:100vh;
-  overflow:hidden !important;   /* children manage their own scroll */
-}
-
-/* By default, sidebar children don't flex */
-aside.sidebar > .card,
-aside.sidebar > .btn{ flex:0 0 auto; }
-
-/* The results card is the ONLY thing that flexes to fill remaining space */
-aside.sidebar > .results-card{
-  display:flex !important;
-  flex-direction:column !important;
-  flex:1 1 auto !important;
-  min-height:0 !important;      /* CRITICAL for nested scroll */
-}
-.results-card .results{
-  flex:1 1 auto !important;
-  min-height:0 !important;
-  overflow:auto !important;     /* scroll inside the list */
-}
-
-/* Solid background so rows don't show through the sticky header */
-.card.summary{
-  position:relative;
-  background-color:#0e1118 !important;   /* solid, not translucent */
-  max-height:170px !important;           /* adjust if you want */
-  overflow:auto !important;
-}
-
-/* Sticky header with solid bg and higher stacking */
-.card.summary .summary-title{
-  position:sticky; top:0; z-index:5;
-  background-color:#0e1118 !important;
-  padding:6px 0;
-  margin:0;
-  box-shadow:0 1px 0 rgba(255,255,255,.06);
-}
-
-/* Add a tiny spacer so the first row doesn't tuck under the sticky bar */
-.card.summary .summary-block:first-of-type{ padding-top:6px; }
-
-/* --- Sidebar layout: fix scrolling + flex behavior (force overrides) --- */
-#atlas-app .app{ height:100vh !important; }
-
-#atlas-app aside.sidebar{
-  display:flex !important;
-  flex-direction:column !important;
-  gap:12px !important;
-  max-height:100vh !important;
-  overflow:hidden !important;            /* sidebar itself never scrolls */
-}
-
-/* Results card is the only flex-grow element in the sidebar */
-#atlas-app aside.sidebar > .results-card{
-  display:flex !important;
-  flex-direction:column !important;
-  flex:1 1 auto !important;
-  min-height:0 !important;
-}
-
-/* Make the results list itself scroll — remove the old 40vh cap */
-#atlas-app .results-card .results{
-  flex:1 1 auto !important;
-  min-height:0 !important;
-  height: 0 !important;                  /* lets flex compute height */
-  overflow:auto !important;
-  max-height: none !important;           /* defeat earlier 40vh rule */
-}
-
-/* --- Data summary: fixed height + true sticky header that covers rows --- */
-#atlas-app .card.summary{
-  position:relative !important;
-  background:#0e1118 !important;         /* solid background */
-  max-height:180px !important;           /* adjust if you want */
-  overflow:auto !important;              /* internal scroll only */
-  padding-top: 0 !important;
-}
-
-/* Make the sticky header span the card padding so nothing peeks behind */
-#atlas-app .card.summary .summary-title{
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 5 !important;
-  margin: -12px -12px 8px !important;    /* pull over card padding */
-  padding: 8px 12px !important;
-  background:#0e1118 !important;
-  box-shadow: 0 1px 0 rgba(255,255,255,.06) !important;
-}
-
-/* First grid block gets a bit of top padding so it doesn't tuck under the sticky bar */
-#atlas-app .card.summary .summary-block:first-of-type{
-  padding-top: 2px !important;
-}
-
-/* Keep the About button always visible */
-#atlas-app #btnAbout{ flex:0 0 auto !important; }

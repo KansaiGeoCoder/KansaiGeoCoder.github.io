@@ -536,7 +536,7 @@ map.on(L.Draw.Event.DELETED, async (e) => {
 let searchInput, prefFilter;
 let allFeatures = [];
 let allBounds = null;            // full extent
-const MAX_RESULTS = 10;
+const MAX_RESULTS = 50;
 
 
 function applyFilters(triggerZoom = false) {
