@@ -853,3 +853,18 @@ input[type="checkbox"] {
     grid-template-columns: auto 1fr;
   }
 }
+
+/* Sidebar "About" / Smallprint card */
+.card.smallprint {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--text-color, #e5e7eb);
+}
+.smallprint-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: var(--accent, #7aa2ff);
+}
+.card.smallprint p {
+  margin-bottom: 8px;
+}
