@@ -43,6 +43,27 @@ function showInfo(feature) {
 
   const kv = (k, v) => v ? `<div class="k">${k}</div><div class="v">${v}</div>` : "";
 
+  // --- Image(s) ---
+  let photos = [];
+  if (p.image) {
+    // Allow comma-separated list for multiple photos
+    photos = p.image.split(",").map(s => s.trim()).filter(Boolean);
+  }
+
+  const photoHtml = photos.length
+    ? `
+      <div class="photo-viewer">
+        <img id="photoMain" src="${photos[0]}" alt="${name}" />
+        ${photos.length > 1 ? `
+          <div class="photo-nav">
+            <button id="prevPhoto" class="photo-btn">‹</button>
+            <button id="nextPhoto" class="photo-btn">›</button>
+          </div>
+        ` : ""}
+      </div>
+    `
+    : `<div class="photo-viewer placeholder"><span>No photo available</span></div>`;
+
   infoCard.innerHTML = `
     <div class="card-head">
       <div class="title">${name}</div>
@@ -52,30 +73,55 @@ function showInfo(feature) {
       </div>
     </div>
 
-    <div class="chips">
-      ${statusChip}${coveredChip}${pedChip}${typeChip}
-      ${p.classification ? `<span class="pill">${p.classification}</span>` : ""}
-      ${p.theme ? `<span class="pill">${p.theme}</span>` : ""}
-    </div>
+    <div class="info-content">
+      <div class="info-text">
+        <div class="chips">
+          ${statusChip}${coveredChip}${pedChip}${typeChip}
+          ${p.classification ? `<span class="pill">${p.classification}</span>` : ""}
+          ${p.theme ? `<span class="pill">${p.theme}</span>` : ""}
+        </div>
 
-    <div class="kv">
-      ${kv("City / Pref.", [p.city, p.prefecture].filter(Boolean).join(" · "))}
-      ${kv("Length", p.length_m ? `${Math.round(p.length_m)} m` : "")}
-      ${kv("Width avg", p.width_avg ? `${p.width_avg} m` : "")}
-      ${kv("Shops (est.)", p.shops_est)}
-      ${kv("Established", p.established)}
-      ${kv("Last renov.", p.last_renov)}
-      ${kv("Station", p.nearest_station ? `${p.nearest_station}${p.walk_min ? ` · ${p.walk_min} min` : ""}` : "")}
-      ${kv("Association", p.association)}
-      ${kv("Website", p.url ? `<a href="${p.url}" target="_blank" rel="noopener">Open ↗</a>` : "")}
-      ${kv("Source", p.source)}
-      ${kv("Accuracy", p.accuracy)}
-      ${kv("Updated", p.last_update ? new Date(p.last_update).toLocaleDateString() : "—")}
-    </div>
+        <div class="kv">
+          ${kv("City / Pref.", [p.city, p.prefecture].filter(Boolean).join(" · "))}
+          ${kv("Length", p.length_m ? `${Math.round(p.length_m)} m` : "")}
+          ${kv("Station", p.nearest_station ? `${p.nearest_station}${p.walk_min ? ` · ${p.walk_min} min` : ""}` : "")}
+          ${kv("Association", p.association)}
+          ${kv("Website", p.url ? `<a href="${p.url}" target="_blank" rel="noopener">Open ↗</a>` : "")}
+          ${kv("Source", p.source)}
+          ${kv("Updated", p.last_update ? new Date(p.last_update).toLocaleDateString() : "—")}
+        </div>
 
-    ${p.description ? `<div class="desc" style="margin-top:10px;line-height:1.45">${p.description}</div>` : ""}
+        ${p.description ? `<div class="desc">${p.description}</div>` : ""}
+      </div>
+      ${photoHtml}
+    </div>
   `;
+
   infoPanel.style.display = "block";
+
+  // Ensure the parent .card of #results gets .results-card (for the CSS above)
+  (() => {
+    const r = document.getElementById('results');
+    const card = r?.closest('.card');
+    if (card && !card.classList.contains('results-card')) {
+      card.classList.add('results-card');
+    }
+  })();
+
+
+  // --- Slideshow logic ---
+  if (photos.length > 1) {
+    let current = 0;
+    const img = infoCard.querySelector("#photoMain");
+    infoCard.querySelector("#prevPhoto").addEventListener("click", () => {
+      current = (current - 1 + photos.length) % photos.length;
+      img.src = photos[current];
+    });
+    infoCard.querySelector("#nextPhoto").addEventListener("click", () => {
+      current = (current + 1) % photos.length;
+      img.src = photos[current];
+    });
+  }
 
   window._openFeatureForm = async () => {
     if (!currentUser) { const u = await ensureAuth(); if (!u) return; }
@@ -84,6 +130,7 @@ function showInfo(feature) {
     openFeatureForm(feature, "Edit Shotengai");
   };
 }
+
 function hideInfo() { infoPanel.style.display = "none"; }
 window._hideInfo = hideInfo;
 
@@ -332,6 +379,48 @@ function openFeatureForm(feature, title) {
   }
   featureFormTitle.textContent = title || (currentEdit.mode === "edit" ? "Edit Shotengai" : "New Shotengai");
   buildFeatureForm(feature?.properties || {});
+
+  // ⬇️ Inject Photos block (keeps your two-column layout intact)
+  const photosBlock = document.createElement("div");
+  photosBlock.className = "form-group fullwidth photos-group";
+  photosBlock.innerHTML = `
+    <h4>Photos</h4>
+    <div class="dropzone" id="dz">
+      <input id="fileInput" type="file" accept="image/*" multiple />
+      <div class="drop-hint">Drag & drop images here, or click to select (JPG/PNG, ≤ 5 MB each)</div>
+      <div class="progress"><i></i></div>
+    </div>
+    <div class="thumb-list" id="thumbs"></div>
+  `;
+  featureFormBody.appendChild(photosBlock);
+
+  // Initialize thumbnails from existing value (image is comma-separated URLs)
+  const urls = (feature?.properties?.image || "")
+    .split(",").map(s => s.trim()).filter(Boolean);
+  updateThumbs(urls);
+
+  // Wire dnd
+  setupDropzone({
+    bucket: "shotengai-photos",
+    currentId: feature?.properties?.id || null,
+    currentSlug: feature?.properties?.slug || "",
+    onUploaded: (newUrls) => {
+      // merge with existing, update hidden input backing `image`
+      const field = document.getElementById("f_image");
+      const arr = (field?.value ? field.value.split(",").map(s => s.trim()).filter(Boolean) : []);
+      const merged = [...arr, ...newUrls];
+      if (field) field.value = merged.join(", ");
+      updateThumbs(merged);
+    },
+    onRemoved: (urlToRemove) => {
+      const field = document.getElementById("f_image");
+      const arr = (field?.value ? field.value.split(",").map(s => s.trim()).filter(Boolean) : []);
+      const next = arr.filter(u => u !== urlToRemove);
+      if (field) field.value = next.join(", ");
+      updateThumbs(next);
+    }
+  });
+
   openFeatureModal();
 }
 window._openFeatureForm = () => openFeatureForm(currentEdit.feature || null, "Edit Shotengai");
@@ -447,6 +536,7 @@ map.on(L.Draw.Event.DELETED, async (e) => {
 let searchInput, prefFilter;
 let allFeatures = [];
 let allBounds = null;            // full extent
+const MAX_RESULTS = 10;
 
 
 function applyFilters(triggerZoom = false) {
@@ -478,12 +568,14 @@ function applyFilters(triggerZoom = false) {
   });
 
   // Sidebar
+  // Update sidebar list (limit to 10)
   const resultsContainer = document.getElementById("results");
   const resultCount = document.getElementById("resultCount");
   if (resultCount) resultCount.textContent = matches.length;
 
   if (resultsContainer) {
-    resultsContainer.innerHTML = matches.map(f => {
+    const limited = matches.slice(0, MAX_RESULTS);
+    resultsContainer.innerHTML = limited.map(f => {
       const p = f.properties;
       const name = p.name_en || p.name_jp || "Unnamed Shotengai";
       const status = (p.status || "").toString().toLowerCase();
@@ -492,11 +584,21 @@ function applyFilters(triggerZoom = false) {
           status === "declining" ? "#f59e0b" :
             status === "closed" ? "#ef4444" : "#9ca3af";
       return `<div class="result-item" data-id="${p.id}" style="border-left:4px solid ${color}">
-        <div class="result-name">${name}</div>
-        <div class="result-meta">${[p.city, p.prefecture].filter(Boolean).join(" · ")}</div>
-      </div>`;
+      <div class="result-name">${name}</div>
+      <div class="result-meta">${[p.city, p.prefecture].filter(Boolean).join(" · ")}</div>
+    </div>`;
     }).join("");
 
+    // Small footer if more results exist
+    const remaining = matches.length - limited.length;
+    if (remaining > 0) {
+      resultsContainer.insertAdjacentHTML(
+        "beforeend",
+        `<div class="results-footer">+${remaining} more… refine filters to narrow down.</div>`
+      );
+    }
+
+    // Rebind clicks
     resultsContainer.querySelectorAll(".result-item").forEach(el => {
       el.addEventListener("click", () => {
         const id = el.dataset.id;
@@ -508,6 +610,7 @@ function applyFilters(triggerZoom = false) {
       });
     });
   }
+
 
   // Zoom only when prefecture changed
   if (triggerZoom) {
@@ -527,6 +630,153 @@ function applyFilters(triggerZoom = false) {
     }
   }
 }
+
+async function uploadShotengaiPhoto(file, { bucket, id, slug }) {
+  if (!currentUser) { const u = await ensureAuth(); if (!u) throw new Error("Sign in required"); }
+  const cleanSlug = (slug || id || "shotengai").toString().toLowerCase().replace(/[^a-z0-9-_]/g, "");
+  const ts = new Date().toISOString().replace(/[\W:]/g, "").slice(0, 15);
+  const key = `${cleanSlug}/${ts}_${file.name.replace(/\s+/g, "_")}`;
+
+  const { error: upErr } = await sbClient.storage.from(bucket).upload(key, file, {
+    cacheControl: "3600", upsert: false,
+    contentType: file.type || "image/jpeg"
+  });
+  if (upErr) throw upErr;
+
+  const { data: pub } = sbClient.storage.from(bucket).getPublicUrl(key);
+  return pub.publicUrl;
+}
+
+function setupDropzone({ bucket, currentId, currentSlug, onUploaded, onRemoved }) {
+  const dz = document.getElementById("dz");
+  const fi = document.getElementById("fileInput");
+  const bar = dz.querySelector(".progress");
+  const fill = bar.querySelector("i");
+
+  function setProgress(p) { bar.style.display = "block"; fill.style.width = `${p}%`; if (p >= 100) setTimeout(() => bar.style.display = "none", 400); }
+  function resetProgress() { bar.style.display = "none"; fill.style.width = "0"; }
+
+  async function handleFiles(files) {
+    const allowed = Array.from(files).filter(f => /^image\//.test(f.type) && f.size <= 5 * 1024 * 1024);
+    if (!allowed.length) return;
+    const urls = [];
+    let done = 0;
+    for (const f of allowed) {
+      try {
+        const url = await uploadShotengaiPhoto(f, { bucket, id: currentId, slug: currentSlug });
+        urls.push(url);
+      } finally {
+        done++; setProgress(Math.round(done / allowed.length * 100));
+      }
+    }
+    resetProgress();
+    if (urls.length && onUploaded) onUploaded(urls);
+  }
+
+  dz.addEventListener("click", () => fi.click());
+  fi.addEventListener("change", e => handleFiles(e.target.files));
+
+  ["dragenter", "dragover"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove("drag"); }));
+  dz.addEventListener("drop", e => handleFiles(e.dataTransfer.files));
+
+  // paste from clipboard
+  dz.addEventListener("paste", e => {
+    const items = e.clipboardData?.files || [];
+    if (items.length) handleFiles(items);
+  });
+
+  // expose remover used by thumbnails
+  dz._removeUrl = (u) => onRemoved && onRemoved(u);
+}
+
+function updateThumbs(urlArr) {
+  const list = document.getElementById("thumbs");
+  if (!list) return;
+  list.innerHTML = urlArr.map(u => `
+    <div class="thumb" data-url="${u}">
+      <img src="${u}" alt="">
+      <button class="x" title="Remove">×</button>
+    </div>
+  `).join("");
+
+  list.querySelectorAll(".thumb .x").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const u = btn.parentElement.getAttribute("data-url");
+      const dz = document.getElementById("dz");
+      dz?._removeUrl?.(u);
+    });
+  });
+}
+
+// ---------- Summary helpers ----------
+function fmtLen(m) {
+  if (!m || m <= 0) return "—";
+  if (m >= 1000) return (m / 1000).toFixed(1).replace(/\.0$/, "") + " km";
+  return Math.round(m) + " m";
+}
+function median(nums) {
+  const a = nums.filter(x => typeof x === "number" && isFinite(x)).sort((x, y) => x - y);
+  if (!a.length) return null;
+  const mid = Math.floor(a.length / 2);
+  return a.length % 2 ? a[mid] : (a[mid - 1] + a[mid]) / 2;
+}
+function computeStats(list) {
+  const out = { count: 0, byStatus: {}, covered: 0, ped: 0, lenSum: 0, lenAvg: null, lenMed: null, prefCount: 0 };
+  if (!Array.isArray(list) || !list.length) return out;
+
+  out.count = list.length;
+  const lens = [];
+  const prefs = new Set();
+
+  list.forEach(f => {
+    const p = f.properties || {};
+    const st = (p.status || "unknown").toString().toLowerCase();
+    out.byStatus[st] = (out.byStatus[st] || 0) + 1;
+    if (p.covered === true) out.covered++;
+    if (p.pedestrian_only === true) out.ped++;
+    if (typeof p.length_m === "number") { out.lenSum += p.length_m; lens.push(p.length_m); }
+    if (p.prefecture) prefs.add(p.prefecture);
+  });
+
+  out.prefCount = prefs.size;
+  out.lenAvg = lens.length ? out.lenSum / lens.length : null;
+  out.lenMed = median(lens);
+  return out;
+}
+function renderSummary(el, stats, label) {
+  if (!el) return;
+  const s = stats || {};
+  const by = s.byStatus || {};
+  el.innerHTML = `
+    <div class="summary-k">Features</div><div class="summary-v">${s.count || 0}${label ? ` (${label})` : ""}</div>
+    <div class="summary-k">Prefectures</div><div class="summary-v">${s.prefCount || 0}</div>
+    <div class="summary-k">Total length</div><div class="summary-v">${fmtLen(s.lenSum)}</div>
+    <div class="summary-k">Avg length</div><div class="summary-v">${fmtLen(s.lenAvg)}</div>
+    <div class="summary-k">Median length</div><div class="summary-v">${fmtLen(s.lenMed)}</div>
+    <div class="summary-k">Covered</div><div class="summary-v">${s.covered || 0}</div>
+    <div class="summary-k">Ped-only</div><div class="summary-v">${s.ped || 0}</div>
+    <div class="summary-k">Status</div><div class="summary-v">
+      ${Object.entries(by).map(([k, v]) => `${k}: ${v}`).join(" · ") || "—"}
+    </div>
+  `;
+}
+
+// About modal wiring
+const aboutModal = document.getElementById("aboutModal");
+const btnAbout = document.getElementById("btnAbout");
+const btnCloseAbout = document.getElementById("btnCloseAbout");
+
+function openAbout() { if (aboutModal) aboutModal.style.display = "flex"; }
+function closeAbout() { if (aboutModal) aboutModal.style.display = "none"; }
+
+btnAbout?.addEventListener("click", openAbout);
+btnCloseAbout?.addEventListener("click", closeAbout);
+
+// Close on overlay click or ESC
+aboutModal?.addEventListener("click", (e) => { if (e.target === aboutModal) closeAbout(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAbout(); });
+
 
 /* ===== Init: Supabase + load data ===== */
 (async function init() {
@@ -588,6 +838,11 @@ function applyFilters(triggerZoom = false) {
     }
 
     allFeatures = features;
+
+    // Overall summary (entire dataset)
+    const overallStats = computeStats(allFeatures);
+    renderSummary(document.getElementById("summaryOverall"), overallStats, "total");
+
 
     // Populate prefecture dropdown (values normalized exactly as displayed)
     prefFilter = document.getElementById("prefFilter");

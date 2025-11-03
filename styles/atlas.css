@@ -860,11 +860,569 @@ input[type="checkbox"] {
   line-height: 1.4;
   color: var(--text-color, #e5e7eb);
 }
+
 .smallprint-title {
   font-weight: 600;
   margin-bottom: 4px;
   color: var(--accent, #7aa2ff);
 }
+
 .card.smallprint p {
   margin-bottom: 8px;
 }
+
+/* ===== Info card with photo ===== */
+/* ===== Info card with wider layout ===== */
+.info-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  /* allow it to grow wider */
+  max-width: 720px;
+  /* was likely around 500px */
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* left text area */
+.info-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.45;
+}
+
+/* photo column on the right */
+.photo-viewer {
+  position: relative;
+  flex: 0 0 200px;
+  /* was 180px */
+  height: 260px;
+  /* slight increase for better proportion */
+  overflow: hidden;
+  border-radius: 8px;
+  background: #0e1118;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* maintain aspect ratio, prevent overflow */
+.photo-viewer img {
+  height: 100%;
+  width: auto;
+  object-fit: cover;
+  border-radius: 6px;
+  user-select: none;
+}
+
+.photo-viewer.placeholder {
+  font-size: 0.85rem;
+  color: #888;
+  text-align: center;
+  padding: 0 4px;
+}
+
+/* slideshow nav stays subtle */
+.photo-nav {
+  position: absolute;
+  bottom: 8px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+}
+
+.photo-btn {
+  border: none;
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 0;
+}
+
+.photo-btn:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+/* On narrow viewports stack the photo below text */
+@media (max-width: 700px) {
+  .info-content {
+    flex-direction: column;
+    max-width: 100%;
+  }
+
+  .photo-viewer {
+    width: 100%;
+    height: 220px;
+  }
+}
+
+
+/* Photos block */
+.photos-group h4 {
+  margin-bottom: 6px;
+}
+
+.dropzone {
+  border: 1.5px dashed #3a4453;
+  border-radius: 10px;
+  padding: 14px;
+  background: #0e1118;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dropzone.drag {
+  background: #111826;
+  border-color: #7aa2ff;
+}
+
+.dropzone input[type=file] {
+  display: none;
+}
+
+.drop-hint {
+  font-size: .9rem;
+  color: #aab3c2;
+}
+
+.thumb-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.thumb {
+  width: 70px;
+  height: 100px;
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  background: #0b0f16;
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.thumb .x {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, .5);
+  color: #fff;
+  cursor: pointer;
+}
+
+.progress {
+  height: 4px;
+  background: #1f2937;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 8px;
+  display: none;
+}
+
+.progress>i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: #7aa2ff;
+}
+
+/* ===== Info card: wider container + wider text/photo split ===== */
+
+/* Force the card itself to be wider */
+#info,
+.infocard {
+  width: 640px !important;
+  /* bump overall card width */
+  max-width: min(92vw, 760px) !important;
+  /* keep it responsive */
+}
+
+/* Make the inner two-column content expand fully */
+#info .info-content,
+.infocard .info-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  width: 100%;
+  max-width: none;
+  /* remove old caps */
+  margin-top: 8px;
+}
+
+/* Left text column gets more room */
+#info .info-text,
+.infocard .info-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.45;
+}
+
+/* Right photo column fixed but a bit larger; scales within bounds */
+#info .photo-viewer,
+.infocard .photo-viewer {
+  position: relative;
+  flex: 0 0 clamp(190px, 28%, 240px);
+  /* ~200px on typical screens */
+  height: clamp(220px, 32vh, 300px);
+  /* proportional height */
+  overflow: hidden;
+  border-radius: 8px;
+  background: #0e1118;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#info .photo-viewer img,
+.infocard .photo-viewer img {
+  height: 100%;
+  width: auto;
+  object-fit: cover;
+  border-radius: 6px;
+  user-select: none;
+}
+
+#info .photo-viewer.placeholder,
+.infocard .photo-viewer.placeholder {
+  font-size: 0.85rem;
+  color: #888;
+  text-align: center;
+  padding: 0 4px;
+}
+
+/* Slideshow buttons */
+#info .photo-nav,
+.infocard .photo-nav {
+  position: absolute;
+  bottom: 8px;
+  right: 6px;
+  display: flex;
+  gap: 4px;
+}
+
+#info .photo-btn,
+.infocard .photo-btn {
+  border: none;
+  background: rgba(0, 0, 0, .4);
+  color: #fff;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 20px;
+  padding: 0;
+}
+
+#info .photo-btn:hover,
+.infocard .photo-btn:hover {
+  background: rgba(0, 0, 0, .6);
+}
+
+/* Stack vertically on narrow screens */
+@media (max-width: 700px) {
+
+  #info,
+  .infocard {
+    width: 92vw !important;
+  }
+
+  #info .info-content,
+  .infocard .info-content {
+    flex-direction: column;
+  }
+
+  #info .photo-viewer,
+  .infocard .photo-viewer {
+    width: 100%;
+    height: 220px;
+  }
+}
+
+/* === Sidebar: Data summary === */
+.card.summary { font-size: 0.9rem; line-height: 1.35; }
+.summary-title { font-weight: 600; margin-bottom: 6px; color: var(--accent, #7aa2ff); }
+.summary-block { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+.summary-block.muted { opacity: .85; margin-top: 8px; border-top: 1px solid rgba(255,255,255,.06); padding-top: 8px; }
+.summary-k { color: #aab3c2; }  /* key */
+.summary-v { text-align: right; }
+@media (max-width: 1100px){ .summary-block{ grid-template-columns: 1fr 1fr; } }
+
+/* About modal tweaks */
+#aboutModal .form-body p { margin-bottom: 10px; line-height: 1.45; }
+#aboutModal h4 { margin: 10px 0 6px; font-weight: 600; }
+#aboutModal ul { margin: 6px 0 10px 18px; }
+#aboutModal .muted { opacity: .8; }
+
+/* === Modal overlay (global) === */
+.modal {
+  position: fixed;       /* overlay */
+  inset: 0;              /* top/right/bottom/left: 0 */
+  display: none;         /* toggled by JS */
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.45);
+  z-index: 4000;         /* above Leaflet popups/controls */
+  padding: 20px;
+}
+
+/* Ensure the inner card can't overflow the viewport */
+.modal .auth-card {
+  max-width: 720px;
+  width: min(720px, 92vw);
+  max-height: 80vh;
+  overflow: hidden;
+}
+.modal .form-body {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Optional: typography for About modal */
+#aboutModal .form-body p { margin-bottom: 10px; line-height: 1.45; }
+#aboutModal h4 { margin: 10px 0 6px; font-weight: 600; }
+#aboutModal ul { margin: 6px 0 10px 18px; }
+#aboutModal .muted { opacity: .8; }
+
+/* Lock page scroll when any modal is open */
+body.modal-open { overflow: hidden; }
+
+/* ==== Sidebar: keep things within viewport ==== */
+aside.sidebar{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+  /* ensure the whole sidebar never exceeds the viewport */
+  max-height: 100vh;
+  overflow: hidden;                 /* children decide their own scroll */
+}
+
+/* Results card should keep most of the vertical space */
+.card .results{
+  max-height: none;                 /* let flex control it */
+  overflow: auto;
+}
+
+/* Make the results card flex and the summary card NOT push below */
+aside.sidebar .card {
+  /* default: not flexing; results card can be set to flex below if you want */
+}
+
+/* If your results card wrapper is .card (with .results inside), let it flex: */
+aside.sidebar .card:has(#results){
+  flex: 1 1 auto;                   /* this card grows/shrinks */
+  min-height: 0;                    /* critical for nested scroll */
+}
+
+/* ==== Summary card: fixed height + internal scroll ==== */
+.card.summary{
+  max-height: 170px;                /* adjust to taste */
+  overflow: auto;                   /* scrolls internally when too long */
+  min-height: 120px;                /* keep some presence even with few rows */
+}
+
+/* Sticky title in the summary so labels stay visible while scrolling */
+.card.summary .summary-title{
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel-bg, rgba(16,21,28,.96));
+  padding-top: 6px;
+  padding-bottom: 4px;
+  /* optional subtle divider under the sticky header */
+  box-shadow: 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* Ensure summary grid doesn’t cause horizontal overflow */
+.summary-block{
+  min-width: 0;
+}
+
+/* Keep the About button always visible under the scrollable cards */
+#btnAbout{
+  flex: 0 0 auto;                   /* never shrinks away */
+}
+
+/* Summary card: ensure sticky header covers scrolled content */
+.card.summary {
+  position: relative;
+  background: var(--panel-bg, #0e1118);
+}
+
+.card.summary .summary-title {
+  position: sticky;
+  top: 0;
+  z-index: 3; /* above rows */
+  background: var(--panel-bg, #0e1118); /* solid bg to prevent bleed-through */
+  padding-top: 6px;
+  padding-bottom: 4px;
+  box-shadow: 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* Small footer under result list */
+.results-footer {
+  margin-top: 6px;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  opacity: .8;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+/* Sidebar layout stays within the viewport */
+aside.sidebar{
+  display:flex; flex-direction:column; gap:10px;
+  max-height:100vh; overflow:hidden;
+}
+
+/* Results card: becomes a flex column; the list itself scrolls */
+.results-card{ display:flex; flex-direction:column; flex:1 1 auto; min-height:0; }
+.results-card .results{ flex:1 1 auto; min-height:0; overflow:auto; }
+
+/* ------- Data summary: fixed height + clean sticky header ------- */
+.card.summary{
+  position:relative;
+  background-color: var(--panel-bg, #0e1118); /* SOLID bg to avoid bleed */
+  max-height: 170px; /* adjust as you like */
+  overflow:auto;      /* internal scroll */
+}
+
+/* Sticky header with solid background and higher z-index */
+.card.summary .summary-title{
+  position: sticky; top: 0; z-index: 3;
+  background-color: var(--panel-bg, #0e1118);  /* SOLID bg */
+  box-shadow: 0 1px 0 rgba(255,255,255,.06);
+  padding-top: 6px; padding-bottom: 6px;
+  margin: 0; 
+}
+
+/* Give the content a little breathing room so it doesn't tuck under the sticky bar */
+.card.summary .summary-block:first-of-type{ padding-top: 6px; }
+
+.summary-block{ min-width:0; display:grid; grid-template-columns:1fr 1fr; gap:6px 12px; }
+.summary-k{ color:#aab3c2; }
+.summary-v{ text-align:right; }
+
+/* Keep the About button visible */
+#btnAbout{ flex:0 0 auto; }
+
+/* Ensure the app fills the viewport so flex math works */
+.app{ height:100vh; }
+
+/* Sidebar is a vertical flex stack that never exceeds the viewport */
+aside.sidebar{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:10px;
+  max-height:100vh;
+  overflow:hidden !important;   /* children manage their own scroll */
+}
+
+/* By default, sidebar children don't flex */
+aside.sidebar > .card,
+aside.sidebar > .btn{ flex:0 0 auto; }
+
+/* The results card is the ONLY thing that flexes to fill remaining space */
+aside.sidebar > .results-card{
+  display:flex !important;
+  flex-direction:column !important;
+  flex:1 1 auto !important;
+  min-height:0 !important;      /* CRITICAL for nested scroll */
+}
+.results-card .results{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  overflow:auto !important;     /* scroll inside the list */
+}
+
+/* Solid background so rows don't show through the sticky header */
+.card.summary{
+  position:relative;
+  background-color:#0e1118 !important;   /* solid, not translucent */
+  max-height:170px !important;           /* adjust if you want */
+  overflow:auto !important;
+}
+
+/* Sticky header with solid bg and higher stacking */
+.card.summary .summary-title{
+  position:sticky; top:0; z-index:5;
+  background-color:#0e1118 !important;
+  padding:6px 0;
+  margin:0;
+  box-shadow:0 1px 0 rgba(255,255,255,.06);
+}
+
+/* Add a tiny spacer so the first row doesn't tuck under the sticky bar */
+.card.summary .summary-block:first-of-type{ padding-top:6px; }
+
+/* --- Sidebar layout: fix scrolling + flex behavior (force overrides) --- */
+#atlas-app .app{ height:100vh !important; }
+
+#atlas-app aside.sidebar{
+  display:flex !important;
+  flex-direction:column !important;
+  gap:12px !important;
+  max-height:100vh !important;
+  overflow:hidden !important;            /* sidebar itself never scrolls */
+}
+
+/* Results card is the only flex-grow element in the sidebar */
+#atlas-app aside.sidebar > .results-card{
+  display:flex !important;
+  flex-direction:column !important;
+  flex:1 1 auto !important;
+  min-height:0 !important;
+}
+
+/* Make the results list itself scroll — remove the old 40vh cap */
+#atlas-app .results-card .results{
+  flex:1 1 auto !important;
+  min-height:0 !important;
+  height: 0 !important;                  /* lets flex compute height */
+  overflow:auto !important;
+  max-height: none !important;           /* defeat earlier 40vh rule */
+}
+
+/* --- Data summary: fixed height + true sticky header that covers rows --- */
+#atlas-app .card.summary{
+  position:relative !important;
+  background:#0e1118 !important;         /* solid background */
+  max-height:180px !important;           /* adjust if you want */
+  overflow:auto !important;              /* internal scroll only */
+  padding-top: 0 !important;
+}
+
+/* Make the sticky header span the card padding so nothing peeks behind */
+#atlas-app .card.summary .summary-title{
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 5 !important;
+  margin: -12px -12px 8px !important;    /* pull over card padding */
+  padding: 8px 12px !important;
+  background:#0e1118 !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.06) !important;
+}
+
+/* First grid block gets a bit of top padding so it doesn't tuck under the sticky bar */
+#atlas-app .card.summary .summary-block:first-of-type{
+  padding-top: 2px !important;
+}
+
+/* Keep the About button always visible */
+#atlas-app #btnAbout{ flex:0 0 auto !important; }

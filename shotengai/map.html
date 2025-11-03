@@ -49,7 +49,7 @@
         </select>
       </div>
 
-      <div class="card">
+      <div class="card results-card">
         <div class="results-head">
           <div class="results-title">Results</div>
           <div id="resultCount" class="pill">0</div>
@@ -57,23 +57,16 @@
         <div id="results" class="results" aria-live="polite"></div>
       </div>
 
-      <div class="card smallprint">
-        <div class="smallprint-title">About the Shotengai Atlas</div>
-        <p>
-          The <strong>Shotengai Atlas</strong> maps Japan’s traditional shopping streets ( <em>Shotengai</em> ) as living spaces of daily culture and urban life.
-        </p>
-        <p>
-          Each line represents a shopping street, showing its
-          <strong>location</strong>, <strong>structure</strong>, <strong>length</strong>, and
-          <strong>status</strong>. Together, they reveal how local communities sustain
-          walkable city spaces across Japan.
-        </p>
-        <p>
-          Data is sourced from fieldwork, open data, and community input, stored in a
-          <strong>Supabase</strong> database.
-          Updated features are reflected live on the map.
-        </p>
+      <div class="card summary" id="summaryCard">
+        <div class="summary-title">Data summary</div>
+        <div id="summaryOverall" class="summary-block"></div>
+        <div id="summaryFiltered" class="summary-block muted"></div>
       </div>
+
+
+      <button id="btnAbout" class="btn btn-ghost" style="width:100%;margin-top:8px">
+        About this project
+      </button>
     </aside>
 
     <main id="map"></main>
@@ -109,6 +102,39 @@
           <button id="btnCancelFeature" class="btn btn-ghost">Cancel</button>
         </div>
         <div id="featureMsg" class="auth-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="aboutModal" class="modal" style="display:none">
+    <div class="auth-card" style="max-width:720px">
+      <div class="card-head">
+        <div class="title">About the Shotengai Atlas</div>
+        <button id="btnCloseAbout" class="close">×</button>
+      </div>
+
+      <div class="form-body" style="max-height:60vh">
+        <p>
+          The <strong>Shotengai Atlas</strong> maps Japan’s traditional shopping streets —
+          the <em>Shotengai</em> — as living spaces of daily culture and urban life.
+        </p>
+        <p>
+          Each line represents a shopping street, showing its <strong>location</strong>,
+          <strong>structure</strong>, <strong>length</strong>, and <strong>status</strong>.
+          Together, these features reveal how local communities sustain walkable city spaces across Japan.
+        </p>
+        <h4>Purpose</h4>
+        <ul>
+          <li><strong>Preserve</strong> the cultural and spatial identity of Shotengai</li>
+          <li><strong>Support</strong> revitalization through accessible spatial data</li>
+          <li><strong>Connect</strong> research, associations, and the public</li>
+        </ul>
+        <h4>Data</h4>
+        <p>
+          Data combines fieldwork, open sources, and community input and is stored in
+          a <strong>Supabase</strong> database. Geometry is served as GeoJSON for fast rendering.
+        </p>
+        <p class="muted">Project by Maximilian Prutsch — ongoing, experimental, and collaborative.</p>
       </div>
     </div>
   </div>
