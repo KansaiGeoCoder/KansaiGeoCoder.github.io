@@ -980,3 +980,31 @@ input[type="checkbox"] {
     margin-bottom: 8px; 
     padding-bottom: 8px; 
 }
+
+/* =======================================================
+   CRITICAL FIX: Leaflet Legend Styling
+   (The addMapLegend function in atlas.js requires this CSS)
+   ======================================================= */
+.info.legend {
+    padding: 6px 8px;
+    /* Use a slightly transparent version of your dark panel background */
+    background: rgba(14, 19, 24, 0.9); 
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    line-height: 1.4;
+    color: var(--text);
+}
+.info.legend h4 {
+    margin: 0 0 5px;
+    color: #fff;
+    font-weight: 600;
+    font-size: 14px;
+}
+.info.legend i {
+    width: 14px;
+    height: 14px;
+    float: left;
+    margin-right: 8px;
+    opacity: 0.9;
+    border-radius: 2px;
+}

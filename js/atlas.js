@@ -21,8 +21,70 @@ L.Control.geocoder({ defaultMarkGeocode: false })
   .addTo(map);
 
 // Styles
-const lineStyle = { color: "#7aa2ff", weight: 3, opacity: 0.9 };
-const lineStyleHover = { color: "#14b8a6", weight: 4, opacity: 1 };
+const TYPE_COLORS = {
+    'A': '#10b981', 
+    'B': '#f59e0b',
+    'C': '#ef4444', 
+    'D': '#3b82f6',  
+    'default': '#cbd5e1' // Gray (Fallback/Missing data)
+};
+const lineStyleHover = { color: '#ffffff', weight: 8, opacity: 1, interactive: true };
+
+/**
+ * Robustly determines the thematic style based on classification property.
+ * This is the core fix for the coloring issue.
+ */
+function getTypeStyle(feature) {
+    // Safely retrieve 'type' or fallback to 'classification'.
+    const typeValue = feature.properties?.classification || feature.properties?.classification;
+    
+    // 1. Safely extract the first character. .toString() is a safety net.
+    const typeCode = typeValue?.toString().toUpperCase()[0] || 'default'; 
+    
+    // 2. Determine the key to look up in TYPE_COLORS
+    const primaryType = TYPE_COLORS.hasOwnProperty(typeCode) ? typeCode : 'default';
+    
+    const color = TYPE_COLORS[primaryType];
+    
+    return {
+        color: color,
+        weight: 6, 
+        opacity: 0.9,
+        interactive: true
+    };
+}
+
+/**
+ * Function to add a Legend Control to the map.
+ * This was previously missing and is necessary to confirm color values.
+ */
+function addMapLegend() {
+    const legend = L.control({ position: 'bottomleft' });
+
+    legend.onAdd = function (map) {
+        // You MUST also define this '.info.legend' CSS in your atlas.css file
+        const div = L.DomUtil.create('div', 'info legend');
+        const types = [
+            { code: 'A', color: TYPE_COLORS['A'], description: 'fully covered street' },
+            { code: 'B', color: TYPE_COLORS['B'], description: 'pedestrian only street' },
+            { code: 'C', color: TYPE_COLORS['C'], description: 'street adjacent covered sidewalk' },
+            { code: 'D', color: TYPE_COLORS['D'], description: 'normal street with Shotengai association' }
+        ];
+
+        let content = '<h4>Shotengai Type</h4>';
+        
+        for (let i = 0; i < types.length; i++) {
+            content +=
+                `<i style="background:${types[i].color};"></i> ${types[i].code}: ${types[i].description}<br>`;
+        }
+        
+        div.innerHTML = content;
+        return div;
+    };
+
+    legend.addTo(map);
+}
+
 
 /* ===== Info Card ===== */
 const infoPanel = document.getElementById("infopanel");
@@ -139,23 +201,31 @@ window._hideInfo = hideInfo;
 
 // NEW FUNCTION: Start drawing a new segment for an existing feature
 function startDrawSegment(entityId) {
-    if (!currentUser) { alert("Sign in to draw new segments."); return; }
-    
-    // 1. Set the global state
-    segmentTargetId = entityId;
-    
-    // 2. Hide the info panel and exit main edit mode controls
-    hideInfo();
-    // Temporarily remove draw control to activate the one-time draw tool
-    if (drawControl) map.removeControl(drawControl);
-    else enterEditMode(); // Ensure controls are initialized (it's idempotent)
+  if (!currentUser) { alert("Sign in to draw new segments."); return; }
 
-    // 3. Activate the Polyline draw tool once
-    const polylineDraw = new L.Draw.Polyline(map, drawControl.options.draw.polyline);
-    polylineDraw.enable();
+  // 1. Set the global state
+  segmentTargetId = entityId;
 
-    // Give user feedback on the state
-    alert("Draw the new segment. Click the last point to finish drawing.");
+  // 2. Hide the info panel and exit main edit mode controls
+  hideInfo();
+
+  // Temporarily remove draw control to activate the one-time draw tool
+  if (drawControl) map.removeControl(drawControl);
+  else enterEditMode(); // Ensure controls are initialized (it's idempotent)
+
+  // 3. Activate the Polyline draw tool once, passing the snap option explicitly
+  let drawOptions = drawControl ? drawControl.options.draw.polyline : {};
+
+  // CRITICAL: Ensure snap is available for the manual draw instance
+  if (map.snap) {
+    drawOptions = { ...drawOptions, snap: map.snap };
+  }
+
+  const polylineDraw = new L.Draw.Polyline(map, drawOptions);
+  polylineDraw.enable();
+
+  // Give user feedback on the state
+  alert("Draw the new segment. Click the last point to finish drawing.");
 }
 window._startDrawSegment = startDrawSegment; // Expose to HTML
 
@@ -214,25 +284,88 @@ let editMode = false;
 let featureIndexById = new Map();
 let segmentTargetId = null; // NEW: Global variable for segment addition workflow
 
+
+/**
+ * Initiates the edit mode, setting up snapping and draw controls.
+ * This is the fixed, robust implementation for snapping.
+ */
 function enterEditMode() {
   editMode = true;
   if (btnEditMode) btnEditMode.textContent = "Exit Edit Mode";
   if (editStatus) editStatus.textContent = "You can draw / edit / delete lines.";
+
   if (!editableGroup) {
     editableGroup = new L.FeatureGroup().addTo(map);
     featureIndexById.forEach(layer => {
-      editableGroup.addLayer(layer);
+      // Only add non-marker layers to the editable group
+      if (layer.options && !layer.options.icon) {
+         editableGroup.addLayer(layer);
+      }
     });
   }
+  
+  // -----------------------------------------------------
+  // CRITICAL SNAPPING SETUP: Requires Leaflet.Handler.MarkerSnap
+  let snapHandler = null;
+
+  if (typeof L.Handler.MarkerSnap !== 'undefined') {
+    if (!map.snap) {
+      map.snap = new L.Handler.MarkerSnap(map, {
+        snapDistance: 30 // Increased snap distance for polyline vertices
+      });
+      map.snap.enable();
+    }
+    snapHandler = map.snap;
+
+    // 1. Add ALL editable features as snapping guides
+    if (snapHandler && editableGroup) {
+      snapHandler.addGuideLayer(editableGroup);
+    }
+
+    // 2. CRITICAL: Inject the snap handler into the editing prototypes (The main fix for editing)
+    if (snapHandler) {
+      // Patch for editing single lines
+      if (L.Edit.Polyline && !L.Edit.Polyline.prototype._hasSnapPatch) {
+        L.Edit.Polyline.addInitHook(function () {
+          this.options.snap = snapHandler;
+        });
+        L.Edit.Polyline.prototype._hasSnapPatch = true;
+      }
+
+      // Patch for editing MultiLineStrings (your data type)
+      if (L.Edit.MultiPolyline && !L.Edit.MultiPolyline.prototype._hasSnapPatch) {
+        L.Edit.MultiPolyline.addInitHook(function () {
+          this.options.snap = snapHandler;
+        });
+        L.Edit.MultiPolyline.prototype._hasSnapPatch = true;
+      }
+    }
+
+  } else {
+    console.warn("L.Handler.MarkerSnap not found. Snapping is disabled.");
+  }
+  // -----------------------------------------------------
 
   if (!drawControl) {
     drawControl = new L.Control.Draw({
-      draw: { polygon: false, marker: false, circle: false, rectangle: false, circlemarker: false, polyline: true },
-      edit: { featureGroup: editableGroup }
+      draw: {
+        polygon: false, marker: false, circle: false, rectangle: false, circlemarker: false,
+        polyline: {
+          // 3. Configuration for *new drawing*
+          snap: snapHandler,
+          snapMiddle: true
+        }
+      },
+      edit: {
+        featureGroup: editableGroup,
+        // 4. Configuration for *editing existing* features
+        snap: snapHandler
+      }
     });
   }
   map.addControl(drawControl);
 }
+
 function exitEditMode() {
   editMode = false;
   if (btnEditMode) btnEditMode.textContent = "Enter Edit Mode";
@@ -261,40 +394,31 @@ function wktFromGeom(geom) {
   return `MULTILINESTRING(${parts})`;
 }
 
-/* ===== Feature form ===== */
+/* ===== Feature form (omitted for brevity) ===== */
 const FEATURE_FIELDS = [
   { key: "id", label: "ID", type: "hidden" },
   { key: "slug", label: "Slug", type: "text", group: "Identification" },
-
   { key: "name_en", label: "Name (EN)", type: "text", group: "Names", required: true },
   { key: "name_jp", label: "Name (JP)", type: "text", group: "Names" },
-
   { key: "city", label: "City", type: "text", group: "Location" },
   { key: "prefecture", label: "Prefecture", type: "text", group: "Location" },
-
   { key: "status", label: "Status", type: "select", group: "Status", options: ["active", "declining", "closed", "planned", "unknown"] },
   { key: "covered", label: "Covered arcade", type: "checkbox", group: "Status" },
   { key: "pedestrian_only", label: "Pedestrian only", type: "checkbox", group: "Status" },
-
   { key: "type", label: "Type", type: "text", group: "Classification" },
   { key: "classification", label: "Classification (detail)", type: "text", group: "Classification" },
   { key: "theme", label: "Theme", type: "text", group: "Classification" },
-
   { key: "length_m", label: "Length (m)", type: "number", step: "1", group: "Metrics" },
   { key: "width_avg", label: "Width avg (m)", type: "number", step: "0.1", group: "Metrics" },
   { key: "shops_est", label: "Shops (est.)", type: "number", step: "1", group: "Metrics" },
-
   { key: "established", label: "Established (year)", type: "number", step: "1", group: "History" },
   { key: "last_renov", label: "Last renovation (year)", type: "number", step: "1", group: "History" },
-
   { key: "nearest_station", label: "Nearest station", type: "text", group: "Access" },
   { key: "walk_min", label: "Walk (min)", type: "number", step: "1", group: "Access" },
-
   { key: "association", label: "Association", type: "text", group: "Links" },
   { key: "url", label: "Website URL", type: "url", group: "Links" },
   { key: "image", label: "Image URL", type: "url", group: "Links" },
   { key: "source", label: "Data source", type: "text", group: "Links" },
-
   { key: "description", label: "Description", type: "textarea", rows: 3, group: "Notes" },
   { key: "accuracy", label: "Accuracy note", type: "text", group: "Notes" }
 ];
@@ -506,10 +630,16 @@ btnSaveFeature?.addEventListener("click", async () => {
     if (currentEdit.mode === "new" && currentEdit.layer) {
       const newFeature = { type: "Feature", properties: { ...props, id: newId }, geometry: geom };
       currentEdit.layer.feature = newFeature;
-      currentEdit.layer.setStyle(lineStyle);
+      // FIX: Apply dynamic thematic style after saving properties
+      currentEdit.layer.setStyle(getTypeStyle(newFeature));
       currentEdit.layer.on("click", () => showInfo(newFeature));
+      currentEdit.layer.on("mouseover", () => currentEdit.layer.setStyle(lineStyleHover));
+      currentEdit.layer.on("mouseout", () => currentEdit.layer.setStyle(getTypeStyle(newFeature)));
       featureIndexById.set(newId, currentEdit.layer);
       editableGroup.addLayer(currentEdit.layer);
+
+      if (map.snap) map.snap.addGuideLayer(currentEdit.layer);
+
       showInfo(newFeature);
       allFeatures.push(newFeature);
       applyFilters();
@@ -518,6 +648,9 @@ btnSaveFeature?.addEventListener("click", async () => {
       if (lyr) {
         const updated = { type: "Feature", properties: { ...props, id: newId || id }, geometry: geom };
         lyr.feature = updated;
+        // The layer needs a style update if its type classification changed
+        lyr.setStyle(getTypeStyle(updated));
+        lyr.on("mouseout", () => lyr.setStyle(getTypeStyle(updated))); // Re-bind mouseout
         showInfo(updated);
         // refresh filters list display
         const i = allFeatures.findIndex(f => f.properties.id === (newId || id));
@@ -535,7 +668,7 @@ btnSaveFeature?.addEventListener("click", async () => {
 map.on(L.Draw.Event.CREATED, async (e) => {
   const newLayer = e.layer;
   const newGeom = newLayer.toGeoJSON().geometry;
-  
+
   if (segmentTargetId) {
     // --- MODE 1: ADDING A SEGMENT TO AN EXISTING FEATURE ---
     if (!currentUser) { alert("Session expired. Please sign in to save the segment."); segmentTargetId = null; return; }
@@ -545,7 +678,7 @@ map.on(L.Draw.Event.CREATED, async (e) => {
 
     const existingLayer = featureIndexById.get(entityId);
     const existingFeature = existingLayer?.feature || allFeatures.find(f => f.properties.id === entityId);
-    
+
     if (!existingFeature) {
       alert("Error: Could not find existing feature to append segment.");
       newLayer.remove();
@@ -557,32 +690,32 @@ map.on(L.Draw.Event.CREATED, async (e) => {
 
     // 1. Prepare for merge: Convert both to MultiLineString coordinates structure
     const oldCoords = existingGeom.type === "MultiLineString"
-        ? existingGeom.coordinates
-        : [existingGeom.coordinates]; // existing is a LineString
+      ? existingGeom.coordinates
+      : [existingGeom.coordinates]; // existing is a LineString
 
     const newCoords = newGeom.type === "MultiLineString"
-        ? newGeom.coordinates // Should always be LineString here
-        : [newGeom.coordinates];
+      ? newGeom.coordinates // Should always be LineString here
+      : [newGeom.coordinates];
 
     // 2. Perform the merge
     const mergedGeom = {
-        type: "MultiLineString",
-        coordinates: [...oldCoords, ...newCoords]
+      type: "MultiLineString",
+      coordinates: [...oldCoords, ...newCoords]
     };
 
     // 3. Update the existing layer object with the new geometry
     const mergedWKT = wktFromGeom(mergedGeom);
-    
+
     // Prepare the update payload
     const saveFeature = {
-        p_id: entityId,
-        p_geom_wkt: mergedWKT,
-        p_props: existingFeature.properties // Keep all attributes the same
+      p_id: entityId,
+      p_geom_wkt: mergedWKT,
+      p_props: existingFeature.properties // Keep all attributes the same
     };
 
     // 4. Submit to Supabase
     const { error } = await sbClient.rpc("upsert_shotengai", saveFeature);
-    
+
     if (error) {
       alert("Failed to save merged segment: " + error.message);
     } else {
@@ -591,39 +724,41 @@ map.on(L.Draw.Event.CREATED, async (e) => {
       // CRITICAL: Update the layer's geometry and map rendering
       if (existingLayer) {
         const featureId = existingLayer.feature.properties.id;
-        
+
         // 1. Remove old layer instance from map and feature groups
         existingLayer.remove();
         featureIndexById.delete(featureId);
-        editableGroup.removeLayer(existingLayer); 
-        
+        editableGroup.removeLayer(existingLayer);
+
         // 2. Update the feature object with the new merged geometry
         existingFeature.geometry = mergedGeom;
 
         // 3. Create a brand new layer instance
-        const updatedLayer = L.geoJSON(existingFeature, { 
-            style: lineStyle,
-            onEachFeature: (feat, lyr) => {
-              lyr.on("click", () => {
-                currentEdit = { mode: "edit", layer: lyr, feature: feat };
-                showInfo(feat);
-              });
-              lyr.on("mouseover", () => lyr.setStyle(lineStyleHover));
-              lyr.on("mouseout", () => lyr.setStyle(lineStyle));
-              // 4. Update the map index and editable group with the new layer object
-              featureIndexById.set(featureId, lyr);
-              editableGroup.addLayer(lyr);
-            }
-        }).addTo(map).getLayers()[0]; 
-        
+        const updatedLayer = L.geoJSON(existingFeature, {
+          style: getTypeStyle,
+          onEachFeature: (feat, lyr) => {
+            lyr.on("click", () => {
+              currentEdit = { mode: "edit", layer: lyr, feature: feat };
+              showInfo(feat);
+            });
+            lyr.on("mouseover", () => lyr.setStyle(lineStyleHover));
+            lyr.on("mouseout", () => lyr.setStyle(getTypeStyle(feat)));
+            // 4. Update the map index and editable group with the new layer object
+            featureIndexById.set(featureId, lyr);
+            editableGroup.addLayer(lyr);
+
+            if (map.snap) map.snap.addGuideLayer(lyr);
+          }
+        }).addTo(map).getLayers()[0];
+
         // Remove the temporary layer drawn by L.Draw
-        newLayer.remove(); 
+        newLayer.remove();
 
       }
 
       // Re-add the main Draw control
       if (drawControl) map.addControl(drawControl);
-      
+
       // Re-show info panel if it was open for the feature being edited
       showInfo(existingFeature);
     }
@@ -631,11 +766,18 @@ map.on(L.Draw.Event.CREATED, async (e) => {
   } else {
     // --- MODE 2: DRAWING A COMPLETELY NEW FEATURE (Existing Logic) ---
     if (!editMode) { alert("Enter Edit Mode to create features."); newLayer.remove(); return; }
-    
+
     currentEdit = { mode: "new", layer: newLayer, feature: null };
     editableGroup.addLayer(newLayer);
-    newLayer.setStyle(lineStyle);
+
+    // FIX: Use getTypeStyle for consistent default styling
+    const defaultFeature = { properties: {} };
+    newLayer.setStyle(getTypeStyle(defaultFeature));
+
+    if (map.snap) map.snap.addGuideLayer(newLayer);
+
     openFeatureForm(null, "New Shotengai");
+    return;
   }
 });
 
@@ -647,6 +789,8 @@ map.on(L.Draw.Event.EDITED, async (e) => {
     const wkt = wktFromGeom(layer.toGeoJSON().geometry);
     const { error } = await sbClient.rpc("update_shotengai_geom", { p_id: id, p_geom_wkt: wkt });
     if (error) alert("Update geometry failed: " + error.message);
+    // Ensure the style is correct after editing
+    layer.setStyle(getTypeStyle(layer.feature)); 
   });
 });
 
@@ -661,6 +805,30 @@ map.on(L.Draw.Event.DELETED, async (e) => {
     allFeatures = allFeatures.filter(f => f.properties.id !== id);
     applyFilters();
   });
+});
+
+map.on(L.Draw.Event.EDITSTART, (e) => {
+  // Wait one tick to ensure Leaflet.Draw has created the vertex markers
+  setTimeout(() => {
+    // e.layer is the feature being edited (Polyline/MultiPolyline)
+    const layer = e.layer;
+    
+    // Check if the layer is in edit mode and has vertex markers
+    if (layer.editing && layer.editing._markers) {
+      layer.editing._markers.forEach(marker => {
+        // Apply the map's snap handler to the marker's drag handler
+        if (marker.dragging && map.snap) {
+          marker.dragging.setOptions({ snap: map.snap });
+          
+          // Force a re-enable of dragging to ensure options take effect
+          if (marker.dragging._enabled) {
+              marker.dragging.disable();
+              marker.dragging.enable();
+          }
+        }
+      });
+    }
+  }, 0);
 });
 
 /* ===== Filtering (globals + helper) ===== */
@@ -694,7 +862,15 @@ function applyFilters(triggerZoom = false) {
     const ok = inPref && inText;
 
     const lyr = featureIndexById.get(p.id);
-    if (lyr) lyr.setStyle(ok ? lineStyle : { ...lineStyle, opacity: 0.15 });
+    const baseStyle = getTypeStyle(f); // Get the correct thematic style for the feature
+
+    if (lyr) {
+      // FIX: Apply the correct thematic style, faded if not a match
+      const finalStyle = ok
+        ? baseStyle
+        : { ...baseStyle, opacity: 0.15 }; // Fade the thematic color
+      lyr.setStyle(finalStyle);
+    }
     if (ok) matches.push(f);
   });
 
@@ -714,6 +890,7 @@ function applyFilters(triggerZoom = false) {
     resultsContainer.innerHTML = limited.map(f => {
       const p = f.properties;
       const name = p.name_en || p.name_jp || "Unnamed Shotengai";
+      // This is using STATUS, not TYPE, which is fine for the sidebar list item style.
       const status = (p.status || "").toString().toLowerCase();
       const color =
         status === "active" ? "#22c55e" :
@@ -899,7 +1076,6 @@ function renderSummary(el, stats, label) {
 }
 
 
-
 // About modal wiring
 const aboutModal = document.getElementById("aboutModal");
 const btnAbout = document.getElementById("btnAbout");
@@ -958,14 +1134,14 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAbout
     });
 
     const layer = L.geoJSON({ type: "FeatureCollection", features }, {
-      style: lineStyle,
+      style: getTypeStyle, // CORRECT: Uses the thematic style
       onEachFeature: (feat, lyr) => {
         lyr.on("click", () => {
           currentEdit = { mode: "edit", layer: lyr, feature: feat };
           showInfo(feat);
         });
         lyr.on("mouseover", () => lyr.setStyle(lineStyleHover));
-        lyr.on("mouseout", () => lyr.setStyle(lineStyle));
+        lyr.on("mouseout", () => lyr.setStyle(getTypeStyle(feat))); // CORRECT: Uses the thematic style on mouse out
         if (feat?.properties?.id) featureIndexById.set(feat.properties.id, lyr);
       }
     }).addTo(map);
@@ -997,8 +1173,9 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAbout
     searchInput?.addEventListener("input", () => applyFilters(false));  // no zoom while typing
     prefFilter?.addEventListener("change", () => applyFilters(true));   // zoom on prefecture change
 
-    // First render
+    // First render and add legend
     applyFilters(false);
+    addMapLegend(); // ADDED: Ensures the legend is displayed.
 
 
   } catch (err) {
