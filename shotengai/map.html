@@ -23,6 +23,8 @@
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js" defer></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-snap@0.2.0/leaflet.snap.js"></script>
 </head>
 
 <body>
@@ -37,6 +39,9 @@
         <button id="btnEditMode" class="btn">Enter Edit Mode</button>
         <span id="editStatus" class="hint"></span>
       </div>
+      <button id="btnAbout" class="btn">
+        About this project
+      </button>
     </header>
 
     <aside class="sidebar">
@@ -49,7 +54,6 @@
         </select>
       </div>
 
-      <!-- AFTER -->
       <div class="card results-card">
         <div class="results-head">
           <div class="results-title">Results</div>
@@ -61,14 +65,11 @@
 
       <div class="card summary" id="summaryCard">
         <div class="summary-title">Data summary</div>
-        <div id="summaryOverall" class="summary-block"></div>
-        <div id="summaryFiltered" class="summary-block muted"></div>
-      </div>
-
-
-      <button id="btnAbout" class="btn btn-ghost" style="width:100%;margin-top:8px">
-        About this project
-      </button>
+        <div class="summary-data-scroll">
+          <div id="summaryOverall" class="summary-block"></div>
+          <div id="summaryFiltered" class="summary-block muted"></div>
+        </div>
+      </div>    
     </aside>
 
     <main id="map"></main>

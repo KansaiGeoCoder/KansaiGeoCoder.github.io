@@ -68,7 +68,10 @@ function showInfo(feature) {
     <div class="card-head">
       <div class="title">${name}</div>
       <div style="display:flex;gap:6px;align-items:center">
-        ${canEdit ? `<button class="btn btn-ghost" onclick="(window._openFeatureForm && window._openFeatureForm())">Edit</button>` : ""}
+        ${canEdit ? `
+          <button class="btn btn-ghost" onclick="(window._openFeatureForm && window._openFeatureForm())">Edit Attributes</button>
+          <button class="btn btn-brand" onclick="window._startDrawSegment('${p.id}')">Draw Segment</button>
+        ` : ""}
         <button class="close" onclick="(window._hideInfo && window._hideInfo())">×</button>
       </div>
     </div>
@@ -134,6 +137,28 @@ function showInfo(feature) {
 function hideInfo() { infoPanel.style.display = "none"; }
 window._hideInfo = hideInfo;
 
+// NEW FUNCTION: Start drawing a new segment for an existing feature
+function startDrawSegment(entityId) {
+    if (!currentUser) { alert("Sign in to draw new segments."); return; }
+    
+    // 1. Set the global state
+    segmentTargetId = entityId;
+    
+    // 2. Hide the info panel and exit main edit mode controls
+    hideInfo();
+    // Temporarily remove draw control to activate the one-time draw tool
+    if (drawControl) map.removeControl(drawControl);
+    else enterEditMode(); // Ensure controls are initialized (it's idempotent)
+
+    // 3. Activate the Polyline draw tool once
+    const polylineDraw = new L.Draw.Polyline(map, drawControl.options.draw.polyline);
+    polylineDraw.enable();
+
+    // Give user feedback on the state
+    alert("Draw the new segment. Click the last point to finish drawing.");
+}
+window._startDrawSegment = startDrawSegment; // Expose to HTML
+
 /* ===== Supabase loader (robust) ===== */
 async function loadSupabaseClient() {
   try {
@@ -187,12 +212,19 @@ let editableGroup;
 let drawControl;
 let editMode = false;
 let featureIndexById = new Map();
+let segmentTargetId = null; // NEW: Global variable for segment addition workflow
 
 function enterEditMode() {
   editMode = true;
   if (btnEditMode) btnEditMode.textContent = "Exit Edit Mode";
   if (editStatus) editStatus.textContent = "You can draw / edit / delete lines.";
-  if (!editableGroup) editableGroup = new L.FeatureGroup().addTo(map);
+  if (!editableGroup) {
+    editableGroup = new L.FeatureGroup().addTo(map);
+    featureIndexById.forEach(layer => {
+      editableGroup.addLayer(layer);
+    });
+  }
+
   if (!drawControl) {
     drawControl = new L.Control.Draw({
       draw: { polygon: false, marker: false, circle: false, rectangle: false, circlemarker: false, polyline: true },
@@ -499,13 +531,112 @@ btnSaveFeature?.addEventListener("click", async () => {
   }
 });
 
-/* ===== Draw events ===== */
-map.on(L.Draw.Event.CREATED, (e) => {
-  if (!editMode) { alert("Enter Edit Mode to create features."); return; }
-  currentEdit = { mode: "new", layer: e.layer, feature: null };
-  editableGroup.addLayer(e.layer);
-  e.layer.setStyle(lineStyle);
-  openFeatureForm(null, "New Shotengai");
+/* ===== Draw events (Updated to handle multi-segment merge) ===== */
+map.on(L.Draw.Event.CREATED, async (e) => {
+  const newLayer = e.layer;
+  const newGeom = newLayer.toGeoJSON().geometry;
+  
+  if (segmentTargetId) {
+    // --- MODE 1: ADDING A SEGMENT TO AN EXISTING FEATURE ---
+    if (!currentUser) { alert("Session expired. Please sign in to save the segment."); segmentTargetId = null; return; }
+
+    const entityId = segmentTargetId;
+    segmentTargetId = null; // Reset state immediately
+
+    const existingLayer = featureIndexById.get(entityId);
+    const existingFeature = existingLayer?.feature || allFeatures.find(f => f.properties.id === entityId);
+    
+    if (!existingFeature) {
+      alert("Error: Could not find existing feature to append segment.");
+      newLayer.remove();
+      if (drawControl) map.addControl(drawControl);
+      return;
+    }
+
+    const existingGeom = existingFeature.geometry;
+
+    // 1. Prepare for merge: Convert both to MultiLineString coordinates structure
+    const oldCoords = existingGeom.type === "MultiLineString"
+        ? existingGeom.coordinates
+        : [existingGeom.coordinates]; // existing is a LineString
+
+    const newCoords = newGeom.type === "MultiLineString"
+        ? newGeom.coordinates // Should always be LineString here
+        : [newGeom.coordinates];
+
+    // 2. Perform the merge
+    const mergedGeom = {
+        type: "MultiLineString",
+        coordinates: [...oldCoords, ...newCoords]
+    };
+
+    // 3. Update the existing layer object with the new geometry
+    const mergedWKT = wktFromGeom(mergedGeom);
+    
+    // Prepare the update payload
+    const saveFeature = {
+        p_id: entityId,
+        p_geom_wkt: mergedWKT,
+        p_props: existingFeature.properties // Keep all attributes the same
+    };
+
+    // 4. Submit to Supabase
+    const { error } = await sbClient.rpc("upsert_shotengai", saveFeature);
+    
+    if (error) {
+      alert("Failed to save merged segment: " + error.message);
+    } else {
+      alert("Segment added and merged successfully!");
+
+      // CRITICAL: Update the layer's geometry and map rendering
+      if (existingLayer) {
+        const featureId = existingLayer.feature.properties.id;
+        
+        // 1. Remove old layer instance from map and feature groups
+        existingLayer.remove();
+        featureIndexById.delete(featureId);
+        editableGroup.removeLayer(existingLayer); 
+        
+        // 2. Update the feature object with the new merged geometry
+        existingFeature.geometry = mergedGeom;
+
+        // 3. Create a brand new layer instance
+        const updatedLayer = L.geoJSON(existingFeature, { 
+            style: lineStyle,
+            onEachFeature: (feat, lyr) => {
+              lyr.on("click", () => {
+                currentEdit = { mode: "edit", layer: lyr, feature: feat };
+                showInfo(feat);
+              });
+              lyr.on("mouseover", () => lyr.setStyle(lineStyleHover));
+              lyr.on("mouseout", () => lyr.setStyle(lineStyle));
+              // 4. Update the map index and editable group with the new layer object
+              featureIndexById.set(featureId, lyr);
+              editableGroup.addLayer(lyr);
+            }
+        }).addTo(map).getLayers()[0]; 
+        
+        // Remove the temporary layer drawn by L.Draw
+        newLayer.remove(); 
+
+      }
+
+      // Re-add the main Draw control
+      if (drawControl) map.addControl(drawControl);
+      
+      // Re-show info panel if it was open for the feature being edited
+      showInfo(existingFeature);
+    }
+
+  } else {
+    // --- MODE 2: DRAWING A COMPLETELY NEW FEATURE (Existing Logic) ---
+    if (!editMode) { alert("Enter Edit Mode to create features."); newLayer.remove(); return; }
+    
+    currentEdit = { mode: "new", layer: newLayer, feature: null };
+    editableGroup.addLayer(newLayer);
+    newLayer.setStyle(lineStyle);
+    openFeatureForm(null, "New Shotengai");
+  }
 });
 
 map.on(L.Draw.Event.EDITED, async (e) => {
@@ -566,6 +697,11 @@ function applyFilters(triggerZoom = false) {
     if (lyr) lyr.setStyle(ok ? lineStyle : { ...lineStyle, opacity: 0.15 });
     if (ok) matches.push(f);
   });
+
+  // --- CRITICAL FIX: COMPUTE AND RENDER FILTERED STATS ---
+  const filteredStats = computeStats(matches);
+  renderSummary(document.getElementById("summaryFiltered"), filteredStats, "filtered");
+  // --------------------------------------------------------
 
   // Sidebar
   // Update sidebar list (limit to 10)
@@ -761,6 +897,8 @@ function renderSummary(el, stats, label) {
     </div>
   `;
 }
+
+
 
 // About modal wiring
 const aboutModal = document.getElementById("aboutModal");

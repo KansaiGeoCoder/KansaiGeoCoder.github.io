@@ -40,7 +40,7 @@ header {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 8px 20px;
   border-bottom: 1px solid var(--border);
   background: linear-gradient(180deg, #0c1015, rgba(12, 16, 21, .6));
 }
@@ -75,7 +75,7 @@ header .sub {
 .edit-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 /* ---------- Sidebar & Cards ---------- */
@@ -83,13 +83,13 @@ aside.sidebar {
   background: var(--panel);
   border-right: 1px solid var(--border);
   padding: 14px;
-  display: flex;
-  flex-direction: column;
+  display: flex !important;
+  flex-direction: column !important;
   gap: 12px;
 
   /* Critical for nested scroll inside grid areas */
-  min-height: 0;
-  overflow: hidden;
+  min-height: 0 !important;
+  overflow: hidden !important;
   /* sidebar itself does NOT scroll */
 }
 
@@ -143,8 +143,10 @@ aside.sidebar {
 .results-card {
   display: flex;
   flex-direction: column;
-  /* FIX: Do not grow, allow Summary to grow instead */
-  flex: 0 1 auto;
+  /* CRITICAL FIX: This card must grow to fill all middle space, pushing the button down */
+  flex: 0 0 auto; 
+  min-height: 0; /* Ensures the inner .results can scroll */
+  overflow: hidden; /* Prevents overflow from the scrollable inner list */
 }
 
 .results-head {
@@ -156,11 +158,12 @@ aside.sidebar {
 }
 
 .results {
-  /* FIX: Cap height to around 10 items (40px*10) to keep summary/button visible */
+  /* CRITICAL FIX: This must be the primary scroll area for the middle content */
   max-height: 500px;
   min-height: 0;
-  overflow: auto;
-  /* <-- scrolling happens here */
+  flex: 1 1 auto; 
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -233,41 +236,65 @@ aside.sidebar {
 .card.summary {
   position: relative;
   background: #0e1118;
+  /* CRITICAL: Make this card the one that takes up all remaining vertical space */
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto; 
 
-  /* CRITICAL FIX: Make this card take up all remaining vertical space */
-  flex: 1 1 auto;
-  min-height: 0;
+  /* CRITICAL FIX 1: Allow the flex item to be constrained when space is low */
+  min-height: 0; 
+  
+  /* CRITICAL FIX 2: Stop the entire card from scrolling; only the internal wrapper should scroll */
+  overflow-y: hidden; 
+  overflow-x: hidden;
 
-  overflow: auto;
-  padding: 0 12px 12px 12px;
-  /* Adjusted padding for sticky header */
+  padding: 0 12px 6px 12px;
 }
 
 .summary-title {
+  /* Keep the title sticky and fixed (flex-shrink: 0 is implicit on a fixed element) */
   position: sticky;
   top: 0;
   z-index: 3;
-
   background: #0e1118;
   margin: 0;
   padding: 12px 0 6px 0;
   box-shadow: 0 1px 0 rgba(255, 255, 255, .06);
   font-weight: 600;
   color: var(--brand);
+  flex-shrink: 0; /* Explicitly prevent title from being compressed */
+}
+
+/* Now, the scrollable data content wrapper needs to take the remaining space inside the card */
+.summary-data-scroll {
+  /* This wrapper takes the height the title doesn't use */
+  flex-grow: 1; 
+  /* CRITICAL: Make this a column flex container */
+  display: flex; 
+  flex-direction: column;
+  
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px; /* Adds space for the scrollbar */
 }
 
 .summary-block {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px 12px;
-  min-width: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 12px;
+    min-width: 0;
+    padding-top: 5px;
+    padding-bottom: 16px; 
+    
+    /* CRITICAL: Allow these blocks to push down */
+    flex-shrink: 0; 
 }
 
 .summary-block.muted {
-  opacity: .85;
-  margin-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, .06);
-  padding-top: 8px;
+    opacity: .85;
+    margin-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, .06);
+    padding-top: 8px;
 }
 
 .summary-k {
@@ -278,12 +305,6 @@ aside.sidebar {
 .summary-v {
   text-align: right;
   font-size: 0.85rem;
-}
-
-/* Keep About button visible at the bottom of the sidebar */
-#btnAbout {
-  flex: 0 0 auto;
-  width: 100%;
 }
 
 /* ---------- Map ---------- */
@@ -648,17 +669,6 @@ input[type="checkbox"] {
     flex-direction: column;
   }
 
-  .photo-viewer {
-    width: 100%;
-    max-height: 400px;
-    /* Example large size - adjust as needed */
-    min-height: 200px;
-    margin-bottom: 16px;
-    overflow: hidden;
-    position: relative;
-    background: #1f2937;
-    border-radius: 12px;
-  }
 
   .auth-card {
     max-width: 94vw;
@@ -862,4 +872,111 @@ input[type="checkbox"] {
   height: var(--thumb) !important;
   object-fit: cover !important;
   display: block;
+}
+
+/* --- New Styles for the 'About' Modal Content --- */
+
+/* Target the specific modal content body */
+.modal .form-body {
+  padding: 16px 20px; /* Better internal padding */
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* Improve readability of body text */
+.modal .form-body p {
+  line-height: 1.6; /* Increased line spacing for readability */
+  margin: 0 0 16px 0; /* Consistent spacing below paragraphs */
+}
+
+/* Enhance Section Headings */
+.modal .form-body h4 {
+  color: var(--accent); /* Use your accent color for pop (teal) */
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 20px 0 8px 0; /* More separation above headings */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Subtle separator line */
+  padding-bottom: 4px;
+}
+
+/* Improve bullet lists */
+.modal .form-body ul {
+  list-style-type: none; /* Use a custom marker or none at all */
+  padding-left: 0; /* Remove default padding */
+  margin: 0 0 16px 0;
+}
+
+.modal .form-body ul li {
+  position: relative;
+  padding-left: 20px;
+  line-height: 1.6;
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+}
+
+/* Custom bullet point using the accent color */
+.modal .form-body ul li::before {
+  content: "•"; /* Use a simple dot or a different character */
+  color: var(--brand); /* Use brand color for the bullet */
+  font-size: 1.2rem;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Style the muted footer text */
+.modal .form-body .muted {
+  display: block;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08); /* Stronger separator for the bottom text */
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* --- Modal Header Styling (Close Button Positioning) --- */
+
+/* 1. Use Flexbox to separate the title and the button */
+.auth-card .card-head {
+  display: flex;
+  justify-content: space-between; /* Pushes the title left and button right */
+  align-items: center;
+  padding-bottom: 16px; /* Adds space between the header and the body content */
+}
+
+/* 2. Style the Title */
+.auth-card .card-head .title {
+  flex-grow: 1; /* Allows the title to take up most of the space */
+  margin-right: 16px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* 3. Style the Close Button */
+.auth-card .card-head .close {
+  background: none;
+  border: none;
+  color: var(--muted); /* Uses the muted theme color */
+  font-size: 1.5rem; /* Makes the 'x' visible */
+  font-weight: 400;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0; /* Prevents button from shrinking */
+  transition: color 0.2s;
+}
+
+.auth-card .card-head .close:hover {
+  color: var(--text); /* Brighter on hover */
+}
+
+.summary-data-scroll .summary-block {
+    flex-shrink: 0; /* Ensures the data blocks don't get squished */
+    padding-bottom: 16px;
+}
+
+#summaryOverall {
+    margin-bottom: 8px; 
+    padding-bottom: 8px; 
 }
