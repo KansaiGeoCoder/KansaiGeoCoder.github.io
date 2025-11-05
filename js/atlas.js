@@ -101,10 +101,15 @@ function addMapLegend() {
 const infoPanel = document.getElementById("infopanel");
 const infoCard = document.getElementById("info");
 
+/* atlas.js (Replace the entire showInfo function) */
+
 function showInfo(feature) {
   const p = feature.properties || {};
   const name = p.name_en || p.name_jp || "Unnamed Shotengai";
-  const canEdit = !!currentUser && editMode;
+
+  // FIX 1: Use the correct global variable 'isEditing' (or 'editMode' if that is your current global state)
+  // Based on previous code, 'isEditing' is the state variable.
+  const canEdit = !!currentUser && isEditing;
 
   const status = (p.status || "").toString().toLowerCase();
   const statusChip = p.status ? `<span class="pill pill-${status}">${p.status}</span>` : "";
@@ -140,10 +145,10 @@ function showInfo(feature) {
   infoCard.innerHTML = `
     <div class="card-head">
       <div class="title">${name}</div>
-      <div style="display:flex;gap:6px;align-items:center">
+      <div class="header-controls">
         ${canEdit ? `
-          <button class="btn btn-ghost" onclick="(window._openFeatureForm && window._openFeatureForm())">Edit Attributes</button>
-          <button class="btn btn-brand" onclick="window._startDrawSegment('${p.id}')">Draw Segment</button>
+          <button class="btn btn-ghost" onclick="window._openFeatureForm()">Edit Attributes</button>
+          <button class="btn btn-ghost" onclick="window._startDrawSegment('${p.id}')">Draw Segment</button>
         ` : ""}
         <button class="close" onclick="(window._hideInfo && window._hideInfo())">×</button>
       </div>
@@ -158,9 +163,9 @@ function showInfo(feature) {
         </div>
 
         <div class="kv">
-          ${kv("City / Pref.", [p.city, p.prefecture].filter(Boolean).join(" · "))}
+          ${kv("City / Pref.", [p.city, p.prefecture].filter(Boolean).join(" - "))}
           ${kv("Length", p.length_m ? `${Math.round(p.length_m)} m` : "")}
-          ${kv("Station", p.nearest_station ? `${p.nearest_station}${p.walk_min ? ` · ${p.walk_min} min` : ""}` : "")}
+          ${kv("Station", p.nearest_station ? `${p.nearest_station}${p.walk_min ? ` - ${p.walk_min} min` : ""}` : "")}
           ${kv("Association", p.association)}
           ${kv("Website", p.url ? `<a href="${p.url}" target="_blank" rel="noopener">Open ↗</a>` : "")}
           ${kv("Source", p.source)}
@@ -172,18 +177,20 @@ function showInfo(feature) {
       ${photoHtml}
     </div>
   `;
-
+  
+  // NOTE: Slideshow logic and _openFeatureForm definition should be kept outside this string block.
+  // ... (Slideshow logic and window._openFeatureForm definition)
+  
   infoPanel.style.display = "block";
-
-  // Ensure the parent .card of #results gets .results-card (for the CSS above)
-  (() => {
-    const r = document.getElementById('results');
-    const card = r?.closest('.card');
-    if (card && !card.classList.contains('results-card')) {
-      card.classList.add('results-card');
-    }
-  })();
-
+  // ... (rest of code)
+  
+  window._openFeatureForm = async () => {
+    // ... (This function is crucial for the Edit button to work, ensure it remains)
+    if (!currentUser) { const u = await ensureAuth(); if (!u) return; }
+    if (!isEditing) toggleEditMode(); 
+    currentEdit = { mode: "edit", layer: featureIndexById.get(p.id) || null, feature };
+    openFeatureForm(feature, "Edit Shotengai");
+  };
 
   // --- Slideshow logic ---
   if (photos.length > 1) {
@@ -199,10 +206,44 @@ function showInfo(feature) {
     });
   }
 
+
+
+  infoPanel.style.display = "block";
+
+  // Ensure the parent .card of #results gets .results-card (for the CSS above)
+  (() => {
+    const r = document.getElementById('results');
+    const card = r?.closest('.card');
+    if (card && !card.classList.contains('results-card')) {
+      card.classList.add('results-card');
+    }
+  })();
+
+
+  // --- Slideshow logic (unchanged) ---
+  if (photos.length > 1) {
+    let current = 0;
+    const img = infoCard.querySelector("#photoMain");
+    infoCard.querySelector("#prevPhoto").addEventListener("click", () => {
+      current = (current - 1 + photos.length) % photos.length;
+      img.src = photos[current];
+    });
+    infoCard.querySelector("#nextPhoto").addEventListener("click", () => {
+      current = (current + 1) % photos.length;
+      img.src = photos[current];
+    });
+  }
+
+  // --- CRITICAL FIX 3: Update the internal wrapper function ---
   window._openFeatureForm = async () => {
     if (!currentUser) { const u = await ensureAuth(); if (!u) return; }
-    if (!editMode) enterEditMode();
+    // Ensure we enter the correct edit mode if not already in it
+    if (!isEditing) toggleEditMode();
+
+    // Set the global context for the form
     currentEdit = { mode: "edit", layer: featureIndexById.get(p.id) || null, feature };
+
+    // Open the form
     openFeatureForm(feature, "Edit Shotengai");
   };
 }
@@ -683,12 +724,14 @@ btnSaveFeature?.addEventListener("click", async () => {
 });
 
 /* ===== Draw events (Updated to handle multi-segment merge) ===== */
+/* atlas.js (The map.on(L.Draw.Event.CREATED, ...) listener) */
+
 map.on(L.Draw.Event.CREATED, async (e) => {
   const newLayer = e.layer;
   const newGeom = newLayer.toGeoJSON().geometry;
 
   if (segmentTargetId) {
-    // --- MODE 1: ADDING A SEGMENT TO AN EXISTING FEATURE ---
+    // --- MODE 1: ADDING A SEGMENT TO AN EXISTING FEATURE (No change needed here) ---
     if (!currentUser) { alert("Session expired. Please sign in to save the segment."); segmentTargetId = null; return; }
 
     const entityId = segmentTargetId;
@@ -746,7 +789,8 @@ map.on(L.Draw.Event.CREATED, async (e) => {
         // 1. Remove old layer instance from map and feature groups
         existingLayer.remove();
         featureIndexById.delete(featureId);
-        editableGroup.removeLayer(existingLayer);
+        // NOTE: Assuming editableGroup is the same as editableLayers
+        editableLayers.removeLayer(existingLayer);
 
         // 2. Update the feature object with the new merged geometry
         existingFeature.geometry = mergedGeom;
@@ -763,7 +807,7 @@ map.on(L.Draw.Event.CREATED, async (e) => {
             lyr.on("mouseout", () => lyr.setStyle(getTypeStyle(feat)));
             // 4. Update the map index and editable group with the new layer object
             featureIndexById.set(featureId, lyr);
-            editableGroup.addLayer(lyr);
+            editableLayers.addLayer(lyr); // NOTE: Assuming editableGroup is editableLayers
 
             if (map.snap) map.snap.addGuideLayer(lyr);
           }
@@ -782,11 +826,12 @@ map.on(L.Draw.Event.CREATED, async (e) => {
     }
 
   } else {
-    // --- MODE 2: DRAWING A COMPLETELY NEW FEATURE (Existing Logic) ---
-    if (!editMode) { alert("Enter Edit Mode to create features."); newLayer.remove(); return; }
+    // --- MODE 2: DRAWING A COMPLETELY NEW FEATURE ---
+    if (!isEditing) { alert("Enter Edit Mode to create features."); newLayer.remove(); return; }
 
+    // CRITICAL: Set the global context for the form
     currentEdit = { mode: "new", layer: newLayer, feature: null };
-    editableGroup.addLayer(newLayer);
+    editableLayers.addLayer(newLayer);
 
     // FIX: Use getTypeStyle for consistent default styling
     const defaultFeature = { properties: {} };
@@ -794,6 +839,7 @@ map.on(L.Draw.Event.CREATED, async (e) => {
 
     if (map.snap) map.snap.addGuideLayer(newLayer);
 
+    // Call the form function, passing null for feature data and the title
     openFeatureForm(null, "New Shotengai");
     return;
   }
@@ -1212,12 +1258,11 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAbout
 
     drawControl = new L.Control.Draw({
       edit: {
-        featureGroup: editableLayers, // Must contain the layers you want to edit
+        // THIS LINE IS CRITICAL: It tells the Edit toolbar which layers to manage
+        featureGroup: editableLayers,
         poly: {
           allowIntersection: false
         }
-        // Leaflet Draw defaults to enabling node editing, deletion, and moving for Polylines/Polygons 
-        // as long as they are in the featureGroup.
       },
       draw: {
         // Fix 1: Explicitly disable polygon drawing
@@ -1320,8 +1365,8 @@ function setupAuthUI() {
   });
 }
 
-let isEditing = false;
 
+let isEditing = false;
 /**
  * Toggles the visibility of the Leaflet Draw toolbar/controls.
  */
@@ -1331,16 +1376,39 @@ function toggleEditMode() {
   const btnEdit = document.getElementById('btnEdit');
   btnEdit.textContent = isEditing ? 'Exit Edit Mode' : 'Edit Map';
 
+  // Optional: Hide the info panel on mode entry
+  if (isEditing) {
+    window._hideInfo && window._hideInfo();
+  }
+
   if (drawControl) {
     if (isEditing) {
-      // Show the Draw control
+      // Show the Draw control (toolbar)
       drawControl.addTo(map);
-      // Optional: You could make layers clickable when editing starts
-      // editableLayers.eachLayer(layer => { layer.options.clickable = true; }); 
+      // Leaflet Draw's control object is now responsible for handling edit activation.
     } else {
       // Hide the Draw control
       map.removeControl(drawControl);
+
+      // Clean up: Manually ensure any active drawing is disabled
+      // This prevents a line from being left half-drawn.
+      if (drawControl._toolbars.draw._activeMode) {
+        drawControl._toolbars.draw._activeMode.handler.disable();
+      }
+      // Clean up: Also ensure the edit mode is explicitly disabled
+      if (drawControl._toolbars.edit._activeMode) {
+        drawControl._toolbars.edit._activeMode.handler.disable();
+      }
     }
+
+    // Force popups to update editing buttons/notes fields.
+    layer.eachLayer(l => {
+      if (l.isPopupOpen()) {
+        l.closePopup();
+        l.openPopup();
+      }
+    });
+
   } else {
     console.error("Leaflet Draw control instance not found!");
   }

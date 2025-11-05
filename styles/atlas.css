@@ -335,6 +335,7 @@ aside.sidebar {
   border: 1px solid #1f2937;
   border-radius: 14px;
   padding: 16px;
+  padding-top: 8px;
   width: 640px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
   color: #e5ebf5;
@@ -962,7 +963,24 @@ input[type="checkbox"] {
 }
 
 /* --- Modal Header Styling (Close Button Positioning) --- */
+.card-head {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center;
+    /* FIX: Reduce vertical padding (e.g., from 12px to 8px) 
+       and use the horizontal padding variable for alignment */
+    padding: 5px var(--h-padding); 
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
 
+.card-head .title {
+    /* Allows the title to take up remaining space, but prevents wrapping */
+    flex-grow: 1; 
+    margin-right: 16px;
+    font-size: 1.2rem;
+    /* ... other styles */
+}
 /* 1. Use Flexbox to separate the title and the button */
 .auth-card .card-head {
   display: flex;
@@ -1088,10 +1106,11 @@ input[type="checkbox"] {
 
 /* NEW/FIXED: Push all header buttons to the right */
 .header-controls {
-  display: flex;
-  gap: 8px;
-  margin-left: auto;
-  /* Pushes the controls to the far right */
+    display: flex; 
+    gap: 8px; /* Maintain small space between buttons */
+    align-items: center;
+    margin-left: auto; 
+    /* The padding is controlled by .card-head, but ensure no extra padding/margins here */
 }
 
 /* Ensure buttons are styled correctly */
@@ -1120,4 +1139,26 @@ input[type="checkbox"] {
 
 .button-primary:hover {
   opacity: 0.9;
+}
+
+#infoPanel .card-head {
+    display: flex;
+    justify-content: space-between; /* Pushes the title and controls apart */
+    align-items: center; /* Vertically centers all elements */
+    flex-shrink: 0;
+    /* Add padding/border as needed */
+}
+
+.auth-card.form-xxwide {
+    /* Set a wide maximum width for the form */
+    max-width: 800px; 
+    /* Use 'width: 90%' to ensure it doesn't break on narrow screens */
+    width: 90%; 
+}
+
+#featureFormTitle {
+    /* Apply the horizontal padding defined in your theme to the left */
+    padding-left: var(--h-padding); 
+    /* Add a small vertical padding for spacing */
+    padding-top: 16px; 
 }
