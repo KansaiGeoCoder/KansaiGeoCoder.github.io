@@ -14,34 +14,40 @@
   <!-- Styles -->
   <link rel="stylesheet" href="../styles/atlas.css?v=5" />
 
-  <!-- Leaflet (core + geocoder + draw) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+  <!-- Leaflet core -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js" defer></script>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js" defer></script>
+  <!-- Local Leaflet plugins -->
+  <script src="../js/vendor/leaflet.geometryutil.js" defer></script>
+  <script src="../js/vendor/leaflet.snap.js" defer></script>
 
+  <!-- Leaflet.Draw -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js" defer></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/leaflet-snap@0.2.0/leaflet.snap.js"></script>
+  <!-- Geocoder -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js" defer></script>
+
+
 </head>
 
 <body>
   <div class="app" id="atlas-app">
     <header>
-      <div class="title">
-        <h1>Shotengai Atlas <span class="badge">beta</span></h1>
+      <div class="logo">
+        <img src="../assets/logo.svg" alt="Shotengai Atlas Logo" height="24">
+        <h1>Shotengai Atlas</h1>
       </div>
-      <div class="sub">Explore & edit Shotengai (商店街)</div>
 
-      <div class="edit-controls">
-        <button id="btnEditMode" class="btn">Enter Edit Mode</button>
-        <span id="editStatus" class="hint"></span>
+      <div class="header-controls">
+        <button id="btnContact" class="button-secondary">Suggest Shotengai</button>
+
+        <button id="btnEdit" class="button-secondary" style="display: none;">Edit Map</button>
+        <button id="btnAbout" class="button-secondary">About</button>
+        <button id="btnSignIn" class="button-primary">Sign In</button>
       </div>
-      <button id="btnAbout" class="btn">
-        About this project
-      </button>
     </header>
 
     <aside class="sidebar">
@@ -69,7 +75,7 @@
           <div id="summaryOverall" class="summary-block"></div>
           <div id="summaryFiltered" class="summary-block muted"></div>
         </div>
-      </div>    
+      </div>
     </aside>
 
     <main id="map"></main>
@@ -81,16 +87,29 @@
   </div>
 
   <!-- Auth modal -->
-  <div id="authModal" class="auth-modal" style="display:none">
-    <div class="auth-card">
-      <h3>Editor Sign in</h3>
-      <input id="authEmail" type="email" placeholder="Email">
-      <input id="authPass" type="password" placeholder="Password">
-      <div class="auth-row">
-        <button id="btnLogin" class="btn">Sign in</button>
-        <button id="btnCloseAuth" class="btn btn-ghost">Cancel</button>
+  <div id="authModal" class="modal" style="display:none">
+    <div class="auth-card card">
+
+      <div class="card-head">
+        <h3 class="title">Editor Sign In</h3>
+        <button id="btnCloseAuth" class="close">×</button>
       </div>
-      <div id="authMsg" class="auth-msg"></div>
+
+      <div class="form-body">
+        <div class="form-group">
+          <label for="authEmail">Email</label>
+          <input id="authEmail" type="email" placeholder="Email">
+        </div>
+        <div class="form-group">
+          <label for="authPass">Password</label>
+          <input id="authPass" type="password" placeholder="Password">
+        </div>
+
+        <div class="auth-row">
+          <button id="btnLogin" class="button-primary">Sign In</button>
+        </div>
+        <div id="authMsg" class="auth-msg"></div>
+      </div>
     </div>
   </div>
 
@@ -106,6 +125,35 @@
         </div>
         <div id="featureMsg" class="auth-msg"></div>
       </div>
+    </div>
+  </div>
+
+  <div id="modalContact" class="modal" style="display: none;">
+    <div class="auth-card card">
+      <div class="card-head">
+        <div class="title">Suggest a Shotengai / Contact</div>
+        <button id="btnCloseContact" class="close">×</button>
+      </div>
+
+      <form class="form-body">
+        <div class="form-group">
+          <label for="contactEmail">Your Email</label>
+          <input type="email" id="contactEmail" placeholder="your@email.com" required>
+        </div>
+        <div class="form-group">
+          <label for="contactSubject">Subject</label>
+          <input type="text" id="contactSubject" placeholder="Shotengai Suggestion / General Inquiry" required>
+        </div>
+        <div class="form-group">
+          <label for="contactMessage">Message / Details</label>
+          <textarea id="contactMessage" rows="5"
+            placeholder="Include name, location, and any details for the Shotengai..."></textarea>
+        </div>
+        <button type="submit" class="button-primary button-full">Send Message</button>
+        <p class="muted">
+          Your email address is required so we can follow up with you.
+        </p>
+      </form>
     </div>
   </div>
 

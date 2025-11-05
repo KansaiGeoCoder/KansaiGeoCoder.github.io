@@ -15,6 +15,17 @@ const basemaps = {
 };
 
 const map = L.map("map", { center: [36.2048, 137.2529], zoom: 5, layers: [basemaps.dark] });
+
+let editableLayers = new L.FeatureGroup().addTo(map);
+let drawControl = null;
+
+// Debug code
+console.log('Plugin check:', {
+  'L.Handler exists': !!L.Handler,
+  'MarkerSnap exists': !!L.Handler?.MarkerSnap,
+  'GeometryUtil exists': !!L.GeometryUtil
+});
+
 L.control.layers({ "Light": basemaps.light, "Dark": basemaps.dark }).addTo(map);
 L.Control.geocoder({ defaultMarkGeocode: false })
   .on("markgeocode", (e) => map.fitBounds(e.geocode.bbox))
@@ -22,11 +33,11 @@ L.Control.geocoder({ defaultMarkGeocode: false })
 
 // Styles
 const TYPE_COLORS = {
-    'A': '#10b981', 
-    'B': '#f59e0b',
-    'C': '#ef4444', 
-    'D': '#3b82f6',  
-    'default': '#cbd5e1' // Gray (Fallback/Missing data)
+  'A': '#10b981',
+  'B': '#f59e0b',
+  'C': '#ef4444',
+  'D': '#3b82f6',
+  'default': '#cbd5e1' // Gray (Fallback/Missing data)
 };
 const lineStyleHover = { color: '#ffffff', weight: 8, opacity: 1, interactive: true };
 
@@ -35,23 +46,23 @@ const lineStyleHover = { color: '#ffffff', weight: 8, opacity: 1, interactive: t
  * This is the core fix for the coloring issue.
  */
 function getTypeStyle(feature) {
-    // Safely retrieve 'type' or fallback to 'classification'.
-    const typeValue = feature.properties?.classification || feature.properties?.classification;
-    
-    // 1. Safely extract the first character. .toString() is a safety net.
-    const typeCode = typeValue?.toString().toUpperCase()[0] || 'default'; 
-    
-    // 2. Determine the key to look up in TYPE_COLORS
-    const primaryType = TYPE_COLORS.hasOwnProperty(typeCode) ? typeCode : 'default';
-    
-    const color = TYPE_COLORS[primaryType];
-    
-    return {
-        color: color,
-        weight: 6, 
-        opacity: 0.9,
-        interactive: true
-    };
+  // Safely retrieve 'type' or fallback to 'classification'.
+  const typeValue = feature.properties?.classification || feature.properties?.classification;
+
+  // 1. Safely extract the first character. .toString() is a safety net.
+  const typeCode = typeValue?.toString().toUpperCase()[0] || 'default';
+
+  // 2. Determine the key to look up in TYPE_COLORS
+  const primaryType = TYPE_COLORS.hasOwnProperty(typeCode) ? typeCode : 'default';
+
+  const color = TYPE_COLORS[primaryType];
+
+  return {
+    color: color,
+    weight: 6,
+    opacity: 0.9,
+    interactive: true
+  };
 }
 
 /**
@@ -59,30 +70,30 @@ function getTypeStyle(feature) {
  * This was previously missing and is necessary to confirm color values.
  */
 function addMapLegend() {
-    const legend = L.control({ position: 'bottomleft' });
+  const legend = L.control({ position: 'bottomleft' });
 
-    legend.onAdd = function (map) {
-        // You MUST also define this '.info.legend' CSS in your atlas.css file
-        const div = L.DomUtil.create('div', 'info legend');
-        const types = [
-            { code: 'A', color: TYPE_COLORS['A'], description: 'fully covered street' },
-            { code: 'B', color: TYPE_COLORS['B'], description: 'pedestrian only street' },
-            { code: 'C', color: TYPE_COLORS['C'], description: 'street adjacent covered sidewalk' },
-            { code: 'D', color: TYPE_COLORS['D'], description: 'normal street with Shotengai association' }
-        ];
+  legend.onAdd = function (map) {
+    // You MUST also define this '.info.legend' CSS in your atlas.css file
+    const div = L.DomUtil.create('div', 'info legend');
+    const types = [
+      { code: 'A', color: TYPE_COLORS['A'], description: 'fully covered street' },
+      { code: 'B', color: TYPE_COLORS['B'], description: 'pedestrian only street' },
+      { code: 'C', color: TYPE_COLORS['C'], description: 'street adjacent covered sidewalk' },
+      { code: 'D', color: TYPE_COLORS['D'], description: 'normal street with Shotengai association' }
+    ];
 
-        let content = '<h4>Shotengai Type</h4>';
-        
-        for (let i = 0; i < types.length; i++) {
-            content +=
-                `<i style="background:${types[i].color};"></i> ${types[i].code}: ${types[i].description}<br>`;
-        }
-        
-        div.innerHTML = content;
-        return div;
-    };
+    let content = '<h4>Shotengai Type</h4>';
 
-    legend.addTo(map);
+    for (let i = 0; i < types.length; i++) {
+      content +=
+        `<i style="background:${types[i].color};"></i> ${types[i].code}: ${types[i].description}<br>`;
+    }
+
+    div.innerHTML = content;
+    return div;
+  };
+
+  legend.addTo(map);
 }
 
 
@@ -279,7 +290,6 @@ btnCloseAuth?.addEventListener("click", closeAuth);
 
 /* ===== Edit mode state ===== */
 let editableGroup;
-let drawControl;
 let editMode = false;
 let featureIndexById = new Map();
 let segmentTargetId = null; // NEW: Global variable for segment addition workflow
@@ -299,25 +309,33 @@ function enterEditMode() {
     featureIndexById.forEach(layer => {
       // Only add non-marker layers to the editable group
       if (layer.options && !layer.options.icon) {
-         editableGroup.addLayer(layer);
+        editableGroup.addLayer(layer);
       }
     });
   }
-  
+
   // -----------------------------------------------------
   // CRITICAL SNAPPING SETUP: Requires Leaflet.Handler.MarkerSnap
   let snapHandler = null;
 
   if (typeof L.Handler.MarkerSnap !== 'undefined') {
+    // If a handler already exists on the map use it, otherwise create one
     if (!map.snap) {
       map.snap = new L.Handler.MarkerSnap(map, {
         snapDistance: 30 // Increased snap distance for polyline vertices
       });
-      map.snap.enable();
+      // assign local reference BEFORE using it
+      snapHandler = map.snap;
+      snapHandler.enable();
+      // Now it's safe to add guide layers
+      if (editableGroup) snapHandler.addGuideLayer(editableGroup);
+    } else {
+      snapHandler = map.snap;
+      // ensure the editable group is included as a guide
+      if (editableGroup) snapHandler.addGuideLayer(editableGroup);
     }
-    snapHandler = map.snap;
 
-    // 1. Add ALL editable features as snapping guides
+    // 1. Add ALL editable features as snapping guides (idempotent)
     if (snapHandler && editableGroup) {
       snapHandler.addGuideLayer(editableGroup);
     }
@@ -790,7 +808,7 @@ map.on(L.Draw.Event.EDITED, async (e) => {
     const { error } = await sbClient.rpc("update_shotengai_geom", { p_id: id, p_geom_wkt: wkt });
     if (error) alert("Update geometry failed: " + error.message);
     // Ensure the style is correct after editing
-    layer.setStyle(getTypeStyle(layer.feature)); 
+    layer.setStyle(getTypeStyle(layer.feature));
   });
 });
 
@@ -812,18 +830,23 @@ map.on(L.Draw.Event.EDITSTART, (e) => {
   setTimeout(() => {
     // e.layer is the feature being edited (Polyline/MultiPolyline)
     const layer = e.layer;
-    
+
     // Check if the layer is in edit mode and has vertex markers
     if (layer.editing && layer.editing._markers) {
-      layer.editing._markers.forEach(marker => {
+      // For MultiPolyline, markers are sometimes nested under a _markerGroup
+      const markers = layer.editing._markerGroup ? layer.editing._markerGroup.getLayers() : layer.editing._markers;
+
+      markers.forEach(marker => {
         // Apply the map's snap handler to the marker's drag handler
         if (marker.dragging && map.snap) {
+          // Explicitly set the snap option on the dragging handler
           marker.dragging.setOptions({ snap: map.snap });
-          
+
           // Force a re-enable of dragging to ensure options take effect
+          // This is often necessary when options are changed after init
           if (marker.dragging._enabled) {
-              marker.dragging.disable();
-              marker.dragging.enable();
+            marker.dragging.disable();
+            marker.dragging.enable();
           }
         }
       });
@@ -1177,9 +1200,148 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAbout
     applyFilters(false);
     addMapLegend(); // ADDED: Ensures the legend is displayed.
 
+    // NEW: Initialize UI elements that depend on Supabase client (sbClient) being ready
+    setupAuthUI();
+
+    layer.eachLayer(lyr => {
+      // We only want to add the polylines (which should be GeoJSON data) to the editable group.
+      if (lyr instanceof L.Polyline) {
+        editableLayers.addLayer(lyr);
+      }
+    });
+
+    drawControl = new L.Control.Draw({
+      edit: {
+        featureGroup: editableLayers, // Must contain the layers you want to edit
+        poly: {
+          allowIntersection: false
+        }
+        // Leaflet Draw defaults to enabling node editing, deletion, and moving for Polylines/Polygons 
+        // as long as they are in the featureGroup.
+      },
+      draw: {
+        // Fix 1: Explicitly disable polygon drawing
+        polygon: false,
+        // Only allow line drawing
+        polyline: {
+          allowIntersection: false
+        },
+        marker: false,
+        circlemarker: false,
+        rectangle: false,
+        circle: false
+      }
+    });
 
   } catch (err) {
     console.error("[Atlas] init failed:", err);
     alert("Failed to load data from Supabase: " + (err.message || err));
   }
+
 })();
+
+/**
+ * Initializes all UI logic related to authentication and modals.
+ * NOTE: The Edit button is only visible when logged in (simulating "edit rights").
+ */
+/* atlas.js (Replace your existing setupAuthUI function) */
+
+/* atlas.js (The complete corrected setupAuthUI function) */
+
+function setupAuthUI() {
+  const modalContact = document.getElementById('modalContact');
+  const btnContact = document.getElementById('btnContact');
+  const btnCloseContact = document.getElementById('btnCloseContact');
+  const btnEdit = document.getElementById('btnEdit');
+  const btnSignIn = document.getElementById('btnSignIn');
+
+  // --- Modal Logic ---
+  btnContact?.addEventListener('click', () => {
+    modalContact.style.display = 'flex';
+  });
+
+  btnEdit?.addEventListener('click', (e) => {
+    e.preventDefault();
+    toggleEditMode(); // Call the global function to toggle the editing UI
+  });
+
+  btnCloseContact?.addEventListener('click', () => {
+    modalContact.style.display = 'none';
+  });
+
+  // Simple form submission handler (prevent default, log data)
+  modalContact?.querySelector('form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    alert("Thank you for your suggestion! (Form submission logic needs to be implemented)");
+    modalContact.style.display = 'none';
+  });
+
+  // CRITICAL FIX 2: Set the default behavior (open modal) synchronously.
+  // This executes immediately and prevents the button from being "dead."
+  btnSignIn?.addEventListener('click', () => {
+    // Only open the modal if the button currently says "Sign In"
+    if (btnSignIn.textContent === 'Sign In') {
+      document.getElementById('authModal').style.display = 'flex';
+    }
+    // If it says "Sign Out", the logic in the listener below will override this.
+  });
+
+
+  // --- Conditional Edit Button Visibility ---
+  if (!sbClient) {
+    console.error("Supabase client is not defined. Cannot set up auth UI.");
+    return;
+  }
+
+  // Watch for authentication changes (Asynchronous)
+  sbClient.auth.onAuthStateChange((event, session) => {
+    const isLoggedIn = !!session;
+
+    if (btnEdit) {
+      btnEdit.style.display = isLoggedIn ? 'block' : 'none';
+
+      // Update Sign In/Sign Out button
+      if (btnSignIn) { // We already declared btnSignIn at the top
+        btnSignIn.textContent = isLoggedIn ? 'Sign Out' : 'Sign In';
+
+        if (isLoggedIn) {
+          // OVERRIDE the synchronous click listener to perform sign out
+          btnSignIn.onclick = async () => {
+            await sbClient.auth.signOut();
+            // Close any open editing toolbars here if needed
+          };
+        } else {
+          // CRITICAL FIX 3: Clear the sign-out override. 
+          // This allows the synchronous addEventListener (set above) to open the modal.
+          btnSignIn.onclick = null;
+        }
+      }
+    }
+  });
+}
+
+let isEditing = false;
+
+/**
+ * Toggles the visibility of the Leaflet Draw toolbar/controls.
+ */
+function toggleEditMode() {
+  isEditing = !isEditing;
+
+  const btnEdit = document.getElementById('btnEdit');
+  btnEdit.textContent = isEditing ? 'Exit Edit Mode' : 'Edit Map';
+
+  if (drawControl) {
+    if (isEditing) {
+      // Show the Draw control
+      drawControl.addTo(map);
+      // Optional: You could make layers clickable when editing starts
+      // editableLayers.eachLayer(layer => { layer.options.clickable = true; }); 
+    } else {
+      // Hide the Draw control
+      map.removeControl(drawControl);
+    }
+  } else {
+    console.error("Leaflet Draw control instance not found!");
+  }
+}

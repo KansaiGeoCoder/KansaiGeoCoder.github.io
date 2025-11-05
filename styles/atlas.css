@@ -14,6 +14,8 @@
   --brand: #6aa0ff;
   --accent: #14b8a6;
   --border: #1f2937;
+  
+  --h-padding: 16px;
 }
 
 /* ---------- Base ---------- */
@@ -39,10 +41,10 @@ header {
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 20px;
   padding: 8px 20px;
   border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, #0c1015, rgba(12, 16, 21, .6));
+  background: linear-gradient(180deg, #0f141a, #12161b);
 }
 
 header .title {
@@ -144,9 +146,11 @@ aside.sidebar {
   display: flex;
   flex-direction: column;
   /* CRITICAL FIX: This card must grow to fill all middle space, pushing the button down */
-  flex: 0 0 auto; 
-  min-height: 0; /* Ensures the inner .results can scroll */
-  overflow: hidden; /* Prevents overflow from the scrollable inner list */
+  flex: 0 0 auto;
+  min-height: 0;
+  /* Ensures the inner .results can scroll */
+  overflow: hidden;
+  /* Prevents overflow from the scrollable inner list */
 }
 
 .results-head {
@@ -161,7 +165,7 @@ aside.sidebar {
   /* CRITICAL FIX: This must be the primary scroll area for the middle content */
   max-height: 500px;
   min-height: 0;
-  flex: 1 1 auto; 
+  flex: 1 1 auto;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
@@ -239,13 +243,13 @@ aside.sidebar {
   /* CRITICAL: Make this card the one that takes up all remaining vertical space */
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto; 
+  flex: 1 1 auto;
 
   /* CRITICAL FIX 1: Allow the flex item to be constrained when space is low */
-  min-height: 0; 
-  
+  min-height: 0;
+
   /* CRITICAL FIX 2: Stop the entire card from scrolling; only the internal wrapper should scroll */
-  overflow-y: hidden; 
+  overflow-y: hidden;
   overflow-x: hidden;
 
   padding: 0 12px 6px 12px;
@@ -262,39 +266,41 @@ aside.sidebar {
   box-shadow: 0 1px 0 rgba(255, 255, 255, .06);
   font-weight: 600;
   color: var(--brand);
-  flex-shrink: 0; /* Explicitly prevent title from being compressed */
+  flex-shrink: 0;
+  /* Explicitly prevent title from being compressed */
 }
 
 /* Now, the scrollable data content wrapper needs to take the remaining space inside the card */
 .summary-data-scroll {
   /* This wrapper takes the height the title doesn't use */
-  flex-grow: 1; 
+  flex-grow: 1;
   /* CRITICAL: Make this a column flex container */
-  display: flex; 
+  display: flex;
   flex-direction: column;
-  
+
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 8px; /* Adds space for the scrollbar */
+  padding-right: 8px;
+  /* Adds space for the scrollbar */
 }
 
 .summary-block {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px 12px;
-    min-width: 0;
-    padding-top: 5px;
-    padding-bottom: 16px; 
-    
-    /* CRITICAL: Allow these blocks to push down */
-    flex-shrink: 0; 
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  min-width: 0;
+  padding-top: 5px;
+  padding-bottom: 16px;
+
+  /* CRITICAL: Allow these blocks to push down */
+  flex-shrink: 0;
 }
 
 .summary-block.muted {
-    opacity: .85;
-    margin-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, .06);
-    padding-top: 8px;
+  opacity: .85;
+  margin-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, .06);
+  padding-top: 8px;
 }
 
 .summary-k {
@@ -471,18 +477,13 @@ aside.sidebar {
 }
 
 .auth-card {
-  width: min(720px, 92vw);
-  background: #0e1318;
-  border: 1px solid #1f2937;
-  border-radius: 14px;
-  padding: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
-  color: #e5ebf5;
-  max-height: 88vh;
-  overflow: hidden;
-  /* Enforce structural control for inner elements */
-  display: flex;
-  flex-direction: column;
+  max-width: 320px; /* Narrows the form significantly */
+  width: 90%; 
+  background: var(--panel);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  padding: 0; /* CRITICAL: Remove card padding to control spacing internally */
+  padding-bottom: 12px; /* Small base padding at the bottom for buttons */
 }
 
 .form-body {
@@ -490,8 +491,7 @@ aside.sidebar {
   /* FIX: Ensure horizontal overflow is clipped */
   overflow-y: auto;
   overflow-x: hidden;
-
-  padding-right: 0;
+  padding: 0 var(--h-padding);
   width: 100%;
   box-sizing: border-box;
 
@@ -508,6 +508,15 @@ aside.sidebar {
   background: #0c1015;
   /* Prevents the group itself from expanding beyond its bounds */
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+}
+
+.form-group label {
+    font-size: 0.85rem; 
+    color: var(--muted);
+    padding: 0 0 3px 0; /* Small gap between label and input */
 }
 
 .form-group h4 {
@@ -533,8 +542,9 @@ aside.sidebar {
   /* FIX: Correct label margin for flow (8px above, 4px below) */
   margin: 16px 5px 0px;
   line-height: 1.2;
-  font-size: 12px;
-  color: var(--muted);
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  padding: 0 0 4px 0;
 }
 
 .form-row input,
@@ -548,7 +558,7 @@ aside.sidebar {
   border: 1px solid var(--border);
   color: var(--text);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   outline: none;
 }
 
@@ -581,8 +591,9 @@ input[type="checkbox"] {
 
 .auth-row {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 0 var(--h-padding);
 }
 
 .auth-msg {
@@ -807,11 +818,14 @@ input[type="checkbox"] {
 }
 
 /* Edit modal — Photos section: keep dropzone compact, thumbnails small */
-.auth-card .photos-group { --thumb: 90px; }
+.auth-card .photos-group {
+  --thumb: 90px;
+}
 
 /* 1) Never render a big image inside the dropzone itself */
 .auth-card .photos-group .dropzone img {
-  display: none !important;            /* hide any accidental preview there */
+  display: none !important;
+  /* hide any accidental preview there */
 }
 
 /* Keep the dropzone tidy */
@@ -858,7 +872,7 @@ input[type="checkbox"] {
   height: 18px;
   border: none;
   border-radius: 3px;
-  background: rgba(0,0,0,.5);
+  background: rgba(0, 0, 0, .5);
   color: #fff;
   cursor: pointer;
   font-size: 12px;
@@ -867,7 +881,7 @@ input[type="checkbox"] {
 }
 
 /* 3) If any generic image sneaks into the Photos group, size it down */
-.auth-card .photos-group > img {
+.auth-card .photos-group>img {
   width: var(--thumb) !important;
   height: var(--thumb) !important;
   object-fit: cover !important;
@@ -878,31 +892,39 @@ input[type="checkbox"] {
 
 /* Target the specific modal content body */
 .modal .form-body {
-  padding: 16px 20px; /* Better internal padding */
+  padding: 16px 20px;
+  /* Better internal padding */
   max-height: 60vh;
   overflow-y: auto;
 }
 
 /* Improve readability of body text */
 .modal .form-body p {
-  line-height: 1.6; /* Increased line spacing for readability */
-  margin: 0 0 16px 0; /* Consistent spacing below paragraphs */
+  line-height: 1.6;
+  /* Increased line spacing for readability */
+  margin: 0 0 16px 0;
+  /* Consistent spacing below paragraphs */
 }
 
 /* Enhance Section Headings */
 .modal .form-body h4 {
-  color: var(--accent); /* Use your accent color for pop (teal) */
+  color: var(--accent);
+  /* Use your accent color for pop (teal) */
   font-size: 1.1rem;
   font-weight: 700;
-  margin: 20px 0 8px 0; /* More separation above headings */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08); /* Subtle separator line */
+  margin: 20px 0 8px 0;
+  /* More separation above headings */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  /* Subtle separator line */
   padding-bottom: 4px;
 }
 
 /* Improve bullet lists */
 .modal .form-body ul {
-  list-style-type: none; /* Use a custom marker or none at all */
-  padding-left: 0; /* Remove default padding */
+  list-style-type: none;
+  /* Use a custom marker or none at all */
+  padding-left: 0;
+  /* Remove default padding */
   margin: 0 0 16px 0;
 }
 
@@ -916,8 +938,10 @@ input[type="checkbox"] {
 
 /* Custom bullet point using the accent color */
 .modal .form-body ul li::before {
-  content: "•"; /* Use a simple dot or a different character */
-  color: var(--brand); /* Use brand color for the bullet */
+  content: "•";
+  /* Use a simple dot or a different character */
+  color: var(--brand);
+  /* Use brand color for the bullet */
   font-size: 1.2rem;
   position: absolute;
   left: 0;
@@ -927,11 +951,14 @@ input[type="checkbox"] {
 /* Style the muted footer text */
 .modal .form-body .muted {
   display: block;
-  margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08); /* Stronger separator for the bottom text */
-  font-size: 0.85rem;
+  margin-top: 15px; 
+  padding-top: 10px; 
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.8rem; 
   color: var(--muted);
+  /* CRITICAL ALIGNMENT FIX: Apply consistent horizontal padding here too */
+  padding-left: var(--h-padding);
+  padding-right: var(--h-padding);
 }
 
 /* --- Modal Header Styling (Close Button Positioning) --- */
@@ -939,46 +966,55 @@ input[type="checkbox"] {
 /* 1. Use Flexbox to separate the title and the button */
 .auth-card .card-head {
   display: flex;
-  justify-content: space-between; /* Pushes the title left and button right */
+  justify-content: space-between; 
   align-items: center;
-  padding-bottom: 16px; /* Adds space between the header and the body content */
+  /* CRITICAL ALIGNMENT FIX: Use the consistent h-padding for alignment */
+  padding: 12px var(--h-padding) 8px var(--h-padding); /* Reduced vertical padding */
+  border-bottom: 1px solid var(--border); /* Adds a clean separator line */
+  margin-bottom: 8px; /* Space between header and first input */
 }
 
 /* 2. Style the Title */
 .auth-card .card-head .title {
-  flex-grow: 1; /* Allows the title to take up most of the space */
-  margin-right: 16px;
-  font-size: 1.2rem;
+  flex-grow: 1; 
+  margin-right: 12px;
+  font-size: 1.1rem; 
   font-weight: 700;
-  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 /* 3. Style the Close Button */
 .auth-card .card-head .close {
   background: none;
   border: none;
-  color: var(--muted); /* Uses the muted theme color */
-  font-size: 1.5rem; /* Makes the 'x' visible */
+  color: var(--muted);
+  /* Uses the muted theme color */
+  font-size: 1.5rem;
+  /* Makes the 'x' visible */
   font-weight: 400;
   cursor: pointer;
   line-height: 1;
-  padding: 0;
-  flex-shrink: 0; /* Prevents button from shrinking */
+  padding-bottom: 10px;
+  flex-shrink: 0;
+  /* Prevents button from shrinking */
   transition: color 0.2s;
 }
 
 .auth-card .card-head .close:hover {
-  color: var(--text); /* Brighter on hover */
+  color: var(--text);
+  /* Brighter on hover */
 }
 
 .summary-data-scroll .summary-block {
-    flex-shrink: 0; /* Ensures the data blocks don't get squished */
-    padding-bottom: 16px;
+  flex-shrink: 0;
+  /* Ensures the data blocks don't get squished */
+  padding-bottom: 16px;
 }
 
 #summaryOverall {
-    margin-bottom: 8px; 
-    padding-bottom: 8px; 
+  margin-bottom: 8px;
+  padding-bottom: 8px;
 }
 
 /* =======================================================
@@ -986,25 +1022,102 @@ input[type="checkbox"] {
    (The addMapLegend function in atlas.js requires this CSS)
    ======================================================= */
 .info.legend {
-    padding: 6px 8px;
-    /* Use a slightly transparent version of your dark panel background */
-    background: rgba(14, 19, 24, 0.9); 
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
-    border-radius: 5px;
-    line-height: 1.4;
-    color: var(--text);
+  padding: 6px 8px;
+  /* Use a slightly transparent version of your dark panel background */
+  background: rgba(14, 19, 24, 0.9);
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+  border-radius: 5px;
+  line-height: 1.4;
+  color: var(--text);
 }
+
 .info.legend h4 {
-    margin: 0 0 5px;
-    color: #fff;
-    font-weight: 600;
-    font-size: 14px;
+  margin: 0 0 5px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
 }
+
 .info.legend i {
-    width: 14px;
-    height: 14px;
-    float: left;
-    margin-right: 8px;
-    opacity: 0.9;
-    border-radius: 2px;
+  width: 14px;
+  height: 14px;
+  float: left;
+  margin-right: 8px;
+  opacity: 0.9;
+  border-radius: 2px;
+}
+
+/* Styled Inputs (fixes plain white fields) */
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background-color: #192027;
+  /* Dark background */
+  color: var(--text);
+  font-size: 1rem;
+  box-sizing: border-box;
+  margin-top: 5px;
+}
+
+/* Focus state */
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  /* Brand color on focus */
+  box-shadow: 0 0 0 1px var(--brand);
+}
+
+/* Add a style for the contact textarea */
+.form-group textarea {
+  resize: vertical;
+  /* Allow resizing only vertically */
+  min-height: 100px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* CRITICAL FIX: Allow the logo section to grow, but the controls will be pushed away */
+  flex-grow: 0;
+}
+
+/* NEW/FIXED: Push all header buttons to the right */
+.header-controls {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  /* Pushes the controls to the far right */
+}
+
+/* Ensure buttons are styled correctly */
+.button-secondary {
+  background: none;
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+.button-primary {
+  background: var(--brand);
+  color: var(--panel);
+  /* Dark text on brand color */
+  border: 1px solid var(--brand);
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.button-primary:hover {
+  opacity: 0.9;
 }
