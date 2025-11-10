@@ -104,7 +104,7 @@ const infoCard = document.getElementById("info");
 /* atlas.js (Replace the entire showInfo function) */
 
 function showInfo(feature) {
-  const p = feature.properties || {};
+  const p = feature.properties;
   const name = p.name_en || p.name_jp || "Unnamed Shotengai";
 
   // FIX 1: Use the correct global variable 'isEditing' (or 'editMode' if that is your current global state)
@@ -172,22 +172,22 @@ function showInfo(feature) {
           ${kv("Updated", p.last_update ? new Date(p.last_update).toLocaleDateString() : "—")}
         </div>
 
-        ${p.description ? `<div class="desc">${p.description}</div>` : ""}
+        ${p.notes ? `<div class="desc">${p.notes}</div>` : ""}
       </div>
       ${photoHtml}
     </div>
   `;
-  
+
   // NOTE: Slideshow logic and _openFeatureForm definition should be kept outside this string block.
   // ... (Slideshow logic and window._openFeatureForm definition)
-  
+
   infoPanel.style.display = "block";
   // ... (rest of code)
-  
+
   window._openFeatureForm = async () => {
     // ... (This function is crucial for the Edit button to work, ensure it remains)
     if (!currentUser) { const u = await ensureAuth(); if (!u) return; }
-    if (!isEditing) toggleEditMode(); 
+    if (!isEditing) toggleEditMode();
     currentEdit = { mode: "edit", layer: featureIndexById.get(p.id) || null, feature };
     openFeatureForm(feature, "Edit Shotengai");
   };
@@ -581,6 +581,16 @@ function readFeatureForm() {
     else if (f.type === "number") obj[f.key] = el.value === "" ? null : Number(el.value);
     else obj[f.key] = el.value === "" ? null : el.value;
   });
+
+  // 💡 ROBUST FIX: Explicitly read the Description field (f_description)
+  // and assign its value to the 'notes' property.
+  const descriptionValue = document.getElementById('f_description')?.value.trim() || null;
+  obj.notes = descriptionValue;
+
+  // The 'description' property will still be set by the loop/FEATURE_FIELDS
+  // if you want to keep it separate, or you can explicitly set it here:
+  // obj.description = descriptionValue;
+
   return obj;
 }
 
@@ -595,7 +605,6 @@ function openFeatureForm(feature, title) {
   featureFormTitle.textContent = title || (currentEdit.mode === "edit" ? "Edit Shotengai" : "New Shotengai");
   buildFeatureForm(feature?.properties || {});
 
-  // ⬇️ Inject Photos block (keeps your two-column layout intact)
   const photosBlock = document.createElement("div");
   photosBlock.className = "form-group fullwidth photos-group";
   photosBlock.innerHTML = `
@@ -646,6 +655,9 @@ btnSaveFeature?.addEventListener("click", async () => {
     if (!currentUser) { await ensureAuth(); if (!currentUser) return; }
 
     const props = readFeatureForm();
+
+    props.notes = document.getElementById('f_description')?.value.trim() || null;
+
     if (!props.name_en && !props.name_jp) {
       featureMsg.textContent = "❌ Please provide at least a name (EN or JP).";
       return;
@@ -683,6 +695,29 @@ btnSaveFeature?.addEventListener("click", async () => {
         : (data?.out_id ?? data?.id);
 
     featureMsg.textContent = "✅ Saved";
+    const updatedProps = {
+      ...props,
+      id: newId,
+      last_update: new Date().toISOString() // Update timestamp to show it's current
+    };
+
+    // 1. Update the local GeoJSON feature object used by showInfo
+    if (currentEdit.feature) {
+      currentEdit.feature.properties = updatedProps;
+
+      // 2. If it was an existing feature being edited, update its Leaflet layer too
+      if (currentEdit.layer) {
+        currentEdit.layer.feature.properties = updatedProps;
+        // Re-apply style in case 'classification' or other style-related property changed
+        currentEdit.layer.setStyle(getTypeStyle(currentEdit.layer.feature));
+      }
+    }
+
+    // 3. Re-render the Info Card with the updated feature object
+    showInfo(currentEdit.feature);
+
+    // 4. Close the form modal now that the update is complete
+    closeFeatureModal();
     setTimeout(() => { closeFeatureModal(); }, 250);
 
     // Update map/index
@@ -1179,28 +1214,18 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAbout
     }
 
     // Fetch data
-    const { data, error } = await sbClient.from("v_shotengai_geojson").select("*");
+    const { data: viewData, error } = await sbClient
+      .from('v_shotengai_geojson')
+      .select('geojson') // Only select the column containing the GeoJSON
+      .single(); // IMPORTANT: Use single() because the view returns one aggregated row
     if (error) throw error;
 
-    const features = (data || []).map((r) => {
-      let geom = r.geomjson;
-      if (typeof geom === "string") { try { geom = JSON.parse(geom); } catch { geom = null; } }
-      return {
-        type: "Feature",
-        properties: {
-          id: r.id, slug: r.slug, name_jp: r.name_jp, name_en: r.name_en,
-          city: r.city, prefecture: r.prefecture, status: r.status,
-          covered: r.covered, pedestrian_only: r.pedestrian_only,
-          type: r.type, classification: r.classification, theme: r.theme,
-          length_m: r.length_m, width_avg: r.width_avg, shops_est: r.shops_est,
-          established: r.established, last_renov: r.last_renov,
-          nearest_station: r.nearest_station, walk_min: r.walk_min,
-          association: r.association, url: r.url, image: r.image, source: r.source,
-          accuracy: r.accuracy, last_update: r.last_update, description: r.description
-        },
-        geometry: geom
-      };
-    });
+    // 1. Extract the GeoJSON object from the single returned row (viewData.geojson)
+    const geojson = viewData?.geojson;
+
+    // 2. Extract the features array directly from the GeoJSON object.
+    // The SQL view already built the features array for you.
+    const features = geojson?.features || [];
 
     const layer = L.geoJSON({ type: "FeatureCollection", features }, {
       style: getTypeStyle, // CORRECT: Uses the thematic style
@@ -1371,45 +1396,46 @@ let isEditing = false;
  * Toggles the visibility of the Leaflet Draw toolbar/controls.
  */
 function toggleEditMode() {
-  isEditing = !isEditing;
+  isEditing = !isEditing;
 
-  const btnEdit = document.getElementById('btnEdit');
-  btnEdit.textContent = isEditing ? 'Exit Edit Mode' : 'Edit Map';
+  const btnEdit = document.getElementById('btnEdit');
+  btnEdit.textContent = isEditing ? 'Exit Edit Mode' : 'Edit Map';
 
-  // Optional: Hide the info panel on mode entry
-  if (isEditing) {
-    window._hideInfo && window._hideInfo();
+  // If a feature is currently selected and displayed, call showInfo()
+  // to refresh the card's content, which causes the Edit buttons to appear/disappear.
+  if (currentEdit?.feature) {
+      showInfo(currentEdit.feature);
   }
 
-  if (drawControl) {
-    if (isEditing) {
-      // Show the Draw control (toolbar)
-      drawControl.addTo(map);
-      // Leaflet Draw's control object is now responsible for handling edit activation.
-    } else {
-      // Hide the Draw control
-      map.removeControl(drawControl);
+  if (drawControl) {
+    if (isEditing) {
+      // Show the Draw control (toolbar)
+      drawControl.addTo(map);
+      // Leaflet Draw's control object is now responsible for handling edit activation.
+    } else {
+      // Hide the Draw control
+      map.removeControl(drawControl);
 
-      // Clean up: Manually ensure any active drawing is disabled
-      // This prevents a line from being left half-drawn.
-      if (drawControl._toolbars.draw._activeMode) {
-        drawControl._toolbars.draw._activeMode.handler.disable();
-      }
-      // Clean up: Also ensure the edit mode is explicitly disabled
-      if (drawControl._toolbars.edit._activeMode) {
-        drawControl._toolbars.edit._activeMode.handler.disable();
-      }
-    }
+      // Clean up: Manually ensure any active drawing is disabled
+      // This prevents a line from being left half-drawn.
+      if (drawControl._toolbars.draw._activeMode) {
+        drawControl._toolbars.draw._activeMode.handler.disable();
+      }
+      // Clean up: Also ensure the edit mode is explicitly disabled
+      if (drawControl._toolbars.edit._activeMode) {
+        drawControl._toolbars.edit._activeMode.handler.disable();
+      }
+    }
 
-    // Force popups to update editing buttons/notes fields.
-    layer.eachLayer(l => {
-      if (l.isPopupOpen()) {
-        l.closePopup();
-        l.openPopup();
-      }
-    });
+    // Force popups to update editing buttons/notes fields.
+    layer.eachLayer(l => {
+      if (l.isPopupOpen()) {
+        l.closePopup();
+        l.openPopup();
+      }
+    });
 
-  } else {
-    console.error("Leaflet Draw control instance not found!");
-  }
+  } else {
+    console.error("Leaflet Draw control instance not found!");
+  }
 }
