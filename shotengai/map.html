@@ -6,29 +6,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Shotengai Atlas | Northlayer Studio</title>
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- Styles -->
   <link rel="stylesheet" href="../styles/atlas.css?v=5" />
 
-  <!-- Leaflet core -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js" defer></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- Local Leaflet plugins -->
-  <script src="../js/vendor/leaflet.geometryutil.js" defer></script>
-  <script src="../js/vendor/leaflet.snap.js" defer></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.css">
+  <script src="https://unpkg.com/leaflet-geoman-free@2.14.2/dist/leaflet-geoman.min.js"></script>
 
-  <!-- Leaflet.Draw -->
+  <script src="../js/vendor/leaflet.geometryutil.js"></script>
+  <script src="../js/vendor/leaflet.snap.js"></script>
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
-  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js" defer></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
-  <!-- Geocoder -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
-  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js" defer></script>
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
 
 </head>
@@ -81,12 +78,10 @@
     <main id="map"></main>
   </div>
 
-  <!-- Floating info panel -->
   <div class="infopanel" id="infopanel" style="display:none">
     <div class="infocard" id="info"></div>
   </div>
 
-  <!-- Auth modal -->
   <div id="authModal" class="modal" style="display:none">
     <div class="auth-card card">
 
@@ -113,7 +108,6 @@
     </div>
   </div>
 
-  <!-- Feature form modal (scrollable, grouped) -->
   <div id="featureModal" class="auth-modal" style="display:none">
     <div class="auth-card form-xxwide">
       <h3 id="featureFormTitle">Shotengai Details</h3>
@@ -190,7 +184,6 @@
     </div>
   </div>
 
-  <!-- App -->
   <script type="module" src="../js/atlas.js?v=3"></script>
 </body>
 
