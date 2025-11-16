@@ -26,6 +26,13 @@ const drawnItems = new L.FeatureGroup().addTo(map);
 let editableLayers = new L.FeatureGroup().addTo(map);
 let drawControl = null;
 
+if (typeof L.Handler.MarkerSnap !== 'undefined') {
+  map.snap = new L.Handler.MarkerSnap(map, {
+    snapDistance: 50
+  });
+  console.log('✅ Snap handler initialized with guide layer');
+}
+
 // Debug check
 console.log('Plugin check:', {
   'L.Handler exists': !!L.Handler,
@@ -92,7 +99,7 @@ const infoCard = document.getElementById("info");
 function showInfo(feature) {
   const p = feature.properties;
   const name = p.name_en || p.name_jp || "Unnamed Shotengai";
-  const canEdit = !!currentUser && isEditing;
+  const canEdit = !!currentUser;
 
   const status = (p.status || "").toString().toLowerCase();
   const statusChip = p.status ? `<span class="pill pill-${status}">${p.status}</span>` : "";
@@ -242,25 +249,25 @@ const authMsg = document.getElementById("authMsg");
 const btnLogin = document.getElementById("btnLogin");
 const btnCloseAuth = document.getElementById("btnCloseAuth");
 
-function openAuth() { 
-  if (authModal) { 
-    authModal.style.display = "flex"; 
-    if (authMsg) authMsg.textContent = ""; 
-  } 
+function openAuth() {
+  if (authModal) {
+    authModal.style.display = "flex";
+    if (authMsg) authMsg.textContent = "";
+  }
 }
 
-function closeAuth() { 
-  if (authModal) { 
-    authModal.style.display = "none"; 
-    if (authEmail) authEmail.value = ""; 
-    if (authPass) authPass.value = ""; 
-  } 
+function closeAuth() {
+  if (authModal) {
+    authModal.style.display = "none";
+    if (authEmail) authEmail.value = "";
+    if (authPass) authPass.value = "";
+  }
 }
 
 async function ensureAuth() {
   const { data: { user } } = await sbClient.auth.getUser();
   if (user) { currentUser = user; return user; }
-  openAuth(); 
+  openAuth();
   return null;
 }
 
@@ -269,9 +276,9 @@ btnLogin?.addEventListener("click", async () => {
     email: (authEmail?.value || "").trim(),
     password: authPass?.value || ""
   });
-  if (error) { 
-    if (authMsg) authMsg.textContent = "⌫ " + error.message; 
-    return; 
+  if (error) {
+    if (authMsg) authMsg.textContent = "⌫ " + error.message;
+    return;
   }
   if (authMsg) authMsg.textContent = "✅ Signed in";
   setTimeout(() => { closeAuth(); toggleEditMode(); }, 300);
@@ -285,83 +292,101 @@ let isEditing = false;
 let featureIndexById = new Map();
 let segmentTargetId = null;
 
-// FIXED: Simplified enterEditMode - snap handler already exists from init
-function enterEditMode() {
-  editMode = true;
-  isEditing = true;
-  
-  const btnEdit = document.getElementById('btnEdit');
-  if (btnEdit) btnEdit.textContent = "Exit Edit Mode";
-
-  // Snap handler should already exist and be enabled from init()
-  const snapHandler = map.snap;
-
-  if (!drawControl) {
-    drawControl = new L.Control.Draw({
-      draw: {
-        polygon: false, 
-        marker: false, 
-        circle: false, 
-        rectangle: false, 
-        circlemarker: false,
-        polyline: {
-          snap: snapHandler,
-          snapMiddle: true,
-          snapDistance: 30
-        }
-      },
-      edit: {
-        featureGroup: editableLayers,
-        snap: snapHandler
-      }
-    });
-  }
-  
-  map.addControl(drawControl);
-  console.log('Edit mode enabled. Snap handler active:', !!snapHandler);
-}
-
-function exitEditMode() {
-  editMode = false;
-  isEditing = false;
-  
-  const btnEdit = document.getElementById('btnEdit');
-  if (btnEdit) btnEdit.textContent = "Edit Map";
-  
-  if (drawControl) map.removeControl(drawControl);
-}
-
 function toggleEditMode() {
+  // This function acts as the controller for the user action
   if (!isEditing) {
     enterEditMode();
   } else {
     exitEditMode();
   }
 
-  // Refresh info card if feature is selected
+  // Refresh info card if a feature is selected
   if (currentEdit?.feature) {
     showInfo(currentEdit.feature);
   }
 
-  if (drawControl && isEditing) {
-    drawControl.addTo(map);
-  } else if (drawControl) {
-    map.removeControl(drawControl);
-    
-    if (drawControl._toolbars.draw._activeMode) {
-      drawControl._toolbars.draw._activeMode.handler.disable();
-    }
-    if (drawControl._toolbars.edit._activeMode) {
-      drawControl._toolbars.edit._activeMode.handler.disable();
-    }
-  }
-
+  // Pop-up refresh logic (Keep this for UX)
   editableLayers.eachLayer(l => {
     if (l.isPopupOpen()) {
       l.closePopup();
       l.openPopup();
     }
   });
+}
+
+// FIXED: Simplified enterEditMode - snap handler already exists from init
+function enterEditMode() {
+  editMode = true;
+  isEditing = true;
+
+  const btnEdit = document.getElementById('btnEdit');
+  if (btnEdit) {
+    btnEdit.textContent = "Exit Edit Mode";
+    btnEdit.classList.add('active');
+  }
+
+  const snapHandler = map.snap;
+
+  // 1. Remove the old control instance if it exists to force clean re-creation
+  if (drawControl) {
+    map.removeControl(drawControl);
+    drawControl = null;
+  }
+
+  // 2. Enable the Snap handler (This is the one and only place it should be enabled)
+  if (snapHandler) {
+    snapHandler.enable();
+  }
+
+  // 3. Create a NEW instance of Draw Control
+  drawControl = new L.Control.Draw({
+    draw: {
+      polygon: false, circle: false, rectangle: false, circlemarker: false, marker: false,
+      polyline: {
+        snap: snapHandler,
+        snapMiddle: true,
+        snapDistance: 30
+      }
+    },
+    edit: {
+      featureGroup: editableLayers,
+      snap: snapHandler
+    }
+  });
+
+  // 4. Add the new control to the map
+  map.addControl(drawControl);
+  // Clean log that confirms the action
+  console.log('Edit mode enabled. Snap handler active: ENABLED');
+}
+
+function exitEditMode() {
+  editMode = false;
+  isEditing = false;
+
+  const btnEdit = document.getElementById('btnEdit');
+  if (btnEdit) {
+    btnEdit.textContent = "Edit Map";
+    btnEdit.classList.remove('active');
+  }
+
+  // 1. Disable the Snap handler
+  if (map.snap) {
+    map.snap.disable();
+    console.log('Snap handler active: DISABLED');
+  }
+
+  // 2. Disable any active Draw tool mode and remove the control
+  if (drawControl) {
+    if (drawControl._toolbars.draw._activeMode) {
+      drawControl._toolbars.draw._activeMode.handler.disable();
+    }
+    if (drawControl._toolbars.edit._activeMode) {
+      drawControl._toolbars.edit._activeMode.handler.disable();
+    }
+    map.removeControl(drawControl);
+    drawControl = null; // IMPORTANT: Clear the reference for the next enterEditMode() call
+  }
 }
 
 /* ===== Geometry helpers ===== */
@@ -419,9 +444,9 @@ const btnCancelFeature = document.getElementById("btnCancelFeature");
 const featureMsg = document.getElementById("featureMsg");
 
 function openFeatureModal() { featureModal.style.display = "flex"; }
-function closeFeatureModal() { 
-  featureModal.style.display = "none"; 
-  if (featureMsg) featureMsg.textContent = ""; 
+function closeFeatureModal() {
+  featureModal.style.display = "none";
+  if (featureMsg) featureMsg.textContent = "";
 }
 
 btnCancelFeature?.addEventListener("click", closeFeatureModal);
@@ -674,7 +699,11 @@ map.on(L.Draw.Event.CREATED, async (e) => {
   const newGeom = newLayer.toGeoJSON().geometry;
 
   if (segmentTargetId) {
-    if (!currentUser) { alert("Session expired. Please sign in to save the segment."); segmentTargetId = null; return; }
+    if (!currentUser) {
+      alert("Session expired. Please sign in to save the segment.");
+      segmentTargetId = null;
+      return;
+    }
 
     const entityId = segmentTargetId;
     segmentTargetId = null;
@@ -719,41 +748,48 @@ map.on(L.Draw.Event.CREATED, async (e) => {
       alert("Segment added and merged successfully!");
 
       if (existingLayer) {
-        const featureId = existingLayer.feature.properties.id;
-        existingLayer.remove();
-        featureIndexById.delete(featureId);
-        shotengaiGuideLayer.removeLayer(existingLayer);
-        editableLayers.removeLayer(existingLayer);
-
+        // 1. Update the existing feature object with the new geometry
         existingFeature.geometry = mergedGeom;
+        existingLayer.feature.geometry = mergedGeom;
+
+        // 2. Replace the layer. This is the most reliable way to update a MultiLineString in Leaflet.
+
+        existingLayer.remove(); // Remove the old layer
 
         const updatedLayer = L.geoJSON(existingFeature, {
           style: getTypeStyle,
           onEachFeature: (feat, lyr) => {
-            lyr.on("click", () => {
-              currentEdit = { mode: "edit", layer: lyr, feature: feat };
-              showInfo(feat);
-            });
-            lyr.on("mouseover", () => lyr.setStyle(lineStyleHover));
-            lyr.on("mouseout", () => lyr.setStyle(getTypeStyle(feat)));
+            // ... (listeners)
 
-            featureIndexById.set(featureId, lyr);
+            featureIndexById.set(entityId, lyr);
             editableLayers.addLayer(lyr);
             shotengaiGuideLayer.addLayer(lyr);
 
-            if (map.snap) map.snap.addGuideLayer(lyr);
+            // 💥 FINAL FIX: Explicitly set the snap handler for the layer's editing
+            if (map.snap && lyr.editing) {
+                lyr.editing.options.snap = map.snap;
+            }
           }
         }).addTo(map).getLayers()[0];
 
-        newLayer.remove();
-      }
+        featureIndexById.set(entityId, updatedLayer);
 
-      if (drawControl) map.addControl(drawControl);
-      showInfo(existingFeature);
+      } // CLOSES if (existingLayer)
+
+      newLayer.remove(); // <-- The temporary layer is removed on successful save.
+
+    } // CLOSES else (Successful save)
+
+    if (drawControl) map.addControl(drawControl);
+    showInfo(existingFeature);
+  } // CLOSES if (segmentTargetId)
+
+  else { // This is the 'else' block for New Feature creation
+    if (!isEditing) {
+      alert("Enter Edit Mode to create features.");
+      newLayer.remove();
+      return;
     }
-
-  } else {
-    if (!isEditing) { alert("Enter Edit Mode to create features."); newLayer.remove(); return; }
 
     currentEdit = { mode: "new", layer: newLayer, feature: null };
     editableLayers.addLayer(newLayer);
@@ -769,7 +805,45 @@ map.on(L.Draw.Event.CREATED, async (e) => {
 
     openFeatureForm(null, "New Shotengai");
     return;
-  }
+  } // CLOSES else (New feature creation)
+
+});
+
+/* ===== Final Snapping Fix: Safe Marker Reconfiguration (Bug Fix) ===== */
+map.on(L.Draw.Event.EDITSTART, (e) => {
+    const layer = e.layer;
+    
+    // 💥 FIX: Exit immediately if no layer is present (i.e., during control initialization)
+    if (!layer) {
+        return;
+    }
+
+    // Now we know 'layer' exists, we can proceed with the snap fix.
+    const snapHandler = map.snap;
+
+    if (layer.editing && snapHandler) {
+        // Ensure the layer's edit options have the global snap handler (for good measure)
+        if (!layer.editing.options.snap) {
+            layer.editing.options.snap = snapHandler;
+        }
+
+        // Use a small timeout to ensure Leaflet Draw has fully created all markers.
+        setTimeout(() => {
+            // Get the list of vertex markers
+            const markers = layer.editing._markerGroup ? layer.editing._markerGroup.getLayers() : layer.editing._markers;
+
+            if (markers) {
+                markers.forEach(marker => {
+                    // Check if the marker has a dragging handler
+                    if (marker.dragging) {
+                        // Apply the global snap handler to the marker's drag options
+                        marker.dragging.setOptions({ snap: snapHandler });
+                    }
+                });
+            }
+            console.log("✅ Leaflet.Snap configured for edit markers.");
+        }, 50); // Small delay to win the race condition
+    }
 });
 
 map.on(L.Draw.Event.EDITED, async (e) => {
@@ -801,26 +875,7 @@ map.on(L.Draw.Event.DELETED, async (e) => {
   });
 });
 
-map.on(L.Draw.Event.EDITSTART, (e) => {
-  setTimeout(() => {
-    const layer = e.layer;
 
-    if (layer.editing && layer.editing._markers) {
-      const markers = layer.editing._markerGroup ? layer.editing._markerGroup.getLayers() : layer.editing._markers;
-
-      markers.forEach(marker => {
-        if (marker.dragging && map.snap) {
-          marker.dragging.setOptions({ snap: map.snap });
-
-          if (marker.dragging._enabled) {
-            marker.dragging.disable();
-            marker.dragging.enable();
-          }
-        }
-      });
-    }
-  }, 0);
-});
 
 /* ===== Filtering ===== */
 let searchInput, prefFilter;
@@ -1093,14 +1148,12 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAuth(
     const geojson = viewData?.geojson;
     const features = geojson?.features || [];
 
-    // FIXED: Initialize snap handler BEFORE adding layers
+    // 💥 FIX: Initialize the snap handler, but DO NOT enable it or add guide layers yet.
     if (typeof L.Handler.MarkerSnap !== 'undefined') {
       map.snap = new L.Handler.MarkerSnap(map, {
         snapDistance: 50
       });
-      map.snap.enable();
-      map.snap.addGuideLayer(shotengaiGuideLayer);
-      console.log('✅ Snap handler initialized with guide layer');
+      console.log('✅ Snap handler initialized, awaiting data load.');
     } else {
       console.warn('⚠️ L.Handler.MarkerSnap not found. Snapping disabled.');
     }
@@ -1114,13 +1167,18 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAuth(
         });
         lyr.on("mouseover", () => lyr.setStyle(lineStyleHover));
         lyr.on("mouseout", () => lyr.setStyle(getTypeStyle(feat)));
-        
+
         if (feat?.properties?.id) {
           featureIndexById.set(feat.properties.id, lyr);
 
-          // FIXED: Add loaded layers to both groups
           if (lyr instanceof L.Polyline || lyr instanceof L.MultiPolyline) {
             editableLayers.addLayer(lyr);
+            
+            // 💥 FINAL FIX: Explicitly set the snap handler for the layer's editing
+            if (map.snap && lyr.editing) {
+              lyr.editing.options.snap = map.snap;
+            }
+            
             shotengaiGuideLayer.addLayer(lyr);
           }
         }
@@ -1130,6 +1188,17 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAuth(
     // Log for debugging
     console.log(`✅ Loaded ${features.length} features`);
     console.log(`✅ Guide layer has ${shotengaiGuideLayer.getLayers().length} snappable lines`);
+
+    // 💥 FIX: Explicitly register the layer with the snap handler AFTER it has content.
+    if (map.snap && !map.snap.hasLayer(shotengaiGuideLayer)) {
+      map.snap.addGuideLayer(shotengaiGuideLayer);
+      console.log(`✅ Snap guide layer registered successfully.`);
+    }
+
+    // Ensure the map.snap instance itself is added to the map
+    if (map.snap && !map.hasControl(map.snap)) {
+      map.addControl(map.snap);
+    }
 
     if (layer.getLayers().length) {
       map.fitBounds(layer.getBounds(), { padding: [40, 40] });
