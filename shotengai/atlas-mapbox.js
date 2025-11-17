@@ -323,12 +323,21 @@ function showInfo(feature) {
 
 function hideInfo() { 
   infoPanel.style.display = "none";
+  
+  // Also clear the map highlight when hiding info panel
+  if (map && map.getLayer && map.getLayer('shotengai-lines-hover')) {
+    map.setPaintProperty('shotengai-lines-hover', 'line-opacity', 0);
+  }
 }
 window._hideInfo = (e) => {
   if (e) {
     e.stopPropagation();
   }
   hideInfo();
+  
+  // Clear current edit state
+  currentEdit = { mode: "new", feature: null };
+  window.currentEdit = currentEdit;
 };
 
 /* ===== Supabase loader ===== */
@@ -1447,7 +1456,7 @@ function applyFilters(triggerZoom = false) {
     resultsContainer.querySelectorAll(".result-item").forEach(el => {
       el.addEventListener("click", () => {
         const id = el.dataset.id;
-        const feat = allFeatures.find(f => String(f.properties.id) === id);
+        const feat = allFeatures.find(f => String(f.properties.id) === String(id));
         if (!feat) return;
         
         // Zoom to feature
@@ -1465,11 +1474,11 @@ function applyFilters(triggerZoom = false) {
         currentEdit = { mode: "edit", feature: feat };
         window.currentEdit = currentEdit;
         
-        // Highlight the feature on the map
+        // Highlight the feature on the map - use NUMERIC id for proper comparison
         if (map.getLayer('shotengai-lines-hover')) {
           map.setPaintProperty('shotengai-lines-hover', 'line-opacity', [
             'case',
-            ['==', ['get', 'id'], id],
+            ['==', ['get', 'id'], feat.properties.id], // Use actual numeric ID from feature
             1,
             0
           ]);
@@ -1837,6 +1846,21 @@ async function loadAndDisplayFeatures() {
     renderSummary(document.getElementById("summaryOverall"), overallStats, "total");
     applyFilters();
     
+    // Debug: Check if layers are properly configured
+    setTimeout(() => {
+      const mainLayer = map.getLayer('shotengai-lines');
+      const hoverLayer = map.getLayer('shotengai-lines-hover');
+      console.log('🔍 Main layer exists:', !!mainLayer);
+      console.log('🔍 Hover layer exists:', !!hoverLayer);
+      
+      // Test if we can query features at a test point
+      const testPoint = map.project(map.getCenter());
+      const features = map.queryRenderedFeatures(testPoint, {
+        layers: ['shotengai-lines']
+      });
+      console.log('🔍 Test feature query returned:', features.length, 'features');
+    }, 500);
+    
     console.log('✅ Features loaded and displayed');
   } catch (error) {
     console.error('❌ Failed to load features:', error);
@@ -1856,132 +1880,137 @@ function registerMapClickHandlers() {
     
     console.log('✅ Layers confirmed, registering click handlers');
     
-    // Click handler for shotengai lines
-    map.on('click', 'shotengai-lines', (e) => {
-      // Don't interfere if we're in draw mode
-      const currentMode = draw.getMode();
-      if (currentMode === 'draw_line_string' || currentMode === 'draw_polygon') {
-        return; // Let draw handle the click for drawing
-      }
-      
-      e.preventDefault();
-      
-      // Get the feature ID from the click
-      const clickedFeatureId = e.features[0].properties.id;
-      
-      // Find the complete feature from our data store (not from the map click which may be truncated)
-      const completeFeature = allFeatures.find(f => f.properties.id === clickedFeatureId);
-      
-      if (!completeFeature) {
-        console.warn('⚠️ Could not find complete feature for ID:', clickedFeatureId);
-        return;
-      }
-      
-      console.log('🖱️ Clicked feature:', completeFeature.properties.name_en || completeFeature.properties.name_jp);
-      console.log('📍 Complete geometry:', completeFeature.geometry);
-      
-      // Update current edit state
-      currentEdit = { mode: "edit", feature: completeFeature };
-      window.currentEdit = currentEdit; // Update global reference
-      
-      // If in edit mode, show info and start editing geometry
-      if (isEditing) {
-        // Show info card so user knows what they're editing
-        showInfo(completeFeature);
-        
-        // Start editing immediately (info card stays open)
-        startEditingGeometry(completeFeature);
-      } else {
-        // If not in edit mode, just show info
-        showInfo(completeFeature);
-        
-        // Highlight clicked feature
-        map.setPaintProperty('shotengai-lines-hover', 'line-opacity', [
-          'case',
-          ['==', ['get', 'id'], clickedFeatureId],
-          1,
-          0
-        ]);
-      }
-    });
-    
-    // ALSO add click handler to hover layer (for when lines are highlighted)
-    map.on('click', 'shotengai-lines-hover', (e) => {
-      // Don't interfere if we're in draw mode
-      const currentMode = draw.getMode();
-      if (currentMode === 'draw_line_string' || currentMode === 'draw_polygon') {
-        return;
-      }
-      
-      e.preventDefault();
-      
-      const clickedFeatureId = e.features[0].properties.id;
-      const completeFeature = allFeatures.find(f => f.properties.id === clickedFeatureId);
-      
-      if (!completeFeature) {
-        console.warn('⚠️ Could not find complete feature for ID:', clickedFeatureId);
-        return;
-      }
-      
-      console.log('🖱️ Clicked highlighted feature:', completeFeature.properties.name_en || completeFeature.properties.name_jp);
-      
-      currentEdit = { mode: "edit", feature: completeFeature };
-      window.currentEdit = currentEdit;
-      
-      if (isEditing) {
-        showInfo(completeFeature);
-        startEditingGeometry(completeFeature);
-      } else {
-        showInfo(completeFeature);
-        // Already highlighted, no need to update
-      }
-    });
-
-    // Click on map background (not on a feature) - deselect
+    // Use global click handler with feature querying (more reliable than layer-specific in Mapbox GL)
     map.on('click', (e) => {
-      // Don't interfere if we're in draw mode
-      const currentMode = draw.getMode();
-      if (currentMode === 'draw_line_string' || currentMode === 'draw_polygon') {
-        return; // Let draw handle it
-      }
+      console.log('🖱️ Map clicked at:', e.lngLat);
+      console.log('📍 Click point (pixels):', e.point);
       
-      // Don't deselect if we're actively editing geometry
-      if (isEditingGeometry) {
-        // Keep the feature selected in direct_select mode
-        const allFeatures = draw.getAll().features;
-        if (allFeatures.length > 0) {
-          draw.changeMode('direct_select', { featureId: allFeatures[0].id });
+      // Don't interfere if we're in draw mode - check if draw is initialized first
+      if (isEditing && draw && draw.getMode) {
+        try {
+          const currentMode = draw.getMode();
+          if (currentMode === 'draw_line_string' || currentMode === 'draw_polygon') {
+            console.log('⏸️ In draw mode, ignoring click');
+            return;
+          }
+        } catch (err) {
+          console.warn('⚠️ Could not get draw mode:', err.message);
         }
-        return;
       }
       
-      // Check if we clicked on a feature
-      const features = map.queryRenderedFeatures(e.point, {
-        layers: ['shotengai-lines']
+      // Query rendered features at the click point with a larger buffer for better detection
+      // Use a 5px buffer around the click point to catch nearby lines
+      const bbox = [
+        [e.point.x - 5, e.point.y - 5],
+        [e.point.x + 5, e.point.y + 5]
+      ];
+      
+      const features = map.queryRenderedFeatures(bbox, {
+        layers: ['shotengai-lines', 'shotengai-lines-hover']
       });
       
-      // If we didn't click on a feature, deselect
-      if (features.length === 0) {
-        // Clear draw selection
-        if (isEditing) {
-          draw.changeMode('simple_select');
-          const selected = draw.getSelected();
-          if (selected.features.length > 0) {
-            // Don't delete, just deselect
-            draw.changeMode('simple_select');
-          }
+      console.log('🔍 Features found at click point (with 5px buffer):', features.length);
+      
+      // Also try without buffer for debugging
+      const featuresExact = map.queryRenderedFeatures(e.point, {
+        layers: ['shotengai-lines', 'shotengai-lines-hover']
+      });
+      console.log('🔍 Features found at exact click point:', featuresExact.length);
+      
+      // Check if layers exist
+      if (!map.getLayer('shotengai-lines')) {
+        console.error('❌ Layer shotengai-lines does not exist!');
+        return;
+      }
+      
+      if (features.length > 0) {
+        // We clicked on a feature!
+        const clickedFeatureId = features[0].properties.id;
+        console.log('📍 Clicked feature ID:', clickedFeatureId);
+        console.log('🎯 Feature properties:', features[0].properties);
+        
+        // Find the complete feature from our data store
+        const completeFeature = allFeatures.find(f => f.properties.id === clickedFeatureId);
+        
+        if (!completeFeature) {
+          console.warn('⚠️ Could not find complete feature for ID:', clickedFeatureId);
+          console.log('📦 Available feature IDs:', allFeatures.map(f => f.properties.id));
+          return;
         }
+        
+        console.log('🖱️ Clicked feature:', completeFeature.properties.name_en || completeFeature.properties.name_jp);
+        console.log('📍 Complete geometry:', completeFeature.geometry);
+        
+        // Update current edit state
+        currentEdit = { mode: "edit", feature: completeFeature };
+        window.currentEdit = currentEdit;
+        
+        // If in edit mode, show info and start editing geometry
+        if (isEditing) {
+          showInfo(completeFeature);
+          startEditingGeometry(completeFeature);
+        } else {
+          // If not in edit mode, just show info
+          showInfo(completeFeature);
+          
+          // Highlight clicked feature
+          map.setPaintProperty('shotengai-lines-hover', 'line-opacity', [
+            'case',
+            ['==', ['get', 'id'], clickedFeatureId],
+            1,
+            0
+          ]);
+        }
+        
+        // Stop propagation since we handled the click
+        if (e.originalEvent) {
+          e.originalEvent.stopPropagation();
+        }
+      } else {
+        // Clicked on background - deselect
+        console.log('🗺️ Background click - deselecting');
+        
+        // Don't deselect if we're actively editing geometry
+        if (isEditingGeometry && draw && draw.getAll) {
+          console.log('⏸️ Geometry editing active, keeping selection');
+          try {
+            const allDrawnFeatures = draw.getAll().features;
+            if (allDrawnFeatures.length > 0 && draw.changeMode) {
+              draw.changeMode('direct_select', { featureId: allDrawnFeatures[0].id });
+            }
+          } catch (err) {
+            console.warn('⚠️ Error maintaining draw selection:', err.message);
+          }
+          return;
+        }
+        
+        console.log('🧹 Clearing info panel and highlights');
         
         // Hide info panel
         hideInfo();
         
-        // Remove highlight
+        // Clear draw selection if any (only if draw is initialized)
+        if (draw && draw.getAll && draw.deleteAll) {
+          try {
+            if (draw.getAll().features.length > 0) {
+              draw.deleteAll();
+            }
+          } catch (err) {
+            console.warn('⚠️ Error clearing draw features:', err.message);
+          }
+        }
+        
+        // CRITICAL: Clear highlight by setting opacity to 0 for ALL features
         if (map.getLayer('shotengai-lines-hover')) {
+          console.log('🧹 Clearing hover layer highlight');
           map.setPaintProperty('shotengai-lines-hover', 'line-opacity', 0);
         }
         
-        // Clear current edit
+        // Clear current edit state
         currentEdit = { mode: "new", feature: null };
+        window.currentEdit = currentEdit;
+        
+        console.log('✅ Selection cleared');
       }
     });
 
@@ -2011,6 +2040,26 @@ function registerMapClickHandlers() {
         map.setPaintProperty('shotengai-lines-hover', 'line-opacity', 0);
       }
     });
+    
+    // Ensure canvas is ready and interactive
+    const canvas = map.getCanvas();
+    if (canvas) {
+      canvas.style.cursor = ''; // Reset cursor
+      // Small delay to ensure all event handlers are fully bound
+      setTimeout(() => {
+        console.log('✅ Canvas interactive and ready for clicks');
+      }, 100);
+    }
+    
+    // Test that handlers are actually registered
+    const registeredEvents = map._listeners;
+    if (registeredEvents && registeredEvents.click) {
+      console.log('✅ Click event listeners registered:', registeredEvents.click.length);
+    }
+    
+    // Force a test to ensure layer is interactive
+    map.setPaintProperty('shotengai-lines', 'line-opacity', 0.9);
+    console.log('✅ Layer paint properties accessible');
     
     console.log('✅ All map click handlers registered');
   }; // End of checkLayersAndRegister
@@ -2123,9 +2172,16 @@ function setupAuthUI() {
         applyFilters(false);
         addMapLegend();
         setupAuthUI();
-        registerMapClickHandlers();
         
-        console.log('🎉 Initialization complete!');
+        // CRITICAL FIX: Wait for map to be fully idle before registering click handlers
+        // The 'load' event fires too early - map needs to finish rendering
+        console.log('⏳ Waiting for map to be fully interactive...');
+        map.once('idle', () => {
+          console.log('✅ Map is now idle and fully interactive');
+          registerMapClickHandlers();
+          console.log('🎉 Initialization complete!');
+        });
+        
       } catch (featureError) {
         console.error('❌ Error loading features:', featureError);
         alert('Failed to load Shotengai data: ' + (featureError.message || featureError));
