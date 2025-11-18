@@ -33,6 +33,12 @@ map.addControl(
   'top-right'
 );
 
+// Add scale bar (shows distance)
+map.addControl(new mapboxgl.ScaleControl({
+  maxWidth: 100,
+  unit: 'metric' // meters/kilometers
+}), 'bottom-right');
+
 // Geocoder removed - using sidebar search instead
 
 /* ===== Mapbox Draw Setup ===== */
@@ -531,21 +537,26 @@ function showNewLineInstructions() {
 }
 
 function finishNewLine() {
+  console.log('🎯 Finishing new line...');
   const drawnFeatures = draw.getAll();
+  console.log('📏 Drawn features:', drawnFeatures.features.length);
   
   if (drawnFeatures.features.length === 0) {
-    alert('No line drawn yet');
+    console.error('❌ No drawn features found!');
+    alert('No line drawn yet. Please draw a line first by clicking the line tool and adding points on the map.');
     return;
   }
   
   // Get all drawn features (may be multiple line segments)
   const allFeatures = drawnFeatures.features;
+  console.log('✏️ Processing', allFeatures.length, 'feature(s)');
   
   // Combine into a single feature if multiple segments
   let combinedGeometry;
   
   if (allFeatures.length === 1) {
     combinedGeometry = allFeatures[0].geometry;
+    console.log('📍 Single feature with', combinedGeometry.coordinates.length, 'vertices');
   } else {
     // Multiple segments - combine into MultiLineString
     const allCoords = allFeatures.map(f => {
@@ -559,6 +570,7 @@ function finishNewLine() {
       type: 'MultiLineString',
       coordinates: allCoords
     };
+    console.log('📍 Combined', allCoords.length, 'segments into MultiLineString');
   }
   
   // Create a temporary feature for the form
@@ -569,6 +581,7 @@ function finishNewLine() {
   };
   
   currentEdit = { mode: "new", feature: tempFeature };
+  console.log('✅ Feature ready for form');
   
   // Remove instructions
   const instructions = document.getElementById('newLineInstructions');
@@ -1382,6 +1395,31 @@ map.on('draw.delete', async (e) => {
   }
 });
 
+/* ===== Fuzzy Search with Fuse.js ===== */
+let fuseInstance = null;
+
+function initializeFuzzySearch() {
+  if (!allFeatures.length) return;
+  
+  // Create Fuse instance for fuzzy searching
+  fuseInstance = new Fuse(allFeatures, {
+    keys: [
+      { name: 'properties.name_en', weight: 2 },
+      { name: 'properties.name_jp', weight: 2 },
+      { name: 'properties.city', weight: 1 },
+      { name: 'properties.prefecture', weight: 1 },
+      { name: 'properties.slug', weight: 0.5 },
+      { name: 'properties.type', weight: 0.5 },
+      { name: 'properties.classification', weight: 0.5 }
+    ],
+    threshold: 0.4, // 0.0 = perfect match, 1.0 = match anything
+    ignoreLocation: true, // Don't care about position of match
+    minMatchCharLength: 2
+  });
+  
+  console.log('✅ Fuzzy search initialized');
+}
+
 /* ===== Filtering ===== */
 let searchInput, prefFilter;
 const MAX_RESULTS = 50;
@@ -1393,22 +1431,37 @@ function applyFilters(triggerZoom = false) {
   const qRaw = (searchInput?.value ?? "");
   const pfRaw = (prefFilter?.value ?? "");
 
-  const q = qRaw.trim().toLowerCase();
+  const q = qRaw.trim();
   const pf = pfRaw.trim().toLowerCase();
 
-  const matches = [];
-  allFeatures.forEach(f => {
-    const p = f.properties || {};
-    const pPref = (p.prefecture || "").trim().toLowerCase();
-
-    const inPref = !pf || (pPref === pf);
-    const inText = !q || [
-      p.name_en, p.name_jp, p.city, p.prefecture, p.slug, p.type, p.classification
-    ].filter(Boolean).some(v => String(v).toLowerCase().includes(q));
-
-    const ok = inPref && inText;
-    if (ok) matches.push(f);
-  });
+  let matches = [];
+  
+  // Use fuzzy search if query exists and Fuse is initialized
+  if (q && fuseInstance) {
+    const fuzzyResults = fuseInstance.search(q);
+    matches = fuzzyResults.map(result => result.item);
+    console.log(`🔍 Fuzzy search for "${q}" found ${matches.length} results`);
+  } else if (!q) {
+    // No search query - show all features
+    matches = [...allFeatures];
+  } else {
+    // Fallback to simple search if Fuse not ready
+    matches = allFeatures.filter(f => {
+      const p = f.properties || {};
+      return [
+        p.name_en, p.name_jp, p.city, p.prefecture, p.slug, p.type, p.classification
+      ].filter(Boolean).some(v => String(v).toLowerCase().includes(q.toLowerCase()));
+    });
+  }
+  
+  // Apply prefecture filter
+  if (pf) {
+    matches = matches.filter(f => {
+      const p = f.properties || {};
+      const pPref = (p.prefecture || "").trim().toLowerCase();
+      return pPref === pf;
+    });
+  }
 
   // Update layer opacity based on filter
   if (map.getLayer('shotengai-lines')) {
@@ -1459,7 +1512,7 @@ function applyFilters(triggerZoom = false) {
         const feat = allFeatures.find(f => String(f.properties.id) === String(id));
         if (!feat) return;
         
-        // Zoom to feature
+        // Zoom to feature (instant - no animation)
         const coords = feat.geometry.type === 'LineString' 
           ? feat.geometry.coordinates 
           : feat.geometry.coordinates.flat();
@@ -1468,7 +1521,10 @@ function applyFilters(triggerZoom = false) {
           return bounds.extend(coord);
         }, new mapboxgl.LngLatBounds(coords[0], coords[0]));
         
-        map.fitBounds(bounds, { padding: 50 });
+        map.fitBounds(bounds, { 
+          padding: 50
+          // Instant zoom (no animation)
+        });
         
         // Update current edit state
         currentEdit = { mode: "edit", feature: feat };
@@ -1673,6 +1729,65 @@ modalContact?.querySelector('form')?.addEventListener('submit', (e) => {
   modalContact.style.display = 'none';
 });
 
+/* ===== Heatmap Toggle ===== */
+let heatmapVisible = false;
+
+function toggleHeatmap() {
+  if (!map.getLayer('shotengai-heatmap')) {
+    console.warn('⚠️ Heatmap layer not found');
+    return;
+  }
+  
+  heatmapVisible = !heatmapVisible;
+  const visibility = heatmapVisible ? 'visible' : 'none';
+  
+  map.setLayoutProperty('shotengai-heatmap', 'visibility', visibility);
+  
+  // Also hide/show regular layers when heatmap is active
+  if (heatmapVisible) {
+    // Hide clusters and points when heatmap is on
+    if (map.getLayer('shotengai-clusters')) {
+      map.setLayoutProperty('shotengai-clusters', 'visibility', 'none');
+    }
+    if (map.getLayer('shotengai-cluster-count')) {
+      map.setLayoutProperty('shotengai-cluster-count', 'visibility', 'none');
+    }
+    if (map.getLayer('shotengai-unclustered-point')) {
+      map.setLayoutProperty('shotengai-unclustered-point', 'visibility', 'none');
+    }
+    // Keep lines visible but reduce opacity
+    if (map.getLayer('shotengai-lines')) {
+      map.setPaintProperty('shotengai-lines', 'line-opacity', 0.3);
+    }
+  } else {
+    // Restore normal visibility
+    if (map.getLayer('shotengai-clusters')) {
+      map.setLayoutProperty('shotengai-clusters', 'visibility', 'visible');
+    }
+    if (map.getLayer('shotengai-cluster-count')) {
+      map.setLayoutProperty('shotengai-cluster-count', 'visibility', 'visible');
+    }
+    if (map.getLayer('shotengai-unclustered-point')) {
+      map.setLayoutProperty('shotengai-unclustered-point', 'visibility', 'visible');
+    }
+    if (map.getLayer('shotengai-lines')) {
+      map.setPaintProperty('shotengai-lines', 'line-opacity', 0.9);
+    }
+  }
+  
+  // Update button state
+  const btnHeatmap = document.getElementById('btnHeatmap');
+  if (btnHeatmap) {
+    btnHeatmap.classList.toggle('active', heatmapVisible);
+    btnHeatmap.textContent = heatmapVisible ? 'Hide Heatmap' : 'Show Heatmap';
+  }
+  
+  console.log(`🗺️ Heatmap ${heatmapVisible ? 'enabled' : 'disabled'}`);
+}
+
+const btnHeatmap = document.getElementById('btnHeatmap');
+btnHeatmap?.addEventListener('click', toggleHeatmap);
+
 /* ===== Add legend ===== */
 function addMapLegend() {
   const legendEl = document.createElement('div');
@@ -1793,27 +1908,129 @@ async function loadAndDisplayFeatures() {
 
     // Remove existing source/layer if present
     if (map.getSource('shotengai')) {
-      // Don't remove click handlers - they're managed by registerMapClickHandlers()
-      
       if (map.getLayer('shotengai-lines')) map.removeLayer('shotengai-lines');
       if (map.getLayer('shotengai-lines-hover')) map.removeLayer('shotengai-lines-hover');
       map.removeSource('shotengai');
     }
+    
+    if (map.getSource('shotengai-points')) {
+      if (map.getLayer('shotengai-clusters')) map.removeLayer('shotengai-clusters');
+      if (map.getLayer('shotengai-cluster-count')) map.removeLayer('shotengai-cluster-count');
+      if (map.getLayer('shotengai-unclustered-point')) map.removeLayer('shotengai-unclustered-point');
+      map.removeSource('shotengai-points');
+    }
 
-    // Add source
+    // Convert line features to point features for clustering
+    // Use the first coordinate of each line as the point
+    const pointFeatures = features.map(f => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: f.geometry.type === 'LineString' 
+          ? f.geometry.coordinates[0] 
+          : f.geometry.coordinates[0][0]
+      },
+      properties: f.properties
+    }));
+
+    // Add main source WITHOUT clustering (for line geometries)
     map.addSource('shotengai', {
       type: 'geojson',
       data: {
         type: 'FeatureCollection',
-        features: features
+        features: features // Original line features
+      }
+    });
+    
+    // Add separate point source WITH clustering (for clusters only - no individual points)
+    map.addSource('shotengai-points', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: pointFeatures
+      },
+      cluster: true,
+      clusterMaxZoom: 9, // Stop clustering at zoom 9 (clusters visible zoom 0-9)
+      clusterRadius: 50
+    });
+
+    // Add cluster circles (visible zoom 0-9)
+    map.addLayer({
+      id: 'shotengai-clusters',
+      type: 'circle',
+      source: 'shotengai-points',
+      filter: ['has', 'point_count'],
+      maxzoom: 10, // Hide clusters at zoom 10+
+      paint: {
+        'circle-color': [
+          'step',
+          ['get', 'point_count'],
+          '#10b981', // Green for small clusters (< 5)
+          5,
+          '#f59e0b', // Orange for medium clusters (5-10)
+          10,
+          '#ef4444'  // Red for large clusters (10+)
+        ],
+        'circle-radius': [
+          'step',
+          ['get', 'point_count'],
+          10,  // Small clusters (was 15)
+          5,
+          14,  // Medium clusters (was 20)
+          10,
+          18   // Large clusters (was 25)
+        ],
+        'circle-stroke-width': 0, // No border (was 2)
+        'circle-opacity': 0.85
       }
     });
 
-    // Add main layer with proper type-based coloring
+    // Add cluster count labels (visible zoom 0-9)
+    map.addLayer({
+      id: 'shotengai-cluster-count',
+      type: 'symbol',
+      source: 'shotengai-points',
+      filter: ['has', 'point_count'],
+      maxzoom: 10, // Hide at zoom 10+
+      layout: {
+        'text-field': '{point_count_abbreviated}',
+        'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
+        'text-size': 11 // Slightly smaller (was 12)
+      },
+      paint: {
+        'text-color': '#ffffff'
+      }
+    });
+
+    // Add unclustered point layer (single shotengai that don't cluster, visible zoom 0-9)
+    map.addLayer({
+      id: 'shotengai-unclustered-point',
+      type: 'circle',
+      source: 'shotengai-points',
+      filter: ['!', ['has', 'point_count']], // Not a cluster
+      maxzoom: 10, // Hide at zoom 10+ (when lines take over)
+      paint: {
+        'circle-color': [
+          'match',
+          ['upcase', ['coalesce', ['slice', ['get', 'classification'], 0, 1], ['slice', ['get', 'type'], 0, 1], '']],
+          'A', TYPE_COLORS['A'],
+          'B', TYPE_COLORS['B'],
+          'C', TYPE_COLORS['C'],
+          'D', TYPE_COLORS['D'],
+          TYPE_COLORS['default']
+        ],
+        'circle-radius': 5, // Smaller (was 8)
+        'circle-stroke-width': 0, // No border (was 2)
+        'circle-opacity': 0.85
+      }
+    });
+
+    // Add main layer with proper type-based coloring (visible zoom 10+, ~1.5km scale)
     map.addLayer({
       id: 'shotengai-lines',
       type: 'line',
       source: 'shotengai',
+      minzoom: 10, // Lines appear at zoom 10+ (was 9)
       paint: {
         'line-color': [
           'match',
@@ -1826,6 +2043,7 @@ async function loadAndDisplayFeatures() {
         ],
         'line-width': 3,
         'line-opacity': 0.9
+        // No line-dasharray - solid lines
       }
     });
 
@@ -1834,12 +2052,122 @@ async function loadAndDisplayFeatures() {
       id: 'shotengai-lines-hover',
       type: 'line',
       source: 'shotengai',
+      minzoom: 10, // Match the main lines layer (was 9)
       paint: {
         'line-color': '#ffffff',
         'line-width': 5,
         'line-opacity': 0
       }
     });
+
+    // Add 3D buildings layer (shows when zoomed in close)
+    if (!map.getLayer('3d-buildings')) {
+      map.addLayer({
+        'id': '3d-buildings',
+        'source': 'composite',
+        'source-layer': 'building',
+        'filter': ['==', 'extrude', 'true'],
+        'type': 'fill-extrusion',
+        'minzoom': 15, // Only show at zoom 15+
+        'paint': {
+          'fill-extrusion-color': '#1a2332', // Match dark theme
+          'fill-extrusion-height': [
+            'interpolate', ['linear'], ['zoom'],
+            15, 0,
+            15.05, ['get', 'height']
+          ],
+          'fill-extrusion-base': [
+            'interpolate', ['linear'], ['zoom'],
+            15, 0,
+            15.05, ['get', 'min_height']
+          ],
+          'fill-extrusion-opacity': 0.6
+        }
+      }, 'shotengai-lines'); // Insert below shotengai lines so they're on top
+    }
+
+    // Add heatmap layer (hidden by default, toggle with button)
+    if (!map.getLayer('shotengai-heatmap')) {
+      // Convert features to points for heatmap
+      const heatmapPoints = features.map(f => ({
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: f.geometry.type === 'LineString' 
+            ? f.geometry.coordinates[0] 
+            : f.geometry.coordinates[0][0]
+        },
+        properties: f.properties
+      }));
+      
+      // Add heatmap source
+      if (!map.getSource('shotengai-heatmap')) {
+        map.addSource('shotengai-heatmap', {
+          type: 'geojson',
+          data: {
+            type: 'FeatureCollection',
+            features: heatmapPoints
+          }
+        });
+      }
+      
+      map.addLayer({
+        'id': 'shotengai-heatmap',
+        'type': 'heatmap',
+        'source': 'shotengai-heatmap',
+        'maxzoom': 15, // Heatmap fades out as you zoom in
+        'layout': {
+          'visibility': 'none' // Hidden by default
+        },
+        'paint': {
+          // Increase weight as zoom level increases
+          'heatmap-weight': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 1,
+            15, 1
+          ],
+          // Increase intensity as zoom level increases
+          'heatmap-intensity': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 1,
+            15, 3
+          ],
+          // Color gradient from blue (low) to red (high)
+          'heatmap-color': [
+            'interpolate',
+            ['linear'],
+            ['heatmap-density'],
+            0, 'rgba(33,102,172,0)',
+            0.2, 'rgb(103,169,207)',
+            0.4, 'rgb(209,229,240)',
+            0.6, 'rgb(253,219,199)',
+            0.8, 'rgb(239,138,98)',
+            1, 'rgb(178,24,43)'
+          ],
+          // Adjust radius at different zoom levels
+          'heatmap-radius': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 2,
+            9, 20,
+            15, 30
+          ],
+          // Adjust opacity based on zoom
+          'heatmap-opacity': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            7, 1,
+            15, 0
+          ]
+        }
+      }, 'shotengai-lines'); // Below lines
+    }
 
     // Update stats
     const overallStats = computeStats(allFeatures);
@@ -1880,7 +2208,87 @@ function registerMapClickHandlers() {
     
     console.log('✅ Layers confirmed, registering click handlers');
     
-    // Use global click handler with feature querying (more reliable than layer-specific in Mapbox GL)
+    // Click handler for clusters - zoom in when clicked
+    map.on('click', 'shotengai-clusters', (e) => {
+      console.log('🎯 Cluster clicked');
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ['shotengai-clusters']
+      });
+      
+      const clusterId = features[0].properties.cluster_id;
+      const point = features[0].geometry.coordinates;
+      
+      // Get cluster expansion zoom
+      map.getSource('shotengai-points').getClusterExpansionZoom(clusterId, (err, zoom) => {
+        if (err) return;
+        
+        map.easeTo({
+          center: point,
+          zoom: zoom + 1 // Zoom in a bit more than minimum
+          // No duration = default Mapbox easing
+        });
+      });
+    });
+    
+    // Change cursor on cluster hover
+    map.on('mouseenter', 'shotengai-clusters', () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    
+    map.on('mouseleave', 'shotengai-clusters', () => {
+      map.getCanvas().style.cursor = '';
+    });
+    
+    // Click handler for unclustered points (single shotengai at zoom 0-8)
+    map.on('click', 'shotengai-unclustered-point', (e) => {
+      console.log('📍 Single point clicked (zooming to show line)');
+      const feature = e.features[0];
+      const id = feature.properties.id;
+      
+      // Find the full feature with geometry
+      const fullFeature = allFeatures.find(f => f.properties.id === id);
+      if (!fullFeature) return;
+      
+      // Zoom to zoom level 12 (where lines are clearly visible)
+      const coords = fullFeature.geometry.type === 'LineString' 
+        ? fullFeature.geometry.coordinates 
+        : fullFeature.geometry.coordinates.flat();
+      
+      const bounds = coords.reduce((bounds, coord) => {
+        return bounds.extend(coord);
+      }, new mapboxgl.LngLatBounds(coords[0], coords[0]));
+      
+      map.fitBounds(bounds, { 
+        padding: 50,
+        maxZoom: 12 // Zoom to level where line is clearly visible
+      });
+      
+      // Update edit state and show info
+      currentEdit = { mode: "edit", feature: fullFeature };
+      window.currentEdit = currentEdit;
+      showInfo(fullFeature);
+      
+      // Highlight (will be visible once we zoom to line level)
+      if (map.getLayer('shotengai-lines-hover')) {
+        map.setPaintProperty('shotengai-lines-hover', 'line-opacity', [
+          'case',
+          ['==', ['get', 'id'], id],
+          1,
+          0
+        ]);
+      }
+    });
+    
+    // Cursor for unclustered points
+    map.on('mouseenter', 'shotengai-unclustered-point', () => {
+      map.getCanvas().style.cursor = 'pointer';
+    });
+    
+    map.on('mouseleave', 'shotengai-unclustered-point', () => {
+      map.getCanvas().style.cursor = '';
+    });
+    
+    // Use global click handler with feature querying
     map.on('click', (e) => {
       console.log('🖱️ Map clicked at:', e.lngLat);
       console.log('📍 Click point (pixels):', e.point);
@@ -1989,15 +2397,21 @@ function registerMapClickHandlers() {
         // Hide info panel
         hideInfo();
         
-        // Clear draw selection if any (only if draw is initialized)
-        if (draw && draw.getAll && draw.deleteAll) {
+        // Clear draw selection if any - BUT only if we're NOT drawing a new feature
+        // Check if the instructions panel is visible (indicates we're in the middle of drawing)
+        const isDrawingNew = document.getElementById('newLineInstructions') !== null;
+        
+        if (!isDrawingNew && draw && draw.getAll && draw.deleteAll) {
           try {
             if (draw.getAll().features.length > 0) {
+              console.log('🧹 Clearing draw features (not in new line mode)');
               draw.deleteAll();
             }
           } catch (err) {
             console.warn('⚠️ Error clearing draw features:', err.message);
           }
+        } else if (isDrawingNew) {
+          console.log('⏸️ Preserving drawn features (new line in progress)');
         }
         
         // CRITICAL: Clear highlight by setting opacity to 0 for ALL features
@@ -2168,6 +2582,9 @@ function setupAuthUI() {
         searchInput = document.getElementById("search");
         searchInput?.addEventListener("input", () => applyFilters(false));
         prefFilter?.addEventListener("change", () => applyFilters(true));
+
+        // Initialize fuzzy search
+        initializeFuzzySearch();
 
         applyFilters(false);
         addMapLegend();

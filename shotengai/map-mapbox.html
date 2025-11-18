@@ -20,6 +20,9 @@
   <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.js'></script>
   <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.3/mapbox-gl-draw.css' type='text/css' />
 
+  <!-- Fuse.js for fuzzy search -->
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0"></script>
+
 </head>
 
 <body>
@@ -31,6 +34,7 @@
       </div>
 
       <div class="header-controls">
+        <button id="btnHeatmap" class="button-secondary">Show Heatmap</button>
         <button id="btnContact" class="button-secondary">Suggest Shotengai</button>
         <button id="btnEdit" class="button-secondary" style="display: none;">Edit Map</button>
         <button id="btnAbout" class="button-secondary">About</button>
@@ -149,8 +153,8 @@
 
       <div class="form-body" style="max-height:60vh">
         <p>
-          The <strong>Shotengai Atlas</strong> maps Japan's traditional shopping streets –
-          the <em>Shotengai</em> – as living spaces of daily culture and urban life.
+          The <strong>Shotengai Atlas</strong> maps Japan's traditional shopping streets —
+          the <em>Shotengai</em> — as living spaces of daily culture and urban life.
         </p>
         <p>
           Each line represents a shopping street, showing its <strong>location</strong>,
@@ -168,7 +172,7 @@
           Data combines fieldwork, open sources, and community input and is stored in
           a <strong>Supabase</strong> database. Geometry is served as GeoJSON for fast rendering.
         </p>
-        <p class="muted">Project by Maximilian Prutsch – ongoing, experimental, and collaborative.</p>
+        <p class="muted">Project by Maximilian Prutsch — ongoing, experimental, and collaborative.</p>
       </div>
     </div>
   </div>
