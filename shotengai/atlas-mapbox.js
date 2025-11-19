@@ -2609,7 +2609,7 @@ function setupAuthUI() {
           )).sort((a, b) => a.localeCompare(b, 'en'));
           prefFilter.innerHTML = `<option value="">All prefectures</option>` +
             prefs.map(p => `<option value="${p}">${p}</option>`).join("");
-          console.log(`âœ… Loaded ${prefs.length} prefectures into filter`);
+          console.log(`Loaded ${prefs.length} prefectures into filter`);
         }
 
         searchInput = document.getElementById("search");
@@ -2625,15 +2625,15 @@ function setupAuthUI() {
         
         // CRITICAL FIX: Wait for map to be fully idle before registering click handlers
         // The 'load' event fires too early - map needs to finish rendering
-        console.log('â³ Waiting for map to be fully interactive...');
+        console.log('Waiting for map to be fully interactive...');
         map.once('idle', () => {
-          console.log('âœ… Map is now idle and fully interactive');
+          console.log('Map is now idle and fully interactive');
           registerMapClickHandlers();
-          console.log('ðŸŽ‰ Initialization complete!');
+          console.log('Initialization complete!');
         });
         
       } catch (featureError) {
-        console.error('âŒ Error loading features:', featureError);
+        console.error('Error loading features:', featureError);
         alert('Failed to load Shotengai data: ' + (featureError.message || featureError));
       }
     });
