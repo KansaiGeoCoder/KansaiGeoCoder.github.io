@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Association Dashboard | Shotengai Atlas</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="dashboard.css?v=1" />
+</head>
+
+<body>
+  <div class="dashboard-container">
+    <!-- Sidebar Navigation -->
+    <aside class="dashboard-sidebar">
+      <div class="logo-section">
+        <img src="../assets/logo.svg" alt="Shotengai Atlas Logo" height="32">
+        <h2>Shotengai Atlas</h2>
+      </div>
+
+      <nav class="dashboard-nav">
+        <a href="#overview" class="nav-item active" data-section="overview">
+          <span class="nav-icon">📊</span>
+          <span>Overview</span>
+        </a>
+        <a href="#shotengai" class="nav-item" data-section="shotengai">
+          <span class="nav-icon">🏪</span>
+          <span>Shotengai Info</span>
+        </a>
+        <a href="#events" class="nav-item" data-section="events">
+          <span class="nav-icon">📅</span>
+          <span>Events</span>
+        </a>
+        <a href="#shops" class="nav-item" data-section="shops">
+          <span class="nav-icon">🏬</span>
+          <span>Shops</span>
+        </a>
+        <a href="#forum" class="nav-item" data-section="forum">
+          <span class="nav-icon">💬</span>
+          <span>Community Forum</span>
+        </a>
+        <a href="#analytics" class="nav-item" data-section="analytics">
+          <span class="nav-icon">📈</span>
+          <span>Analytics</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar">A</div>
+          <div class="user-details">
+            <div class="user-name" id="userName">Loading...</div>
+            <div class="user-role">Association Admin</div>
+          </div>
+        </div>
+        <button id="btnLogout" class="logout-btn">Sign Out</button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      <header class="dashboard-header">
+        <div class="header-content">
+          <h1 id="dashboardTitle">Dashboard Overview</h1>
+          <div class="header-actions">
+            <button class="btn-secondary" id="btnBackToMap">
+              <span>← Back to Map</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="dashboard-content">
+        <!-- Overview Section (Default) -->
+        <section id="section-overview" class="dashboard-section active">
+          <div class="welcome-banner">
+            <h2>Welcome back! 👋</h2>
+            <p>Here's what's happening with your Shotengai</p>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">👥</div>
+              <div class="stat-content">
+                <div class="stat-label">Total Visitors</div>
+                <div class="stat-value">1,234</div>
+                <div class="stat-change positive">+12% this month</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">🏪</div>
+              <div class="stat-content">
+                <div class="stat-label">Active Shops</div>
+                <div class="stat-value">45</div>
+                <div class="stat-change">2 new this month</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">📅</div>
+              <div class="stat-content">
+                <div class="stat-label">Upcoming Events</div>
+                <div class="stat-value">3</div>
+                <div class="stat-change">Next: Summer Festival</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon">⭐</div>
+              <div class="stat-content">
+                <div class="stat-label">Member Rating</div>
+                <div class="stat-value">4.7</div>
+                <div class="stat-change positive">+0.3 this quarter</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="card">
+              <div class="card-header">
+                <h3>Recent Activity</h3>
+              </div>
+              <div class="card-body">
+                <div class="activity-list">
+                  <div class="activity-item">
+                    <div class="activity-icon">✏️</div>
+                    <div class="activity-content">
+                      <div class="activity-title">Shotengai info updated</div>
+                      <div class="activity-time">2 hours ago</div>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-icon">🎉</div>
+                    <div class="activity-content">
+                      <div class="activity-title">New event created: Summer Festival</div>
+                      <div class="activity-time">1 day ago</div>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-icon">🏪</div>
+                    <div class="activity-content">
+                      <div class="activity-title">New shop registered</div>
+                      <div class="activity-time">3 days ago</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>Quick Actions</h3>
+              </div>
+              <div class="card-body">
+                <div class="quick-actions">
+                  <button class="action-btn">
+                    <span class="action-icon">✏️</span>
+                    <span>Edit Shotengai Info</span>
+                  </button>
+                  <button class="action-btn">
+                    <span class="action-icon">📅</span>
+                    <span>Create New Event</span>
+                  </button>
+                  <button class="action-btn">
+                    <span class="action-icon">📸</span>
+                    <span>Upload Photos</span>
+                  </button>
+                  <button class="action-btn">
+                    <span class="action-icon">💬</span>
+                    <span>Post Announcement</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Shotengai Info Section -->
+        <section id="section-shotengai" class="dashboard-section">
+          <div class="section-header">
+            <h2>Shotengai Information</h2>
+            <button class="btn-primary">Edit Information</button>
+          </div>
+          <div class="placeholder-content">
+            <p>📝 Shotengai information management coming soon...</p>
+          </div>
+        </section>
+
+        <!-- Events Section -->
+        <section id="section-events" class="dashboard-section">
+          <div class="section-header">
+            <h2>Events Management</h2>
+            <button class="btn-primary">Create Event</button>
+          </div>
+          <div class="placeholder-content">
+            <p>📅 Events management coming soon...</p>
+          </div>
+        </section>
+
+        <!-- Shops Section -->
+        <section id="section-shops" class="dashboard-section">
+          <div class="section-header">
+            <h2>Shops Directory</h2>
+            <button class="btn-primary">Add Shop</button>
+          </div>
+          <div class="placeholder-content">
+            <p>🏪 Shops management coming soon...</p>
+          </div>
+        </section>
+
+        <!-- Forum Section -->
+        <section id="section-forum" class="dashboard-section">
+          <div class="section-header">
+            <h2>Community Forum</h2>
+            <button class="btn-primary">New Topic</button>
+          </div>
+          <div class="placeholder-content">
+            <p>💬 Forum coming soon...</p>
+          </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="section-analytics" class="dashboard-section">
+          <div class="section-header">
+            <h2>Analytics & Reports</h2>
+            <button class="btn-secondary">Export Data</button>
+          </div>
+          <div class="placeholder-content">
+            <p>📈 Analytics dashboard coming soon...</p>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script type="module" src="dashboard.js?v=1"></script>
+</body>
+
+</html>
