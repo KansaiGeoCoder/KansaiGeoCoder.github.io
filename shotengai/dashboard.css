@@ -1,28 +1,21 @@
 /* =========================================================
    Shotengai Atlas - Dashboard CSS
-   Association Dashboard Styling - Artistic Warm Theme
+   Association Dashboard Styling
    ========================================================= */
 
-/* ---------- Artistic Theme Variables ---------- */
+/* ---------- Theme Variables ---------- */
 :root {
-  --bg: #f5f1e8;
-  --panel: #faf8f3;
-  --card-bg: #ffffff;
-  --muted: #8b7355;
-  --text: #3d3328;
-  --text-secondary: #6b5d4f;
-  --brand: #c17c4a;
-  --brand-light: #d99a6f;
-  --brand-dark: #a0623a;
-  --accent: #7a9b8e;
-  --accent-light: #9bb8ad;
-  --border: #d4c8b8;
-  --border-light: #e8dfd2;
-  --shadow: rgba(61, 51, 40, 0.08);
-  --shadow-lg: rgba(61, 51, 40, 0.12);
-  --success: #6b9a7a;
-  --warning: #d4a574;
-  --danger: #c17c74;
+  --bg: #0b0d10;
+  --panel: #12161b;
+  --card-bg: #0e1318;
+  --muted: #98a2b3;
+  --text: #e5e7eb;
+  --brand: #6aa0ff;
+  --accent: #14b8a6;
+  --border: #1f2937;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
   
   --sidebar-width: 260px;
   --header-height: 70px;
@@ -37,12 +30,10 @@ html,
 body {
   height: 100%;
   margin: 0;
-  font-family: 'Inter', 'Georgia', serif;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   overflow: hidden;
-  font-size: 15px;
-  line-height: 1.6;
 }
 
 /* ---------- Dashboard Layout ---------- */
@@ -56,16 +47,15 @@ body {
 /* ---------- Sidebar ---------- */
 .dashboard-sidebar {
   background: var(--panel);
-  border-right: 2px solid var(--border);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  box-shadow: 2px 0 12px var(--shadow);
 }
 
 .logo-section {
   padding: 20px;
-  border-bottom: 2px solid var(--border-light);
+  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -74,9 +64,8 @@ body {
 .logo-section h2 {
   margin: 0;
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
-  font-family: 'Georgia', serif;
 }
 
 .dashboard-nav {
@@ -89,20 +78,19 @@ body {
   align-items: center;
   gap: 12px;
   padding: 12px 20px;
-  color: var(--text-secondary);
+  color: var(--muted);
   text-decoration: none;
   transition: all 0.2s;
   border-left: 3px solid transparent;
-  font-weight: 500;
 }
 
 .nav-item:hover {
-  background: var(--bg);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text);
 }
 
 .nav-item.active {
-  background: rgba(193, 124, 74, 0.12);
+  background: rgba(106, 160, 255, 0.1);
   color: var(--brand);
   border-left-color: var(--brand);
 }
@@ -116,7 +104,7 @@ body {
 /* ---------- Sidebar Footer ---------- */
 .sidebar-footer {
   padding: 16px;
-  border-top: 2px solid var(--border-light);
+  border-top: 1px solid var(--border);
 }
 
 .user-info {
@@ -130,7 +118,7 @@ body {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--brand), var(--brand-light));
+  background: var(--brand);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -163,8 +151,8 @@ body {
 .logout-btn {
   width: 100%;
   padding: 8px 16px;
-  background: var(--bg);
-  border: 1px solid var(--border-light);
+  background: transparent;
+  border: 1px solid var(--border);
   color: var(--muted);
   border-radius: 8px;
   cursor: pointer;
@@ -189,7 +177,7 @@ body {
 .dashboard-header {
   height: var(--header-height);
   background: var(--panel);
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
   padding: 0 32px;
   display: flex;
   align-items: center;
@@ -274,7 +262,7 @@ body {
 
 .stat-card {
   background: var(--card-bg);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 24px;
   display: flex;
@@ -339,14 +327,14 @@ body {
 /* ---------- Cards ---------- */
 .card {
   background: var(--card-bg);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border);
   border-radius: 12px;
   overflow: hidden;
 }
 
 .card-header {
   padding: 20px 24px;
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 
 .card-header h3 {
@@ -411,7 +399,7 @@ body {
   gap: 12px;
   padding: 16px;
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
   cursor: pointer;
@@ -447,7 +435,7 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--brand), var(--brand-light));
+  background: var(--brand);
   color: var(--bg);
 }
 
@@ -458,9 +446,9 @@ body {
 }
 
 .btn-secondary {
-  background: var(--bg);
+  background: transparent;
   color: var(--text);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border);
 }
 
 .btn-secondary:hover {
