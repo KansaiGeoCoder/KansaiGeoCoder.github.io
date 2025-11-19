@@ -2633,7 +2633,7 @@ function setupAuthUI() {
         });
         
       } catch (featureError) {
-        console.error('Error loading features:', featureError);
+        console.error('âŒ Error loading features:', featureError);
         alert('Failed to load Shotengai data: ' + (featureError.message || featureError));
       }
     });
