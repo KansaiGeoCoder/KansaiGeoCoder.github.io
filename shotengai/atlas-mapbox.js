@@ -12,23 +12,11 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 /* ===== Map Setup ===== */
 const map = new mapboxgl.Map({
   container: 'map',
-  style: 'mapbox://styles/mapbox/dark-v11', // ⭐ More realistic
-  center: [137.2529, 36.2048],
+  style: 'mapbox://styles/mapbox/dark-v11', // Dark theme matching your design
+  center: [137.2529, 36.2048], // Japan center
   zoom: 5,
-  maxZoom: 22,
-  minZoom: 2,
-  projection: 'globe' // ⭐ Optional: globe view
-});
-
-// ⭐ Optional: Add atmosphere for globe effect
-map.on('style.load', () => {
-  map.setFog({
-    'color': 'rgba(0, 0, 0, 1)',
-    'high-color': 'rgb(36, 92, 223)',
-    'horizon-blend': 0,
-    'space-color': '#212121',
-    'star-intensity': 0.2
-  });
+  maxZoom: 22, // Increased from 18 to allow very close inspection
+  minZoom: 3
 });
 
 // Add navigation controls
@@ -125,7 +113,7 @@ let snapIndicator = null; // Visual indicator for snap point
 // Track when user enters draw mode
 map.on('draw.modechange', (e) => {
   console.log('Draw mode changed to:', e.mode);
-
+  
   if (e.mode === 'draw_line_string') {
     console.log('âœï¸ Line drawing mode activated');
     // User clicked the line tool - they're ready to draw
@@ -140,20 +128,20 @@ map.on('draw.modechange', (e) => {
 function findNearbyVertex(point, excludeFeatureId = null) {
   // Convert screen pixel point to map coordinates if needed
   const lngLat = point.lng !== undefined ? point : map.unproject(point);
-
+  
   // Get all vertices from existing features
   const vertices = [];
-
+  
   allFeatures.forEach(feature => {
     // Skip the feature being edited
     if (excludeFeatureId && feature.properties.id === excludeFeatureId) {
       return;
     }
-
-    const coords = feature.geometry.type === 'LineString'
-      ? feature.geometry.coordinates
+    
+    const coords = feature.geometry.type === 'LineString' 
+      ? feature.geometry.coordinates 
       : feature.geometry.coordinates.flat();
-
+    
     coords.forEach(coord => {
       vertices.push({
         lng: coord[0],
@@ -161,33 +149,33 @@ function findNearbyVertex(point, excludeFeatureId = null) {
       });
     });
   });
-
+  
   // Find closest vertex
   let closestVertex = null;
   let minDistance = Infinity;
-
+  
   vertices.forEach(vertex => {
     const vertexPoint = map.project([vertex.lng, vertex.lat]);
     const mousePoint = map.project([lngLat.lng, lngLat.lat]);
-
+    
     const distance = Math.sqrt(
-      Math.pow(vertexPoint.x - mousePoint.x, 2) +
+      Math.pow(vertexPoint.x - mousePoint.x, 2) + 
       Math.pow(vertexPoint.y - mousePoint.y, 2)
     );
-
+    
     if (distance < minDistance && distance < SNAP_DISTANCE_PX) {
       minDistance = distance;
       closestVertex = vertex;
     }
   });
-
+  
   return closestVertex;
 }
 
 function showSnapIndicator(lngLat) {
   // Remove existing indicator
   hideSnapIndicator();
-
+  
   // Create snap indicator as a temporary marker
   const el = document.createElement('div');
   el.className = 'snap-indicator';
@@ -199,7 +187,7 @@ function showSnapIndicator(lngLat) {
     border-radius: 50%;
     box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
   `;
-
+  
   snapIndicator = new mapboxgl.Marker(el)
     .setLngLat([lngLat.lng, lngLat.lat])
     .addTo(map);
@@ -214,11 +202,11 @@ function hideSnapIndicator() {
 
 /* ===== Type Colors ===== */
 const TYPE_COLORS = {
-  'A': '#5dd9c1',  // Gentle teal - fully covered
-  'B': '#fbbf24',  // Warm amber - pedestrian only
-  'C': '#f87171',  // Soft coral - covered sidewalk
-  'D': '#7ba7ff',  // Sky blue - with association
-  'default': '#a8b5c9'  // Soft gray
+  'A': '#10b981',
+  'B': '#f59e0b',
+  'C': '#ef4444',
+  'D': '#3b82f6',
+  'default': '#cbd5e1'
 };
 
 function getTypeColor(feature) {
@@ -327,7 +315,7 @@ function showInfo(feature) {
   }
 
   infoPanel.style.display = "block";
-
+  
   // Ensure hover layer exists and highlight the feature
   if (map.getLayer('shotengai-lines-hover')) {
     map.setPaintProperty('shotengai-lines-hover', 'line-opacity', [
@@ -339,9 +327,9 @@ function showInfo(feature) {
   }
 }
 
-function hideInfo() {
+function hideInfo() { 
   infoPanel.style.display = "none";
-
+  
   // Also clear the map highlight when hiding info panel
   if (map && map.getLayer && map.getLayer('shotengai-lines-hover')) {
     map.setPaintProperty('shotengai-lines-hover', 'line-opacity', 0);
@@ -352,7 +340,7 @@ window._hideInfo = (e) => {
     e.stopPropagation();
   }
   hideInfo();
-
+  
   // Clear current edit state
   currentEdit = { mode: "new", feature: null };
   window.currentEdit = currentEdit;
@@ -415,7 +403,7 @@ btnLogin?.addEventListener("click", async () => {
     if (authMsg) authMsg.textContent = "❌ " + error.message;
     return;
   }
-
+  
   // Check user role and redirect accordingly
   if (data?.user) {
     try {
@@ -424,9 +412,9 @@ btnLogin?.addEventListener("click", async () => {
         .select('role, display_name')
         .eq('id', data.user.id)
         .single();
-
+      
       if (authMsg) authMsg.textContent = "✅ Signed in";
-
+      
       // Redirect based on role
       if (!profileError && profile) {
         if (profile.role === 'association' || profile.role === 'shop_owner') {
@@ -438,10 +426,10 @@ btnLogin?.addEventListener("click", async () => {
           return;
         }
       }
-
+      
       // Default: close auth and enable edit mode (for regular editors/admins)
       setTimeout(() => { closeAuth(); toggleEditMode(); }, 300);
-
+      
     } catch (err) {
       console.error('Error checking user role:', err);
       // On error, just proceed with default behavior
@@ -510,7 +498,7 @@ function exitEditMode() {
     // Clear any features in draw before removing
     draw.deleteAll();
     draw.changeMode('simple_select');
-
+    
     map.removeControl(draw);
     drawControlAdded = false;
   }
@@ -519,15 +507,15 @@ function exitEditMode() {
   if (map.getLayer('shotengai-lines-hover')) {
     map.setPaintProperty('shotengai-lines-hover', 'line-opacity', 0);
   }
-
+  
   // Restore line opacity for all features (in case some were hidden)
   if (map.getLayer('shotengai-lines')) {
     map.setPaintProperty('shotengai-lines', 'line-opacity', 0.9);
   }
-
+  
   isEditingGeometry = false;
   currentDrawFeatureId = null;
-
+  
   console.log('Edit mode disabled');
 }
 
@@ -538,7 +526,7 @@ function showNewLineInstructions() {
   if (existing) {
     existing.remove();
   }
-
+  
   // Create instructions overlay
   const instructions = document.createElement('div');
   instructions.id = 'newLineInstructions';
@@ -554,7 +542,7 @@ function showNewLineInstructions() {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     min-width: 200px;
   `;
-
+  
   instructions.innerHTML = `
     <div style="color: #e5e7eb; margin-bottom: 12px; font-weight: 600;">
       Drawing New Line
@@ -573,9 +561,9 @@ function showNewLineInstructions() {
       </button>
     </div>
   `;
-
+  
   document.body.appendChild(instructions);
-
+  
   // Add event listeners
   document.getElementById('btnFinishNewLine').addEventListener('click', finishNewLine);
   document.getElementById('btnCancelNewLine').addEventListener('click', cancelNewLine);
@@ -585,20 +573,20 @@ function finishNewLine() {
   console.log('ðŸŽ¯ Finishing new line...');
   const drawnFeatures = draw.getAll();
   console.log('ðŸ“ Drawn features:', drawnFeatures.features.length);
-
+  
   if (drawnFeatures.features.length === 0) {
     console.error('âŒ No drawn features found!');
     alert('No line drawn yet. Please draw a line first by clicking the line tool and adding points on the map.');
     return;
   }
-
+  
   // Get all drawn features (may be multiple line segments)
   const allFeatures = drawnFeatures.features;
   console.log('âœï¸ Processing', allFeatures.length, 'feature(s)');
-
+  
   // Combine into a single feature if multiple segments
   let combinedGeometry;
-
+  
   if (allFeatures.length === 1) {
     combinedGeometry = allFeatures[0].geometry;
     console.log('ðŸ“ Single feature with', combinedGeometry.coordinates.length, 'vertices');
@@ -610,28 +598,28 @@ function finishNewLine() {
       }
       return f.geometry.coordinates;
     });
-
+    
     combinedGeometry = {
       type: 'MultiLineString',
       coordinates: allCoords
     };
     console.log('ðŸ“ Combined', allCoords.length, 'segments into MultiLineString');
   }
-
+  
   // Create a temporary feature for the form
   const tempFeature = {
     type: 'Feature',
     geometry: combinedGeometry,
     properties: {}
   };
-
+  
   currentEdit = { mode: "new", feature: tempFeature };
   console.log('âœ… Feature ready for form');
-
+  
   // Remove instructions
   const instructions = document.getElementById('newLineInstructions');
   if (instructions) instructions.remove();
-
+  
   // Open form
   openFeatureForm(null, "New Shotengai");
 }
@@ -639,11 +627,11 @@ function finishNewLine() {
 function cancelNewLine() {
   // Delete all drawn features
   draw.deleteAll();
-
+  
   // Remove instructions
   const instructions = document.getElementById('newLineInstructions');
   if (instructions) instructions.remove();
-
+  
   currentEdit = { mode: "new", feature: null };
 }
 
@@ -653,28 +641,28 @@ function startEditingGeometry(feature) {
     alert("Please sign in and enable Edit Mode first.");
     return;
   }
-
+  
   if (!feature || !feature.geometry) {
     console.error('âŒ Invalid feature provided to startEditingGeometry');
     return;
   }
-
+  
   // Double-check we have the complete feature from our data store
   const completeFeature = allFeatures.find(f => f.properties.id === feature.properties.id);
   if (completeFeature) {
     feature = completeFeature;
     console.log('âœ… Using complete feature from data store');
   }
-
+  
   isEditingGeometry = true;
   currentDrawFeatureId = feature.properties.id;
-
+  
   // Keep the info panel open (don't hide it)
   // User can see what they're editing while working
-
+  
   // Clear any existing draw features
   draw.deleteAll();
-
+  
   // Function to hide the original feature
   const hideOriginalFeature = () => {
     if (map.getLayer('shotengai-lines')) {
@@ -685,15 +673,15 @@ function startEditingGeometry(feature) {
         0.9  // Keep others visible
       ]);
     }
-
+    
     if (map.getLayer('shotengai-lines-hover')) {
       map.setPaintProperty('shotengai-lines-hover', 'line-opacity', 0);
     }
   };
-
+  
   // Hide immediately
   hideOriginalFeature();
-
+  
   // Keep it hidden during editing (in case of map refreshes)
   const hideInterval = setInterval(() => {
     if (isEditingGeometry && currentDrawFeatureId === feature.properties.id) {
@@ -702,33 +690,33 @@ function startEditingGeometry(feature) {
       clearInterval(hideInterval);
     }
   }, 100);
-
+  
   // Store interval ID for cleanup
   window._editHideInterval = hideInterval;
-
+  
   // Handle geometry properly without losing data
   let geometryToEdit = JSON.parse(JSON.stringify(feature.geometry)); // Deep clone
-
+  
   console.log('ðŸ“ Original geometry:', geometryToEdit);
   console.log('ðŸ“ Original type:', geometryToEdit.type);
-
+  
   // If it's a MultiLineString, we need to properly flatten it
   if (geometryToEdit.type === 'MultiLineString') {
     console.log(`ðŸ“Š MultiLineString with ${geometryToEdit.coordinates.length} segment(s)`);
-
+    
     // Log each segment
     geometryToEdit.coordinates.forEach((segment, i) => {
       console.log(`  Segment ${i}: ${segment.length} vertices`);
     });
-
+    
     // Flatten: concatenate all segments' coordinates into one array
     const allCoords = [];
     geometryToEdit.coordinates.forEach(segment => {
       allCoords.push(...segment); // Spread operator to add each coordinate
     });
-
+    
     console.log(`ðŸ“ Flattened to ${allCoords.length} total vertices`);
-
+    
     geometryToEdit = {
       type: 'LineString',
       coordinates: allCoords
@@ -736,7 +724,7 @@ function startEditingGeometry(feature) {
   } else {
     console.log(`ðŸ“ Already LineString with ${geometryToEdit.coordinates.length} vertices`);
   }
-
+  
   // Add the feature to draw
   const featureForDraw = {
     type: 'Feature',
@@ -744,21 +732,21 @@ function startEditingGeometry(feature) {
     geometry: geometryToEdit,
     properties: feature.properties
   };
-
+  
   console.log('âœï¸ Adding to draw with', geometryToEdit.coordinates.length, 'vertices');
-
+  
   const drawIds = draw.add(featureForDraw);
-
+  
   // Change to direct_select mode to allow vertex editing
   if (drawIds && drawIds.length > 0) {
     draw.changeMode('direct_select', { featureId: drawIds[0] });
   }
-
+  
   console.log('âœï¸ Started editing geometry for:', feature.properties.name_en || feature.properties.name_jp);
-
+  
   // Enable snapping during editing
   enableSnapping(feature.properties.id);
-
+  
   // Show editing controls overlay
   showGeometryEditControls();
 }
@@ -770,9 +758,9 @@ let lastSnapPoint = null;
 
 function enableSnapping(excludeFeatureId) {
   if (snappingEnabled) return;
-
+  
   snappingEnabled = true;
-
+  
   // Use map's mousemove for snapping detection
   map.on('mousemove', handleSnapMouseMove);
 }
@@ -781,10 +769,10 @@ function handleSnapMouseMove(e) {
   // Only show snap indicator, don't interfere with draw behavior
   // Works for both editing existing lines and drawing new lines
   if (!isEditing) return;
-
+  
   // Find nearby vertex to snap to (exclude feature being edited if any)
   const nearbyVertex = findNearbyVertex(e.lngLat, currentDrawFeatureId);
-
+  
   if (nearbyVertex) {
     showSnapIndicator(nearbyVertex);
     lastSnapPoint = nearbyVertex;
@@ -796,11 +784,11 @@ function handleSnapMouseMove(e) {
 
 function disableSnapping() {
   if (!snappingEnabled) return;
-
+  
   snappingEnabled = false;
-
+  
   map.off('mousemove', handleSnapMouseMove);
-
+  
   hideSnapIndicator();
   lastSnapPoint = null;
 }
@@ -809,7 +797,7 @@ function disableSnapping() {
 map.on('draw.update', (e) => {
   // Don't auto-save - wait for user to click Save button
   console.log('ðŸ“ Geometry modified (not saved yet)');
-
+  
   // Re-hide the original feature being edited (in case map refresh made it visible)
   if (isEditingGeometry && currentDrawFeatureId && map.getLayer('shotengai-lines')) {
     map.setPaintProperty('shotengai-lines', 'line-opacity', [
@@ -819,46 +807,46 @@ map.on('draw.update', (e) => {
       0.9
     ]);
   }
-
+  
   // Apply snap if we have a snap point (works for both new and edited lines)
   if (lastSnapPoint && isEditing) {
     const features = draw.getAll().features;
     if (features.length > 0) {
       const feature = features[features.length - 1]; // Get the most recent feature
       const coords = feature.geometry.coordinates;
-
+      
       // Find the vertex that was just moved (closest to last snap point)
       let minDist = Infinity;
       let closestIndex = -1;
-
+      
       coords.forEach((coord, i) => {
         const dist = Math.sqrt(
-          Math.pow(coord[0] - lastSnapPoint.lng, 2) +
+          Math.pow(coord[0] - lastSnapPoint.lng, 2) + 
           Math.pow(coord[1] - lastSnapPoint.lat, 2)
         );
-
+        
         if (dist < 0.0001) { // Very close = likely the one being dragged
           closestIndex = i;
         }
       });
-
+      
       // If we found a close vertex and snap point is still valid
       if (closestIndex >= 0 && lastSnapPoint) {
         const snapDist = Math.sqrt(
-          Math.pow(coords[closestIndex][0] - lastSnapPoint.lng, 2) +
+          Math.pow(coords[closestIndex][0] - lastSnapPoint.lng, 2) + 
           Math.pow(coords[closestIndex][1] - lastSnapPoint.lat, 2)
         );
-
+        
         // Snap if within threshold (in map coordinates, roughly 15 pixels)
         if (snapDist < 0.0002) {
           coords[closestIndex] = [lastSnapPoint.lng, lastSnapPoint.lat];
           feature.geometry.coordinates = coords;
-
+          
           // Update draw silently
           const featureId = feature.id;
           draw.delete(featureId);
           draw.add(feature);
-
+          
           // Re-select based on mode
           if (isEditingGeometry) {
             draw.changeMode('direct_select', { featureId: featureId });
@@ -888,7 +876,7 @@ function showGeometryEditControls() {
   if (existingControls) {
     existingControls.remove();
   }
-
+  
   // Create controls overlay
   const controls = document.createElement('div');
   controls.id = 'geometryEditControls';
@@ -904,7 +892,7 @@ function showGeometryEditControls() {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     min-width: 200px;
   `;
-
+  
   controls.innerHTML = `
     <div style="color: #e5e7eb; margin-bottom: 12px; font-weight: 600;">
       Editing Geometry
@@ -923,9 +911,9 @@ function showGeometryEditControls() {
       </button>
     </div>
   `;
-
+  
   document.body.appendChild(controls);
-
+  
   // Add event listeners
   document.getElementById('btnSaveGeometry').addEventListener('click', saveGeometryEdit);
   document.getElementById('btnCancelGeometry').addEventListener('click', cancelGeometryEdit);
@@ -935,25 +923,25 @@ async function saveGeometryEdit() {
   if (!isEditingGeometry || !currentDrawFeatureId) {
     return;
   }
-
+  
   // Get the edited feature(s) from draw
   const drawnFeatures = draw.getAll();
   if (drawnFeatures.features.length === 0) {
     alert('No geometry to save');
     return;
   }
-
+  
   console.log('ðŸ’¾ Saving edited geometry for feature:', currentDrawFeatureId);
-
+  
   // Store current map view
   const currentCenter = map.getCenter();
   const currentZoom = map.getZoom();
   const currentBearing = map.getBearing();
   const currentPitch = map.getPitch();
-
+  
   // Combine all features into a single geometry
   let finalGeometry;
-
+  
   if (drawnFeatures.features.length === 1) {
     // Single feature - use as is
     finalGeometry = drawnFeatures.features[0].geometry;
@@ -967,33 +955,33 @@ async function saveGeometryEdit() {
       }
       return [];
     }).flat();
-
+    
     finalGeometry = {
       type: 'MultiLineString',
       coordinates: allCoordinates
     };
   }
-
+  
   const wkt = wktFromGeom(finalGeometry);
-  const { error } = await sbClient.rpc("update_shotengai_geom", {
-    p_id: currentDrawFeatureId,
-    p_geom_wkt: wkt
+  const { error } = await sbClient.rpc("update_shotengai_geom", { 
+    p_id: currentDrawFeatureId, 
+    p_geom_wkt: wkt 
   });
-
+  
   if (error) {
     console.error('âŒ Update geometry failed:', error);
     alert("Failed to save geometry: " + error.message);
     return;
   }
-
+  
   console.log('âœ… Geometry saved successfully');
-
+  
   // Update the feature in our local array
   const featureIndex = allFeatures.findIndex(f => f.properties.id === currentDrawFeatureId);
   if (featureIndex >= 0) {
     allFeatures[featureIndex].geometry = finalGeometry;
   }
-
+  
   // Update the map source data directly
   if (map.getSource('shotengai')) {
     map.getSource('shotengai').setData({
@@ -1001,10 +989,10 @@ async function saveGeometryEdit() {
       features: allFeatures
     });
   }
-
+  
   // Restore line opacity for all features
   map.setPaintProperty('shotengai-lines', 'line-opacity', 0.9);
-
+  
   // Restore the exact map view
   map.jumpTo({
     center: currentCenter,
@@ -1012,27 +1000,27 @@ async function saveGeometryEdit() {
     bearing: currentBearing,
     pitch: currentPitch
   });
-
+  
   // Clear draw and exit geometry editing mode
   draw.deleteAll();
   draw.changeMode('simple_select');
-
+  
   // Disable snapping
   disableSnapping();
-
+  
   // Clear hide interval
   if (window._editHideInterval) {
     clearInterval(window._editHideInterval);
     window._editHideInterval = null;
   }
-
+  
   isEditingGeometry = false;
   currentDrawFeatureId = null;
-
+  
   // Remove controls
   const controls = document.getElementById('geometryEditControls');
   if (controls) controls.remove();
-
+  
   // Show success message
   const infoMsg = document.createElement('div');
   infoMsg.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #10b981; color: white; padding: 12px 24px; border-radius: 8px; z-index: 10001; box-shadow: 0 4px 12px rgba(0,0,0,0.3);';
@@ -1043,35 +1031,35 @@ async function saveGeometryEdit() {
 
 function cancelGeometryEdit() {
   console.log('âŒ Geometry edit cancelled');
-
+  
   // Clear draw
   draw.deleteAll();
   draw.changeMode('simple_select');
-
+  
   // Restore line opacity for all features
   if (map.getLayer('shotengai-lines')) {
     map.setPaintProperty('shotengai-lines', 'line-opacity', 0.9);
   }
-
+  
   // Disable snapping
   disableSnapping();
-
+  
   // Clear hide interval
   if (window._editHideInterval) {
     clearInterval(window._editHideInterval);
     window._editHideInterval = null;
   }
-
+  
   isEditingGeometry = false;
   currentDrawFeatureId = null;
-
+  
   // Remove controls
   const controls = document.getElementById('geometryEditControls');
   if (controls) {
     controls.remove();
     console.log('âœ… Removed geometry edit controls');
   }
-
+  
   // Show the info panel again if we have a current feature
   if (currentEdit?.feature) {
     showInfo(currentEdit.feature);
@@ -1242,7 +1230,7 @@ function readFeatureForm() {
 function openFeatureForm(feature, title) {
   currentEdit.mode = feature?.properties?.id ? "edit" : "new";
   currentEdit.feature = feature || null;
-
+  
   featureFormTitle.textContent = title || (currentEdit.mode === "edit" ? "Edit Shotengai" : "New Shotengai");
   buildFeatureForm(feature?.properties || {});
 
@@ -1302,15 +1290,15 @@ btnSaveFeature?.addEventListener("click", async () => {
     }
 
     let geom = null;
-
+    
     if (currentEdit.mode === "new") {
       // Get geometry from drawn features
       const drawnFeatures = draw.getAll();
-      if (drawnFeatures.features.length === 0) {
-        featureMsg.textContent = "âŒ No geometry. Draw a line first.";
-        return;
+      if (drawnFeatures.features.length === 0) { 
+        featureMsg.textContent = "âŒ No geometry. Draw a line first."; 
+        return; 
       }
-
+      
       // Combine all drawn features into one geometry
       if (drawnFeatures.features.length === 1) {
         geom = drawnFeatures.features[0].geometry;
@@ -1324,7 +1312,7 @@ btnSaveFeature?.addEventListener("click", async () => {
           }
           return [];
         }).flat();
-
+        
         geom = {
           type: 'MultiLineString',
           coordinates: allCoords
@@ -1334,7 +1322,7 @@ btnSaveFeature?.addEventListener("click", async () => {
       if (currentEdit.feature?.geometry) geom = currentEdit.feature.geometry;
       else { featureMsg.textContent = "âŒ No geometry on feature."; return; }
     }
-
+    
     const wkt = wktFromGeom(geom);
     const id = props.id || currentEdit.feature?.properties?.id || null;
 
@@ -1369,13 +1357,13 @@ btnSaveFeature?.addEventListener("click", async () => {
 
     // Update the map
     await loadAndDisplayFeatures();
-
+    
     showInfo({ type: "Feature", properties: updatedProps, geometry: geom });
     closeFeatureModal();
 
     // Clear draw
     draw.deleteAll();
-
+    
     // Remove new line instructions if they exist
     const instructions = document.getElementById('newLineInstructions');
     if (instructions) instructions.remove();
@@ -1389,7 +1377,7 @@ btnSaveFeature?.addEventListener("click", async () => {
 /* ===== Draw events ===== */
 map.on('draw.create', async (e) => {
   const feature = e.features[0];
-
+  
   if (!currentUser) {
     alert("Sign in to create features.");
     draw.delete(feature.id);
@@ -1405,7 +1393,7 @@ map.on('draw.create', async (e) => {
   // Keep the feature in draw so user can continue adding to it or modify it
   // Don't open form yet - user can click "Finish" or we open on manual trigger
   currentEdit = { mode: "new", feature: null };
-
+  
   // Show a temporary message that they can continue drawing or finish
   showNewLineInstructions();
 });
@@ -1416,9 +1404,9 @@ map.on('draw.delete', async (e) => {
   if (instructions) {
     instructions.remove();
   }
-
+  
   if (!currentUser) return;
-
+  
   for (const feature of e.features) {
     const id = feature.properties?.id;
     if (!id) {
@@ -1426,7 +1414,7 @@ map.on('draw.delete', async (e) => {
       console.log('Deleted new feature before saving');
       continue;
     }
-
+    
     // This is an existing saved feature
     const { error } = await sbClient.from("shotengai").delete().eq("id", id);
     if (error) {
@@ -1445,7 +1433,7 @@ let fuseInstance = null;
 
 function initializeFuzzySearch() {
   if (!allFeatures.length) return;
-
+  
   // Create Fuse instance for fuzzy searching
   fuseInstance = new Fuse(allFeatures, {
     keys: [
@@ -1461,7 +1449,7 @@ function initializeFuzzySearch() {
     ignoreLocation: true, // Don't care about position of match
     minMatchCharLength: 2
   });
-
+  
   console.log('âœ… Fuzzy search initialized');
 }
 
@@ -1480,7 +1468,7 @@ function applyFilters(triggerZoom = false) {
   const pf = pfRaw.trim().toLowerCase();
 
   let matches = [];
-
+  
   // Use fuzzy search if query exists and Fuse is initialized
   if (q && fuseInstance) {
     const fuzzyResults = fuseInstance.search(q);
@@ -1498,7 +1486,7 @@ function applyFilters(triggerZoom = false) {
       ].filter(Boolean).some(v => String(v).toLowerCase().includes(q.toLowerCase()));
     });
   }
-
+  
   // Apply prefecture filter
   if (pf) {
     matches = matches.filter(f => {
@@ -1511,7 +1499,7 @@ function applyFilters(triggerZoom = false) {
   // Update layer opacity based on filter
   if (map.getLayer('shotengai-lines')) {
     const matchIds = new Set(matches.map(f => f.properties.id));
-
+    
     map.setPaintProperty('shotengai-lines', 'line-opacity', [
       'case',
       ['in', ['get', 'id'], ['literal', Array.from(matchIds)]],
@@ -1556,25 +1544,25 @@ function applyFilters(triggerZoom = false) {
         const id = el.dataset.id;
         const feat = allFeatures.find(f => String(f.properties.id) === String(id));
         if (!feat) return;
-
+        
         // Zoom to feature (instant - no animation)
-        const coords = feat.geometry.type === 'LineString'
-          ? feat.geometry.coordinates
+        const coords = feat.geometry.type === 'LineString' 
+          ? feat.geometry.coordinates 
           : feat.geometry.coordinates.flat();
-
+        
         const bounds = coords.reduce((bounds, coord) => {
           return bounds.extend(coord);
         }, new mapboxgl.LngLatBounds(coords[0], coords[0]));
-
-        map.fitBounds(bounds, {
+        
+        map.fitBounds(bounds, { 
           padding: 50
           // Instant zoom (no animation)
         });
-
+        
         // Update current edit state
         currentEdit = { mode: "edit", feature: feat };
         window.currentEdit = currentEdit;
-
+        
         // Highlight the feature on the map - use NUMERIC id for proper comparison
         if (map.getLayer('shotengai-lines-hover')) {
           map.setPaintProperty('shotengai-lines-hover', 'line-opacity', [
@@ -1584,7 +1572,7 @@ function applyFilters(triggerZoom = false) {
             0
           ]);
         }
-
+        
         // Show info panel
         showInfo(feat);
       });
@@ -1592,17 +1580,17 @@ function applyFilters(triggerZoom = false) {
   }
 
   if (triggerZoom && matches.length > 0) {
-    const coords = matches.flatMap(f =>
-      f.geometry.type === 'LineString'
-        ? f.geometry.coordinates
+    const coords = matches.flatMap(f => 
+      f.geometry.type === 'LineString' 
+        ? f.geometry.coordinates 
         : f.geometry.coordinates.flat()
     );
-
+    
     if (coords.length > 0) {
       const bounds = coords.reduce((bounds, coord) => {
         return bounds.extend(coord);
       }, new mapboxgl.LngLatBounds(coords[0], coords[0]));
-
+      
       map.fitBounds(bounds, { padding: 40 });
     }
   }
@@ -1782,12 +1770,12 @@ function toggleHeatmap() {
     console.warn('âš ï¸ Heatmap layer not found');
     return;
   }
-
+  
   heatmapVisible = !heatmapVisible;
   const visibility = heatmapVisible ? 'visible' : 'none';
-
+  
   map.setLayoutProperty('shotengai-heatmap', 'visibility', visibility);
-
+  
   // Also hide/show regular layers when heatmap is active
   if (heatmapVisible) {
     // Hide clusters and points when heatmap is on
@@ -1819,14 +1807,14 @@ function toggleHeatmap() {
       map.setPaintProperty('shotengai-lines', 'line-opacity', 0.9);
     }
   }
-
+  
   // Update button state
   const btnHeatmap = document.getElementById('btnHeatmap');
   if (btnHeatmap) {
     btnHeatmap.classList.toggle('active', heatmapVisible);
     btnHeatmap.textContent = heatmapVisible ? 'Hide Heatmap' : 'Show Heatmap';
   }
-
+  
   console.log(`ðŸ—ºï¸ Heatmap ${heatmapVisible ? 'enabled' : 'disabled'}`);
 }
 
@@ -1856,7 +1844,7 @@ function addMapLegend() {
       <span>D: normal street with Shotengai association</span>
     </div>
   `;
-
+  
   // Create custom control
   class LegendControl {
     onAdd(map) {
@@ -1864,13 +1852,13 @@ function addMapLegend() {
       this._container = legendEl;
       return this._container;
     }
-
+    
     onRemove() {
       this._container.parentNode.removeChild(this._container);
       this._map = undefined;
     }
   }
-
+  
   map.addControl(new LegendControl(), 'bottom-left');
 }
 
@@ -1878,7 +1866,7 @@ function addMapLegend() {
 async function loadAndDisplayFeatures() {
   try {
     console.log('ðŸ”„ Loading features from Supabase...');
-
+    
     // Try the view first
     let features = [];
     try {
@@ -1886,7 +1874,7 @@ async function loadAndDisplayFeatures() {
         .from('v_shotengai_geojson')
         .select('geojson')
         .single();
-
+      
       if (viewError) {
         console.warn('âš ï¸ View query failed, trying direct table query:', viewError);
         throw viewError;
@@ -1896,7 +1884,7 @@ async function loadAndDisplayFeatures() {
 
       const geojson = viewData?.geojson;
       console.log('ðŸ—ºï¸ GeoJSON data:', geojson);
-
+      
       features = geojson?.features || [];
     } catch (viewErr) {
       // Fallback: Load directly from shotengai table
@@ -1904,14 +1892,14 @@ async function loadAndDisplayFeatures() {
       const { data: tableData, error: tableError } = await sbClient
         .from('shotengai')
         .select('*, geom');
-
+      
       if (tableError) {
         console.error('âŒ Table query error:', tableError);
         throw tableError;
       }
-
+      
       console.log('ðŸ“¦ Raw table data:', tableData);
-
+      
       // Convert table rows to GeoJSON features
       features = tableData
         .filter(row => row.geom)
@@ -1924,15 +1912,15 @@ async function loadAndDisplayFeatures() {
           };
         });
     }
-
+    
     console.log(`âœ… Loaded ${features.length} features`);
-
+    
     if (features.length === 0) {
       console.warn('âš ï¸ No features found in database');
       alert('No Shotengai data found in the database. Please check your Supabase configuration.');
       return;
     }
-
+    
     // Debug: Show sample of classification/type values
     const sampleFeatures = features.slice(0, 5);
     console.log('ðŸ“Š Sample feature types:', sampleFeatures.map(f => ({
@@ -1940,9 +1928,9 @@ async function loadAndDisplayFeatures() {
       classification: f.properties.classification,
       type: f.properties.type
     })));
-
+    
     allFeatures = features;
-
+    
     // Build feature index
     featureIndexById.clear();
     features.forEach(f => {
@@ -1957,7 +1945,7 @@ async function loadAndDisplayFeatures() {
       if (map.getLayer('shotengai-lines-hover')) map.removeLayer('shotengai-lines-hover');
       map.removeSource('shotengai');
     }
-
+    
     if (map.getSource('shotengai-points')) {
       if (map.getLayer('shotengai-clusters')) map.removeLayer('shotengai-clusters');
       if (map.getLayer('shotengai-cluster-count')) map.removeLayer('shotengai-cluster-count');
@@ -1971,8 +1959,8 @@ async function loadAndDisplayFeatures() {
       type: 'Feature',
       geometry: {
         type: 'Point',
-        coordinates: f.geometry.type === 'LineString'
-          ? f.geometry.coordinates[0]
+        coordinates: f.geometry.type === 'LineString' 
+          ? f.geometry.coordinates[0] 
           : f.geometry.coordinates[0][0]
       },
       properties: f.properties
@@ -1986,7 +1974,7 @@ async function loadAndDisplayFeatures() {
         features: features // Original line features
       }
     });
-
+    
     // Add separate point source WITH clustering (for clusters only - no individual points)
     map.addSource('shotengai-points', {
       type: 'geojson',
@@ -2005,26 +1993,28 @@ async function loadAndDisplayFeatures() {
       type: 'circle',
       source: 'shotengai-points',
       filter: ['has', 'point_count'],
-      maxzoom: 10,
+      maxzoom: 10, // Hide clusters at zoom 10+
       paint: {
         'circle-color': [
           'step',
           ['get', 'point_count'],
-          'rgba(93, 217, 193, 0.9)',  // Gentle teal
+          '#10b981', // Green for small clusters (< 5)
           5,
-          'rgba(251, 191, 36, 0.9)',  // Warm amber
+          '#f59e0b', // Orange for medium clusters (5-10)
           10,
-          'rgba(248, 113, 113, 0.9)'  // Soft coral
+          '#ef4444'  // Red for large clusters (10+)
         ],
         'circle-radius': [
           'step',
           ['get', 'point_count'],
-          12,
+          10,  // Small clusters (was 15)
           5,
-          16,
+          14,  // Medium clusters (was 20)
           10,
-          20
+          18   // Large clusters (was 25)
         ],
+        'circle-stroke-width': 0, // No border (was 2)
+        'circle-opacity': 0.85
       }
     });
 
@@ -2073,26 +2063,20 @@ async function loadAndDisplayFeatures() {
       id: 'shotengai-lines',
       type: 'line',
       source: 'shotengai',
-      minzoom: 10,
+      minzoom: 10, // Lines appear at zoom 10+ (was 9)
       paint: {
         'line-color': [
           'match',
           ['upcase', ['coalesce', ['slice', ['get', 'classification'], 0, 1], ['slice', ['get', 'type'], 0, 1], '']],
-          'A', '#5dd9c1',
-          'B', '#fbbf24',
-          'C', '#f87171',
-          'D', '#7ba7ff',
-          '#a8b5c9'
+          'A', TYPE_COLORS['A'],  // Green - fully covered
+          'B', TYPE_COLORS['B'],  // Orange - pedestrian only
+          'C', TYPE_COLORS['C'],  // Red - covered sidewalk
+          'D', TYPE_COLORS['D'],  // Blue - with association
+          TYPE_COLORS['default']  // Gray - default
         ],
-        'line-width': [
-          'interpolate',
-          ['linear'],
-          ['zoom'],
-          10, 2,
-          15, 4,
-          18, 6
-        ],
-        'line-opacity': 0.9,
+        'line-width': 3,
+        'line-opacity': 0.9
+        // No line-dasharray - solid lines
       }
     });
 
@@ -2142,13 +2126,13 @@ async function loadAndDisplayFeatures() {
         type: 'Feature',
         geometry: {
           type: 'Point',
-          coordinates: f.geometry.type === 'LineString'
-            ? f.geometry.coordinates[0]
+          coordinates: f.geometry.type === 'LineString' 
+            ? f.geometry.coordinates[0] 
             : f.geometry.coordinates[0][0]
         },
         properties: f.properties
       }));
-
+      
       // Add heatmap source
       if (!map.getSource('shotengai-heatmap')) {
         map.addSource('shotengai-heatmap', {
@@ -2159,7 +2143,7 @@ async function loadAndDisplayFeatures() {
           }
         });
       }
-
+      
       map.addLayer({
         'id': 'shotengai-heatmap',
         'type': 'heatmap',
@@ -2222,14 +2206,14 @@ async function loadAndDisplayFeatures() {
     const overallStats = computeStats(allFeatures);
     renderSummary(document.getElementById("summaryOverall"), overallStats, "total");
     applyFilters();
-
+    
     // Debug: Check if layers are properly configured
     setTimeout(() => {
       const mainLayer = map.getLayer('shotengai-lines');
       const hoverLayer = map.getLayer('shotengai-lines-hover');
       console.log('ðŸ” Main layer exists:', !!mainLayer);
       console.log('ðŸ” Hover layer exists:', !!hoverLayer);
-
+      
       // Test if we can query features at a test point
       const testPoint = map.project(map.getCenter());
       const features = map.queryRenderedFeatures(testPoint, {
@@ -2237,7 +2221,7 @@ async function loadAndDisplayFeatures() {
       });
       console.log('ðŸ” Test feature query returned:', features.length, 'features');
     }, 500);
-
+    
     console.log('âœ… Features loaded and displayed');
   } catch (error) {
     console.error('âŒ Failed to load features:', error);
@@ -2254,23 +2238,23 @@ function registerMapClickHandlers() {
       setTimeout(checkLayersAndRegister, 100);
       return;
     }
-
+    
     console.log('âœ… Layers confirmed, registering click handlers');
-
+    
     // Click handler for clusters - zoom in when clicked
     map.on('click', 'shotengai-clusters', (e) => {
       console.log('ðŸŽ¯ Cluster clicked');
       const features = map.queryRenderedFeatures(e.point, {
         layers: ['shotengai-clusters']
       });
-
+      
       const clusterId = features[0].properties.cluster_id;
       const point = features[0].geometry.coordinates;
-
+      
       // Get cluster expansion zoom
       map.getSource('shotengai-points').getClusterExpansionZoom(clusterId, (err, zoom) => {
         if (err) return;
-
+        
         map.easeTo({
           center: point,
           zoom: zoom + 1 // Zoom in a bit more than minimum
@@ -2278,45 +2262,45 @@ function registerMapClickHandlers() {
         });
       });
     });
-
+    
     // Change cursor on cluster hover
     map.on('mouseenter', 'shotengai-clusters', () => {
       map.getCanvas().style.cursor = 'pointer';
     });
-
+    
     map.on('mouseleave', 'shotengai-clusters', () => {
       map.getCanvas().style.cursor = '';
     });
-
+    
     // Click handler for unclustered points (single shotengai at zoom 0-8)
     map.on('click', 'shotengai-unclustered-point', (e) => {
       console.log('ðŸ“ Single point clicked (zooming to show line)');
       const feature = e.features[0];
       const id = feature.properties.id;
-
+      
       // Find the full feature with geometry
       const fullFeature = allFeatures.find(f => f.properties.id === id);
       if (!fullFeature) return;
-
+      
       // Zoom to zoom level 12 (where lines are clearly visible)
-      const coords = fullFeature.geometry.type === 'LineString'
-        ? fullFeature.geometry.coordinates
+      const coords = fullFeature.geometry.type === 'LineString' 
+        ? fullFeature.geometry.coordinates 
         : fullFeature.geometry.coordinates.flat();
-
+      
       const bounds = coords.reduce((bounds, coord) => {
         return bounds.extend(coord);
       }, new mapboxgl.LngLatBounds(coords[0], coords[0]));
-
-      map.fitBounds(bounds, {
+      
+      map.fitBounds(bounds, { 
         padding: 50,
         maxZoom: 12 // Zoom to level where line is clearly visible
       });
-
+      
       // Update edit state and show info
       currentEdit = { mode: "edit", feature: fullFeature };
       window.currentEdit = currentEdit;
       showInfo(fullFeature);
-
+      
       // Highlight (will be visible once we zoom to line level)
       if (map.getLayer('shotengai-lines-hover')) {
         map.setPaintProperty('shotengai-lines-hover', 'line-opacity', [
@@ -2327,21 +2311,21 @@ function registerMapClickHandlers() {
         ]);
       }
     });
-
+    
     // Cursor for unclustered points
     map.on('mouseenter', 'shotengai-unclustered-point', () => {
       map.getCanvas().style.cursor = 'pointer';
     });
-
+    
     map.on('mouseleave', 'shotengai-unclustered-point', () => {
       map.getCanvas().style.cursor = '';
     });
-
+    
     // Use global click handler with feature querying
     map.on('click', (e) => {
       console.log('ðŸ–±ï¸ Map clicked at:', e.lngLat);
       console.log('ðŸ“ Click point (pixels):', e.point);
-
+      
       // Don't interfere if we're in draw mode - check if draw is initialized first
       if (isEditing && draw && draw.getMode) {
         try {
@@ -2354,54 +2338,54 @@ function registerMapClickHandlers() {
           console.warn('âš ï¸ Could not get draw mode:', err.message);
         }
       }
-
+      
       // Query rendered features at the click point with a larger buffer for better detection
       // Use a 5px buffer around the click point to catch nearby lines
       const bbox = [
         [e.point.x - 5, e.point.y - 5],
         [e.point.x + 5, e.point.y + 5]
       ];
-
+      
       const features = map.queryRenderedFeatures(bbox, {
         layers: ['shotengai-lines', 'shotengai-lines-hover']
       });
-
+      
       console.log('ðŸ” Features found at click point (with 5px buffer):', features.length);
-
+      
       // Also try without buffer for debugging
       const featuresExact = map.queryRenderedFeatures(e.point, {
         layers: ['shotengai-lines', 'shotengai-lines-hover']
       });
       console.log('ðŸ” Features found at exact click point:', featuresExact.length);
-
+      
       // Check if layers exist
       if (!map.getLayer('shotengai-lines')) {
         console.error('âŒ Layer shotengai-lines does not exist!');
         return;
       }
-
+      
       if (features.length > 0) {
         // We clicked on a feature!
         const clickedFeatureId = features[0].properties.id;
         console.log('ðŸ“ Clicked feature ID:', clickedFeatureId);
         console.log('ðŸŽ¯ Feature properties:', features[0].properties);
-
+        
         // Find the complete feature from our data store
         const completeFeature = allFeatures.find(f => f.properties.id === clickedFeatureId);
-
+        
         if (!completeFeature) {
           console.warn('âš ï¸ Could not find complete feature for ID:', clickedFeatureId);
           console.log('ðŸ“¦ Available feature IDs:', allFeatures.map(f => f.properties.id));
           return;
         }
-
+        
         console.log('ðŸ–±ï¸ Clicked feature:', completeFeature.properties.name_en || completeFeature.properties.name_jp);
         console.log('ðŸ“ Complete geometry:', completeFeature.geometry);
-
+        
         // Update current edit state
         currentEdit = { mode: "edit", feature: completeFeature };
         window.currentEdit = currentEdit;
-
+        
         // If in edit mode, show info and start editing geometry
         if (isEditing) {
           showInfo(completeFeature);
@@ -2409,7 +2393,7 @@ function registerMapClickHandlers() {
         } else {
           // If not in edit mode, just show info
           showInfo(completeFeature);
-
+          
           // Highlight clicked feature
           map.setPaintProperty('shotengai-lines-hover', 'line-opacity', [
             'case',
@@ -2418,7 +2402,7 @@ function registerMapClickHandlers() {
             0
           ]);
         }
-
+        
         // Stop propagation since we handled the click
         if (e.originalEvent) {
           e.originalEvent.stopPropagation();
@@ -2426,7 +2410,7 @@ function registerMapClickHandlers() {
       } else {
         // Clicked on background - deselect
         console.log('ðŸ—ºï¸ Background click - deselecting');
-
+        
         // Don't deselect if we're actively editing geometry
         if (isEditingGeometry && draw && draw.getAll) {
           console.log('â¸ï¸ Geometry editing active, keeping selection');
@@ -2440,16 +2424,16 @@ function registerMapClickHandlers() {
           }
           return;
         }
-
+        
         console.log('ðŸ§¹ Clearing info panel and highlights');
-
+        
         // Hide info panel
         hideInfo();
-
+        
         // Clear draw selection if any - BUT only if we're NOT drawing a new feature
         // Check if the instructions panel is visible (indicates we're in the middle of drawing)
         const isDrawingNew = document.getElementById('newLineInstructions') !== null;
-
+        
         if (!isDrawingNew && draw && draw.getAll && draw.deleteAll) {
           try {
             if (draw.getAll().features.length > 0) {
@@ -2462,17 +2446,17 @@ function registerMapClickHandlers() {
         } else if (isDrawingNew) {
           console.log('â¸ï¸ Preserving drawn features (new line in progress)');
         }
-
+        
         // CRITICAL: Clear highlight by setting opacity to 0 for ALL features
         if (map.getLayer('shotengai-lines-hover')) {
           console.log('ðŸ§¹ Clearing hover layer highlight');
           map.setPaintProperty('shotengai-lines-hover', 'line-opacity', 0);
         }
-
+        
         // Clear current edit state
         currentEdit = { mode: "new", feature: null };
         window.currentEdit = currentEdit;
-
+        
         console.log('âœ… Selection cleared');
       }
     });
@@ -2503,7 +2487,7 @@ function registerMapClickHandlers() {
         map.setPaintProperty('shotengai-lines-hover', 'line-opacity', 0);
       }
     });
-
+    
     // Ensure canvas is ready and interactive
     const canvas = map.getCanvas();
     if (canvas) {
@@ -2513,20 +2497,20 @@ function registerMapClickHandlers() {
         console.log('âœ… Canvas interactive and ready for clicks');
       }, 100);
     }
-
+    
     // Test that handlers are actually registered
     const registeredEvents = map._listeners;
     if (registeredEvents && registeredEvents.click) {
       console.log('âœ… Click event listeners registered:', registeredEvents.click.length);
     }
-
+    
     // Force a test to ensure layer is interactive
     map.setPaintProperty('shotengai-lines', 'line-opacity', 0.9);
     console.log('âœ… Layer paint properties accessible');
-
+    
     console.log('âœ… All map click handlers registered');
   }; // End of checkLayersAndRegister
-
+  
   // Start the check
   checkLayersAndRegister();
 }
@@ -2581,12 +2565,12 @@ function setupAuthUI() {
   try {
     console.log('ðŸš€ Initializing Shotengai Atlas...');
     console.log('âœ… Mapbox token configured');
-
+    
     // Load Supabase
     console.log('ðŸ”„ Loading Supabase client...');
     const createClient = await loadSupabaseClient();
     console.log('âœ… Supabase client loaded');
-
+    
     // Test connection
     console.log('ðŸ”„ Testing Supabase connection...');
     await fetch(`${SUPABASE_URL.replace(/\/$/, "")}/rest/v1/`, { method: "HEAD" });
@@ -2596,11 +2580,11 @@ function setupAuthUI() {
 
     // Check auth state
     console.log('ðŸ”„ Checking authentication...');
-    sbClient.auth.onAuthStateChange((_e, session) => {
+    sbClient.auth.onAuthStateChange((_e, session) => { 
       currentUser = session?.user || null;
       console.log('ðŸ” Auth state changed:', currentUser ? 'Logged in' : 'Logged out');
     });
-
+    
     {
       const { data: { user } } = await sbClient.auth.getUser();
       currentUser = user || null;
@@ -2611,7 +2595,7 @@ function setupAuthUI() {
     console.log('ðŸ—ºï¸ Waiting for map to load...');
     map.on('load', async () => {
       console.log('âœ… Map loaded successfully');
-      initSidebarToggle();
+      
       try {
         await loadAndDisplayFeatures();
 
@@ -2638,7 +2622,7 @@ function setupAuthUI() {
         applyFilters(false);
         addMapLegend();
         setupAuthUI();
-
+        
         // CRITICAL FIX: Wait for map to be fully idle before registering click handlers
         // The 'load' event fires too early - map needs to finish rendering
         console.log('Waiting for map to be fully interactive...');
@@ -2647,13 +2631,13 @@ function setupAuthUI() {
           registerMapClickHandlers();
           console.log('Initialization complete!');
         });
-
+        
       } catch (featureError) {
         console.error('âŒ Error loading features:', featureError);
         alert('Failed to load Shotengai data: ' + (featureError.message || featureError));
       }
     });
-
+    
     map.on('error', (e) => {
       console.error('âŒ Map error:', e);
     });
@@ -2663,44 +2647,3 @@ function setupAuthUI() {
     alert("Failed to initialize application: " + (err.message || err));
   }
 })();
-
-/* ===== Sidebar Toggle ===== */
-function initSidebarToggle() {
-  // Create toggle button
-  const toggleBtn = document.createElement('button');
-  toggleBtn.className = 'sidebar-toggle';
-  toggleBtn.innerHTML = '◀';
-  toggleBtn.setAttribute('aria-label', 'Toggle sidebar');
-  document.body.appendChild(toggleBtn);
-
-  const app = document.querySelector('.app');
-  let sidebarCollapsed = false;
-
-  toggleBtn.addEventListener('click', () => {
-    sidebarCollapsed = !sidebarCollapsed;
-
-    if (sidebarCollapsed) {
-      app.classList.add('sidebar-collapsed');
-      toggleBtn.innerHTML = '▶';
-      toggleBtn.style.left = '0';
-    } else {
-      app.classList.remove('sidebar-collapsed');
-      toggleBtn.innerHTML = '◀';
-      toggleBtn.style.left = '';
-    }
-  });
-
-  // Auto-close sidebar on mobile after selecting result
-  if (window.innerWidth <= 960) {
-    document.addEventListener('click', (e) => {
-      if (e.target.closest('.result-item')) {
-        setTimeout(() => {
-          sidebarCollapsed = true;
-          app.classList.add('sidebar-collapsed');
-          toggleBtn.innerHTML = '▶';
-          toggleBtn.style.left = '0';
-        }, 300);
-      }
-    });
-  }
-}

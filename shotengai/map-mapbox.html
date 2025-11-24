@@ -8,10 +8,9 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <!-- ⭐ UPDATED: Use new gentle theme CSS -->
-  <link rel="stylesheet" href="atlas-mapbox-gentle.css?v=2" />
+  <link rel="stylesheet" href="atlas-mapbox.css?v=1" />
 
   <!-- Mapbox GL JS -->
   <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
@@ -32,7 +31,6 @@
       <div class="logo">
         <img src="../assets/logo.svg" alt="Shotengai Atlas Logo" height="24">
         <h1>Shotengai Atlas</h1>
-        <span class="badge">BETA</span>
       </div>
 
       <div class="header-controls">
@@ -46,9 +44,9 @@
 
     <aside class="sidebar">
       <div class="card controls">
-        <label for="search">Search Shotengai</label>
-        <input id="search" type="text" placeholder="Name, city, or prefecture..." autocomplete="off" />
-        <label for="prefFilter" class="mt8">Prefecture</label>
+        <label for="search">Search (name / city / prefecture)</label>
+        <input id="search" type="text" placeholder="e.g., 錦市場, Teramachi, Kobe" autocomplete="off" />
+        <label for="prefFilter" class="mt8">Prefecture filter</label>
         <select id="prefFilter">
           <option value="">All prefectures</option>
         </select>
@@ -63,7 +61,7 @@
       </div>
 
       <div class="card summary" id="summaryCard">
-        <div class="summary-title">Data Summary</div>
+        <div class="summary-title">Data summary</div>
         <div class="summary-data-scroll">
           <div id="summaryOverall" class="summary-block"></div>
           <div id="summaryFiltered" class="summary-block muted"></div>
@@ -74,12 +72,10 @@
     <main id="map"></main>
   </div>
 
-  <!-- Info Panel (appears when clicking a feature) -->
   <div class="infopanel" id="infopanel" style="display:none">
     <div class="infocard" id="info"></div>
   </div>
 
-  <!-- Authentication Modal -->
   <div id="authModal" class="modal" style="display:none">
     <div class="auth-card card">
       <div class="card-head">
@@ -105,7 +101,6 @@
     </div>
   </div>
 
-  <!-- Feature Form Modal -->
   <div id="featureModal" class="auth-modal" style="display:none">
     <div class="auth-card form-xxwide">
       <h3 id="featureFormTitle">Shotengai Details</h3>
@@ -120,11 +115,10 @@
     </div>
   </div>
 
-  <!-- Contact Modal -->
   <div id="modalContact" class="modal" style="display: none;">
     <div class="auth-card card">
       <div class="card-head">
-        <div class="title">Suggest a Shotengai</div>
+        <div class="title">Suggest a Shotengai / Contact</div>
         <button id="btnCloseContact" class="close">×</button>
       </div>
 
@@ -135,23 +129,25 @@
         </div>
         <div class="form-group">
           <label for="contactSubject">Subject</label>
-          <input type="text" id="contactSubject" placeholder="Shotengai Suggestion" required>
+          <input type="text" id="contactSubject" placeholder="Shotengai Suggestion / General Inquiry" required>
         </div>
         <div class="form-group">
-          <label for="contactMessage">Details</label>
+          <label for="contactMessage">Message / Details</label>
           <textarea id="contactMessage" rows="5"
-            placeholder="Include name, location, and any details..."></textarea>
+            placeholder="Include name, location, and any details for the Shotengai..."></textarea>
         </div>
         <button type="submit" class="button-primary button-full">Send Message</button>
+        <p class="muted">
+          Your email address is required so we can follow up with you.
+        </p>
       </form>
     </div>
   </div>
 
-  <!-- About Modal -->
   <div id="aboutModal" class="modal" style="display:none">
     <div class="auth-card" style="max-width:720px">
       <div class="card-head">
-        <div class="title">About Shotengai Atlas</div>
+        <div class="title">About the Shotengai Atlas</div>
         <button id="btnCloseAbout" class="close">×</button>
       </div>
 
@@ -163,28 +159,25 @@
         <p>
           Each line represents a shopping street, showing its <strong>location</strong>,
           <strong>structure</strong>, <strong>length</strong>, and <strong>status</strong>.
+          Together, these features reveal how local communities sustain walkable city spaces across Japan.
         </p>
         <h4>Purpose</h4>
         <ul>
-          <li><strong>Preserve</strong> cultural and spatial identity</li>
-          <li><strong>Support</strong> revitalization through data</li>
-          <li><strong>Connect</strong> communities and researchers</li>
+          <li><strong>Preserve</strong> the cultural and spatial identity of Shotengai</li>
+          <li><strong>Support</strong> revitalization through accessible spatial data</li>
+          <li><strong>Connect</strong> research, associations, and the public</li>
         </ul>
-        <h4>Legend</h4>
-        <ul>
-          <li><strong>Type A:</strong> Fully covered arcade street</li>
-          <li><strong>Type B:</strong> Pedestrian-only street</li>
-          <li><strong>Type C:</strong> Street with covered sidewalk</li>
-          <li><strong>Type D:</strong> Regular street with association</li>
-        </ul>
-        <p class="muted">
-          Project by Maximilian Prutsch — ongoing and collaborative.
+        <h4>Data</h4>
+        <p>
+          Data combines fieldwork, open sources, and community input and is stored in
+          a <strong>Supabase</strong> database. Geometry is served as GeoJSON for fast rendering.
         </p>
+        <p class="muted">Project by Maximilian Prutsch — ongoing, experimental, and collaborative.</p>
       </div>
     </div>
   </div>
 
-  <script type="module" src="atlas-mapbox.js?v=2"></script>
+  <script type="module" src="atlas-mapbox.js?v=1"></script>
 </body>
 
 </html>
