@@ -1,5 +1,5 @@
 /* =========================================================
-   Shotengai Atlas – Mapbox Version CSS (2025-11-16)
+   Shotengai Atlas â€“ Mapbox Version CSS (2025-11-16)
    - Based on original atlas.css
    - Adjusted for Mapbox GL JS
    ========================================================= */
@@ -21,7 +21,11 @@
 html,
 body {
   height: 100%;
+  width: 100%;
   margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: fixed;
   font-family: Inter, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
@@ -29,21 +33,66 @@ body {
 
 /* App grid */
 .app {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  grid-template-rows: auto 1fr;
-  min-height: 100vh;
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
 
-/* Header */
+/* Make map fill entire space */
+main#map {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* Ensure mapbox canvas fills container */
+#map canvas {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Float header and sidebar on top of map */
 header {
-  grid-column: 1 / -1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  pointer-events: none;
   display: flex;
   align-items: center;
   gap: 20px;
-  padding: 8px 20px;
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, #0f141a, #12161b);
+  padding: 20px;
+  padding-right: 80px; /* Space for map controls */
+}
+
+header > * {
+  pointer-events: auto;
+}
+
+aside.sidebar {
+  position: absolute;
+  top: 20px; /* Start from top with padding */
+  left: 0;
+  bottom: 180px; /* Leave space for legend at bottom (increased) */
+  width: 340px;
+  z-index: 10;
+  pointer-events: none;
+  padding: 0 20px 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow: hidden;
+}
+
+aside.sidebar > * {
+  pointer-events: auto;
 }
 
 header .title {
@@ -80,64 +129,54 @@ header .sub {
 }
 
 .logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-grow: 0;
+  display: none; /* Hide entire logo section */
 }
 
 .header-controls {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
   margin-left: auto;
 }
 
-/* ---------- Sidebar & Cards ---------- */
-aside.sidebar {
-  background: var(--panel);
-  border-right: 1px solid var(--border);
-  padding: 14px;
-  display: flex !important;
-  flex-direction: column !important;
-  gap: 12px;
-  min-height: 0 !important;
-  overflow: hidden !important;
-}
-
+/* ---------- Cards ---------- */
 .card {
-  background: #0e1318;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 12px;
+  background: rgba(14, 19, 24, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 /* Controls card */
 .controls {
   display: grid;
-  gap: 8px;
+  gap: 10px;
 }
 
 .controls label {
-  font-size: 12px;
-  color: var(--muted);
+  display: none; /* Hide labels for cleaner look */
 }
 
 .controls input[type="text"],
 .controls select {
   width: 100%;
-  background: #0b0f13;
-  border: 1px solid var(--border);
+  background: rgba(11, 15, 19, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 10px 12px;
   outline: none;
+  transition: all 0.2s;
 }
 
 .controls input[type="text"]:focus,
 .controls select:focus {
-  border-color: #334155;
-  box-shadow: 0 0 0 3px rgba(51, 65, 85, .35);
+  border-color: rgba(106, 160, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(106, 160, 255, 0.1);
+  background: rgba(11, 15, 19, 0.8);
 }
 
 .card.controls input[type="text"],
@@ -156,18 +195,27 @@ aside.sidebar {
   flex: 0 0 auto;
   min-height: 0;
   overflow: hidden;
+  max-height: 400px;
 }
 
 .results-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
   flex: 0 0 auto;
 }
 
+.results-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+
 .results {
-  max-height: 500px;
+  max-height: 350px;
   min-height: 0;
   flex: 1 1 auto;
   overflow-y: auto;
@@ -178,15 +226,19 @@ aside.sidebar {
 }
 
 .result-item {
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: #0c1015;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(12, 16, 21, 0.4);
+  backdrop-filter: blur(8px);
   cursor: pointer;
+  transition: all 0.2s;
 }
 
 .result-item:hover {
-  border-color: #264b77;
+  border-color: rgba(106, 160, 255, 0.4);
+  background: rgba(12, 16, 21, 0.6);
+  transform: translateX(2px);
 }
 
 .result-name {
@@ -207,63 +259,68 @@ aside.sidebar {
 /* Pills */
 .pill {
   display: inline-block;
-  background: #1f2b3a;
-  border-radius: 12px;
-  padding: 3px 8px;
+  background: rgba(31, 43, 58, 0.8);
+  backdrop-filter: blur(8px);
+  border-radius: 10px;
+  padding: 4px 10px;
   margin-right: 6px;
-  font-size: .8rem;
+  font-size: 12px;
   color: #cfe2ff;
-  border: 1px solid #334155;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .pill-active {
-  background: #153d27;
+  background: rgba(21, 61, 39, 0.8);
   color: #a5f3bc;
-  border-color: #195e38;
+  border-color: rgba(165, 243, 188, 0.3);
 }
 
 .pill-declining {
-  background: #3d2f0f;
+  background: rgba(61, 47, 15, 0.8);
   color: #facc15;
-  border-color: #6b5111;
+  border-color: rgba(250, 204, 21, 0.3);
 }
 
 .pill-closed {
-  background: #3d0f0f;
+  background: rgba(61, 15, 15, 0.8);
   color: #f87171;
-  border-color: #7f1d1d;
+  border-color: rgba(248, 113, 113, 0.3);
 }
 
 .pill-planned {
-  background: #1a2330;
+  background: rgba(26, 35, 48, 0.8);
   color: #cfe2ff;
-  border-color: #2d4a7a;
+  border-color: rgba(207, 226, 255, 0.3);
 }
 
 /* ---------- Sidebar: Data summary ---------- */
 .card.summary {
   position: relative;
-  background: #0e1118;
+  background: rgba(14, 17, 24, 0.85);
+  backdrop-filter: blur(10px);
   display: flex;
   flex-direction: column;
-  flex: 1 1 auto;
+  flex: 1 1 auto; /* Allow it to grow */
   min-height: 0;
-  overflow-y: hidden;
+  overflow-y: auto; /* Allow scroll if needed */
   overflow-x: hidden;
-  padding: 0 12px 6px 12px;
+  padding: 16px;
 }
 
 .summary-title {
   position: sticky;
   top: 0;
   z-index: 3;
-  background: #0e1118;
+  background: rgba(14, 17, 24, 0.95);
+  backdrop-filter: blur(10px);
   margin: 0;
-  padding: 12px 0 6px 0;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, .06);
+  padding: 0 0 8px 0;
   font-weight: 600;
-  color: var(--brand);
+  color: var(--muted);
   flex-shrink: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .summary-data-scroll {
@@ -309,20 +366,29 @@ aside.sidebar {
   position: relative;
 }
 
+/* Ensure mapbox container fills properly */
+.mapboxgl-map {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
 /* Mapbox specific adjustments */
 .mapboxgl-ctrl-top-right {
   top: 10px;
   right: 10px;
 }
 
-.mapboxgl-ctrl-bottom-left {
-  bottom: 10px;
-  left: 10px;
-}
-
 .mapboxgl-ctrl-bottom-right {
   bottom: 10px;
   right: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
 }
 
 /* Style Mapbox controls - LIGHT BACKGROUND, DARK ICONS */
@@ -375,18 +441,76 @@ aside.sidebar {
   background-color: #10161d;
 }
 
-/* Attribution */
+/* Attribution - simple text links at bottom */
 .mapboxgl-ctrl-attrib {
-  background-color: rgba(11, 15, 19, 0.9);
-  color: #94a3b8;
+  background-color: transparent;
+  color: rgba(148, 163, 184, 0.6);
   font-size: 11px;
+  backdrop-filter: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mapboxgl-ctrl-attrib-inner {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.mapboxgl-ctrl-attrib a {
+  color: rgba(148, 163, 184, 0.7);
+  text-decoration: none;
+  font-size: 11px;
+  transition: color 0.2s;
+}
+
+.mapboxgl-ctrl-attrib a:hover {
+  color: rgba(148, 163, 184, 1);
+}
+
+/* Hide the toggle button */
+.mapboxgl-ctrl-attrib-button {
+  display: none;
+}
+
+/* Position attribution at bottom-left */
+.mapboxgl-ctrl-bottom-left {
+  bottom: 10px;
+  left: 360px; /* To the right of sidebar/legend */
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Custom attribution links (Terms, Privacy) */
+.custom-attribution {
+  position: absolute;
+  bottom: 10px;
+  left: 360px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.custom-attribution a {
+  color: rgba(148, 163, 184, 0.7);
+  text-decoration: none;
+  font-size: 11px;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.custom-attribution a:hover {
+  color: rgba(148, 163, 184, 1);
 }
 
 /* Floating info panel */
 .infopanel {
   position: absolute;
   right: 20px;
-  bottom: 20px;
+  bottom: 120px; /* More space for legend + scale bar */
   z-index: 450;
   display: none;
   pointer-events: none;
@@ -394,13 +518,14 @@ aside.sidebar {
 
 .infocard {
   pointer-events: auto;
-  background: #0e1318;
-  border: 1px solid #1f2937;
-  border-radius: 14px;
-  padding: 16px;
-  padding-top: 8px;
+  background: rgba(14, 19, 24, 0.92);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  padding-top: 12px;
   width: 640px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   color: #e5ebf5;
 }
 
@@ -529,34 +654,43 @@ aside.sidebar {
 }
 
 .button-secondary {
-  background: none;
+  background: transparent;
+  backdrop-filter: none;
   color: var(--text);
-  border: 1px solid var(--border);
-  padding: 8px 14px;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition: all 0.2s;
+  box-shadow: none;
+  font-weight: 500;
 }
 
 .button-secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
 }
 
 .button-primary {
-  background: var(--brand);
-  color: #0b0d10;
-  border: 1px solid var(--brand);
-  padding: 8px 14px;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  background: rgba(106, 160, 255, 0.9);
+  backdrop-filter: blur(10px);
+  color: #ffffff;
+  border: 1px solid rgba(106, 160, 255, 0.3);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   font-weight: 600;
 }
 
 .button-primary:hover {
-  opacity: 0.9;
+  background: rgba(106, 160, 255, 1);
+  border-color: rgba(106, 160, 255, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(106, 160, 255, 0.3);
 }
 
 .button-full {
@@ -584,9 +718,11 @@ aside.sidebar {
 .auth-card {
   max-width: 320px;
   width: 90%;
-  background: var(--panel);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-  border-radius: 8px;
+  background: rgba(14, 19, 24, 0.95);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   padding: 0;
   padding-bottom: 12px;
 }
@@ -608,11 +744,12 @@ aside.sidebar {
 }
 
 .form-group {
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
   box-sizing: border-box;
-  padding: 8px 10px;
-  background: #0c1015;
+  padding: 12px 14px;
+  background: rgba(12, 16, 21, 0.5);
+  backdrop-filter: blur(8px);
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -896,7 +1033,7 @@ input[type="checkbox"] {
 }
 
 .modal .form-body ul li::before {
-  content: "•";
+  content: "â€¢";
   color: var(--brand);
   font-size: 1.2rem;
   position: absolute;
@@ -917,30 +1054,43 @@ input[type="checkbox"] {
 
 /* Legend */
 .legend {
-  background: rgba(14, 19, 24, 0.9);
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  font-size: 13px;
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  width: 300px;
+  background: rgba(14, 19, 24, 0.85);
+  backdrop-filter: blur(10px);
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 11px;
   line-height: 1.5;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  pointer-events: auto;
 }
 
 .legend h4 {
   margin: 0 0 8px 0;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.9);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
+  color: rgba(229, 231, 235, 0.85);
+  font-size: 11px;
+}
+
+.legend-item:last-child {
+  margin-bottom: 0;
 }
 
 .legend-color {
-  width: 20px;
+  width: 16px;
   height: 3px;
   margin-right: 8px;
   border-radius: 2px;
@@ -948,17 +1098,29 @@ input[type="checkbox"] {
 
 /* ---------- Responsive ---------- */
 @media (max-width: 960px) {
-  .app {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto 1fr;
+  aside.sidebar {
+    width: 280px;
   }
+  
+  .infocard {
+    width: min(90vw, 640px);
+  }
+}
 
-  .sidebar {
-    grid-row: 2;
+@media (max-width: 768px) {
+  aside.sidebar {
+    display: none;
   }
 
   header {
-    grid-column: 1;
+    padding-right: 20px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .header-controls {
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }
 
