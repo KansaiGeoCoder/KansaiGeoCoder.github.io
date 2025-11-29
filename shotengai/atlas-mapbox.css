@@ -1,5 +1,5 @@
 /* =========================================================
-   Shotengai Atlas â€“ Mapbox Version CSS (2025-11-16)
+   Shotengai Atlas Ã¢â‚¬â€œ Mapbox Version CSS (2025-11-16)
    - Based on original atlas.css
    - Adjusted for Mapbox GL JS
    ========================================================= */
@@ -778,6 +778,26 @@ header .sub {
   transform: translateY(-1px);
 }
 
+.button-outline {
+  background: transparent;
+  backdrop-filter: none;
+  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: none;
+  font-weight: 500;
+}
+
+.button-outline:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
 .button-primary {
   background: rgba(106, 160, 255, 0.9);
   backdrop-filter: blur(10px);
@@ -1139,7 +1159,7 @@ input[type="checkbox"] {
 }
 
 .modal .form-body ul li::before {
-  content: "•";
+  content: "â€¢";
   color: var(--brand);
   font-size: 1.2rem;
   position: absolute;

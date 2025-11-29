@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign Up | Shotengai Atlas</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="simple-signup.css" />
+</head>
+
+<body>
+  <div class="signup-container">
+    <div class="signup-card">
+      <!-- Header -->
+      <div class="signup-header">
+        <img src="../assets/logo.svg" alt="Shotengai Atlas Logo" height="32">
+        <h1>Join Shotengai Atlas</h1>
+        <p class="subtitle">Choose your account type</p>
+      </div>
+
+      <!-- Account Type Selection -->
+      <div class="account-type-selector" id="accountTypeSelector">
+        <div class="account-type-card" data-type="visitor">
+          <div class="account-icon">👤</div>
+          <h3>Visitor</h3>
+          <p>Explore shotengai across Japan</p>
+          <div class="account-badge">Instant Access</div>
+        </div>
+
+        <div class="account-type-card" data-type="shop_owner">
+          <div class="account-icon">🏪</div>
+          <h3>Shop Owner</h3>
+          <p>Manage your shop profile</p>
+          <div class="account-badge">Requires Approval</div>
+        </div>
+
+        <div class="account-type-card" data-type="association">
+          <div class="account-icon">🏢</div>
+          <h3>Association</h3>
+          <p>Manage your shotengai</p>
+          <div class="account-badge">Requires Approval</div>
+        </div>
+      </div>
+
+      <!-- Signup Form (Hidden Initially) -->
+      <form class="signup-form" id="signupForm" style="display: none;">
+        <button type="button" class="btn-back" id="btnBack">← Back</button>
+
+        <h2 id="formTitle">Create Account</h2>
+
+        <!-- Basic Info (All Users) -->
+        <div class="form-group">
+          <label for="email">Email *</label>
+          <input type="email" id="email" required placeholder="your@email.com">
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password *</label>
+          <input type="password" id="password" required placeholder="Min. 8 characters">
+        </div>
+
+        <div class="form-group">
+          <label for="displayName">Display Name *</label>
+          <input type="text" id="displayName" required placeholder="Your name">
+        </div>
+
+        <!-- Shop Owner Fields -->
+        <div id="shopOwnerFields" style="display: none;">
+          <h3>Shop Information</h3>
+          
+          <div class="form-group">
+            <label for="shopName">Shop Name *</label>
+            <input type="text" id="shopName" placeholder="Your shop name">
+          </div>
+
+          <div class="form-group">
+            <label for="shopShotengai">Shotengai Location *</label>
+            <input type="text" id="shopShotengai" placeholder="Which shotengai?">
+          </div>
+        </div>
+
+        <!-- Association Fields -->
+        <div id="associationFields" style="display: none;">
+          <h3>Association Information</h3>
+          
+          <div class="form-group">
+            <label for="associationName">Association Name *</label>
+            <input type="text" id="associationName" placeholder="Official name">
+          </div>
+
+          <div class="form-group">
+            <label for="shotengaiManaged">Shotengai Managed *</label>
+            <input type="text" id="shotengaiManaged" placeholder="Which shotengai?">
+          </div>
+        </div>
+
+        <!-- Terms -->
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="agreeTerms" required>
+            <span>I agree to the Terms of Service</span>
+          </label>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-primary" id="btnSubmit">
+          <span id="submitText">Create Account</span>
+        </button>
+
+        <div class="form-message" id="formMessage"></div>
+
+        <div class="form-footer">
+          Already have an account? <a href="map-mapbox.html">Sign In</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-icon" id="modalIcon">✅</div>
+        <h2 id="modalTitle">Success!</h2>
+        <p id="modalMessage"></p>
+        <button class="btn-primary" onclick="window.location.href='map-mapbox.html'">Go to Map</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="simple-signup.js"></script>
+</body>
+
+</html>

@@ -38,14 +38,15 @@
         <button id="btnEdit" class="button-secondary" style="display: none;">Edit Map</button>
         <button id="btnAbout" class="button-secondary">About</button>
         <button id="btnContact" class="button-secondary">Contact</button>
-        <button id="btnSignIn" class="button-primary">Sign In</button>
+        <button id="btnSignIn" class="button-outline">Sign In</button>
+        <button id="btnSignUp" class="button-primary">Sign Up</button>
       </div>
     </header>
 
     <aside class="sidebar">
       <div class="card controls">
         <label for="search">Search (name / city / prefecture)</label>
-        <input id="search" type="text" placeholder="e.g., 錦市場, Teramachi, Kobe" autocomplete="off" />
+        <input id="search" type="text" placeholder="e.g., éŒ¦å¸‚å ´, Teramachi, Kobe" autocomplete="off" />
         <label for="prefFilter" class="mt8">Prefecture filter</label>
         <select id="prefFilter">
           <option value="">All prefectures</option>
@@ -79,7 +80,7 @@
   <div id="authModal" class="modal" style="display:none">
     <div class="auth-card card">
       <div class="card-head">
-        <h3 class="title">Editor Sign In</h3>
+        <h3 class="title">Sign In</h3>
         <button id="btnCloseAuth" class="close">x</button>
       </div>
 
@@ -97,6 +98,10 @@
           <button id="btnLogin" class="button-primary">Sign In</button>
         </div>
         <div id="authMsg" class="auth-msg"></div>
+        
+        <div class="form-footer">
+          Don't have an account? <a href="signup.html">Sign Up</a>
+        </div>
       </div>
     </div>
   </div>
@@ -153,8 +158,8 @@
 
       <div class="form-body" style="max-height:60vh">
         <p>
-          The <strong>Shotengai Atlas</strong> maps Japan's traditional shopping streets —
-          the <em>Shotengai</em> — as living spaces of daily culture and urban life.
+          The <strong>Shotengai Atlas</strong> maps Japan's traditional shopping streets â€”
+          the <em>Shotengai</em> â€” as living spaces of daily culture and urban life.
         </p>
         <p>
           Each line represents a shopping street, showing its <strong>location</strong>,
@@ -172,7 +177,7 @@
           Data combines fieldwork, open sources, and community input and is stored in
           a <strong>Supabase</strong> database. Geometry is served as GeoJSON for fast rendering.
         </p>
-        <p class="muted">Project by Maximilian Prutsch — ongoing, experimental, and collaborative.</p>
+        <p class="muted">Project by Maximilian Prutsch â€” ongoing, experimental, and collaborative.</p>
       </div>
     </div>
   </div>
