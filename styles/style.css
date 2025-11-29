@@ -96,14 +96,32 @@ header {
   display: flex;
   align-items: center;
   gap: .6rem;
-  font-weight: 800;
-  letter-spacing: .2px
 }
 
 .brand img {
   width: 28px;
   height: 28px;
-  border-radius: 6px
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1.2;
+}
+
+.brand-name {
+  font-weight: 800;
+  letter-spacing: .2px;
+  font-size: 1rem;
+}
+
+.brand-subtitle {
+  font-size: .7rem;
+  color: var(--muted);
+  font-weight: 400;
 }
 
 nav ul {
@@ -116,11 +134,17 @@ nav ul {
 
 nav a {
   color: var(--muted);
-  font-weight: 600
+  font-weight: 600;
+  transition: color .2s
 }
 
 nav a:hover {
   color: var(--ink)
+}
+
+nav a.nav-cta {
+  color: var(--teal);
+  font-weight: 700
 }
 
 .menu-toggle {
@@ -128,7 +152,8 @@ nav a:hover {
   border: 1px solid var(--line);
   background: #fff;
   border-radius: 10px;
-  padding: .45rem .6rem
+  padding: .45rem .6rem;
+  cursor: pointer
 }
 
 @media (max-width:860px) {
@@ -150,6 +175,10 @@ nav a:hover {
 
   .menu-toggle {
     display: inline-flex
+  }
+
+  .brand-subtitle {
+    display: none;
   }
 }
 
@@ -274,65 +303,143 @@ section {
   color: var(--muted)
 }
 
-/* Work grid */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem
+/* Two-column text layout */
+.two-column-text {
+  column-count: 2;
+  column-gap: 2rem;
+  text-align: justify;
+  column-fill: balance;
 }
 
-.card {
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--card);
-  overflow: hidden;
-  transition: transform .2s ease
+.two-column-text p {
+  margin: 0 0 .8rem 0;
+  break-inside: avoid;
 }
 
-.card:hover {
-  transform: translateY(-2px)
+.two-column-text p:last-child {
+  margin-bottom: 0;
 }
 
-.card img {
-  aspect-ratio: 16/9;
-  object-fit: cover
-}
-
-.card .meta {
-  padding: 1rem
-}
-
-.tag {
-  font-size: .82rem;
-  color: var(--muted)
-}
-
-.card h3 {
-  margin: .25rem 0 .35rem;
-  font-family: "Outfit";
-  font-size: 1.15rem
-}
-
-.more {
-  display: inline-flex;
-  align-items: center;
-  gap: .4rem;
-  color: var(--blue);
-  font-weight: 700
-}
-
-@media (max-width:900px) {
-  .grid {
-    grid-template-columns: 1fr
+@media (max-width: 768px) {
+  .two-column-text {
+    column-count: 1;
   }
 }
 
-/* Research layout */
+/* Project Section */
+.project-intro-columns {
+  column-count: 2;
+  column-gap: 2rem;
+  margin-bottom: 2.4rem;
+  text-align: justify;
+  column-fill: balance;
+}
+
+.project-intro-columns p {
+  font-size: 1.05rem;
+  margin: 0 0 .8rem 0;
+  break-inside: avoid;
+}
+
+@media (max-width: 768px) {
+  .project-intro-columns {
+    column-count: 1;
+  }
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1.8rem
+}
+
+.feature-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.4rem;
+  background: var(--card);
+  transition: transform .2s ease, box-shadow .2s ease
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(17, 20, 24, .08)
+}
+
+.feature-icon {
+  font-size: 2rem;
+  margin-bottom: .6rem
+}
+
+.feature-card h3 {
+  font-family: "Outfit";
+  font-size: 1.1rem;
+  margin: 0 0 .4rem 0
+}
+
+.feature-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: .95rem
+}
+
+/* Shotengai Content Section */
+.shotengai-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem
+}
+
+.content-block h3 {
+  font-family: "Outfit";
+  font-weight: 800;
+  font-size: 1.5rem;
+  margin: 0 0 .4rem 0
+}
+
+.rule {
+  height: 4px;
+  width: 64px;
+  background: var(--teal);
+  border-radius: 4px;
+  margin: .4rem 0 1rem
+}
+
+.content-block p {
+  margin: .8rem 0
+}
+
+.benefits-list {
+  list-style: none;
+  padding: 0;
+  margin: 1.2rem 0;
+  break-inside: avoid-column;
+}
+
+.benefits-list li {
+  padding: .6rem 0;
+  padding-left: 1.4rem;
+  position: relative
+}
+
+.benefits-list li::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: var(--teal);
+  font-weight: 700
+}
+
 .research-wrap {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.2rem;
+  gap: 1.6rem;
   align-items: center
+}
+
+.research-wrap.reverse {
+  direction: ltr
 }
 
 @media (max-width:900px) {
@@ -343,10 +450,11 @@ section {
 
 .topo {
   position: relative;
-  border: 1px dashed var(--line);
+  border: 1px solid var(--line);
   border-radius: 18px;
   background: #fff;
-  overflow: hidden
+  overflow: hidden;
+  box-shadow: 0 6px 20px rgba(17, 20, 24, .06)
 }
 
 .topo .badge {
@@ -358,135 +466,154 @@ section {
   border-radius: 999px;
   padding: .35rem .6rem;
   font-weight: 700;
+  font-size: .85rem;
   color: #2b3542
 }
 
-/* Inputs */
-.input {
-  width: 100%;
+.challenges {
+  background: linear-gradient(180deg, #fff, #fdfefe);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: .85rem 1rem;
-  font: inherit
+  border-radius: var(--radius);
+  padding: 1.6rem;
+  margin-top: 1.2rem
 }
 
-.textarea {
-  min-height: 140px;
-  width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: .85rem 1rem;
-  font: inherit;
-  resize: vertical
+/* Research Section */
+.research-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem
 }
 
-.sp {
-  height: .8rem
-}
-
-/* Article template (shotengai) */
-.article {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 2rem;
-  margin-top: 1.8rem
-}
-
-.toc {
-  position: sticky;
-  top: 88px;
-  align-self: start;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 1rem;
-  background: #fff
-}
-
-.toc h4 {
-  margin: 0 0 .4rem 0;
+.research-content h3 {
   font-family: "Outfit";
-  font-size: 1rem
+  font-weight: 800;
+  font-size: 1.6rem;
+  margin: 0 0 .4rem 0
 }
 
-.toc a {
-  display: block;
-  color: #2b3542;
-  padding: .3rem 0;
-  font-size: .95rem
+.methodology-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin: 1.8rem 0
 }
 
-.toc a:hover {
+.method-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.2rem;
+  background: var(--card)
+}
+
+.method-card h4 {
+  font-family: "Outfit";
+  font-size: 1.05rem;
+  margin: 0 0 .4rem 0;
   color: var(--blue)
 }
 
-.toc .small {
+.method-card p {
+  margin: 0;
   color: var(--muted);
-  font-size: .85rem;
-  margin-top: .4rem
-}
-
-@media (max-width:1000px) {
-  .article {
-    grid-template-columns: 1fr
-  }
-
-  .toc {
-    position: relative;
-    top: auto
-  }
-}
-
-.content {
-  max-width: var(--read)
-}
-
-.content h2 {
-  font-family: "Outfit";
-  font-weight: 800;
-  margin: 2.2rem 0 .6rem;
-  font-size: 1.6rem
-}
-
-.content p {
-  margin: .8rem 0
-}
-
-.rule {
-  height: 4px;
-  width: 64px;
-  background: var(--blue);
-  border-radius: 4px;
-  margin: .4rem 0 1rem
-}
-
-figure {
-  margin: 1.2rem 0;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: #fff;
-  overflow: hidden
-}
-
-figcaption {
-  font-size: .9rem;
-  color: var(--muted);
-  padding: .7rem 1rem;
-  border-top: 1px solid var(--line)
+  font-size: .95rem
 }
 
 .callout {
   border: 1px solid var(--line);
   border-radius: 14px;
   background: linear-gradient(180deg, #fff, #fdfefe);
-  padding: 1rem
+  padding: 1.4rem;
+  margin-top: 1.6rem
 }
 
-/* Buttons & footer */
+.callout h4 {
+  font-family: "Outfit";
+  margin: 0 0 .6rem 0;
+  font-size: 1.15rem
+}
+
+.callout p {
+  margin: .6rem 0
+}
+
+/* Founder Section */
+.founder-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem
+}
+
+.expertise {
+  margin-top: 1.6rem
+}
+
+.expertise h3 {
+  font-family: "Outfit";
+  font-weight: 800;
+  font-size: 1.4rem;
+  margin: 0 0 .4rem 0
+}
+
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.2rem;
+  margin-top: 1.2rem
+}
+
+.skills-grid > div {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card)
+}
+
+.skills-grid strong {
+  display: block;
+  font-family: "Outfit";
+  font-size: 1.05rem;
+  margin-bottom: .3rem;
+  color: var(--ink)
+}
+
+.skills-grid p {
+  margin: 0;
+  color: var(--muted);
+  font-size: .92rem
+}
+
+/* CTA Section */
+.cta-section {
+  text-align: center;
+  padding: 2rem 0
+}
+
+.cta-content h2 {
+  font-family: "Outfit";
+  font-weight: 800;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  margin: 0 0 .8rem 0
+}
+
+.cta-content .lead {
+  max-width: 640px;
+  margin: 0 auto 1.6rem
+}
+
+.cta-note {
+  margin-top: 1rem;
+  color: var(--muted);
+  font-size: .9rem
+}
+
+/* Buttons */
 .cta {
   display: flex;
   gap: .7rem;
   flex-wrap: wrap;
-  margin-top: 1rem
+  margin-top: 1rem;
+  justify-content: center
 }
 
 .btn {
@@ -497,7 +624,8 @@ figcaption {
   padding: .7rem 1rem;
   font-weight: 700;
   border: 1px solid var(--ink);
-  transition: .2s
+  transition: transform .2s ease, box-shadow .2s ease;
+  cursor: pointer
 }
 
 .btn:hover {
@@ -510,95 +638,22 @@ figcaption {
   border-color: var(--ink)
 }
 
+.btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(17, 20, 24, .2)
+}
+
 .btn-ghost {
   background: transparent;
   border-color: var(--line);
   color: var(--ink)
 }
 
-footer {
-  border-top: 1px solid var(--line);
-  padding: 1.6rem 0 2.6rem;
-  color: var(--muted)
-}
-
-.footer {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap
-}
-
-.links {
-  display: flex;
-  gap: 1rem
+.btn-large {
+  padding: 1rem 1.8rem;
+  font-size: 1.05rem
 }
 
 /* Timeline */
-.timeline {
-  margin-top: 1.6rem;
-}
-
-.timeline ol {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-left: 2px solid var(--line);
-  padding-left: 1.4rem;
-}
-
-.timeline li {
-  position: relative;
-  padding: 0 0 1.2rem 0;
-}
-
-.timeline li:last-child {
-  padding-bottom: 0;
-}
-
-.timeline .t-point {
-  position: absolute;
-  left: -9px;
-  /* centers on the vertical line */
-  top: .15rem;
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-  background: #fff;
-  border: 2px solid var(--blue);
-  box-shadow: 0 0 0 3px rgba(63, 169, 245, .12);
-}
-
-.timeline .t-meta {
-  font-size: .88rem;
-  color: var(--muted);
-  margin-bottom: .15rem;
-}
-
-.timeline .t-body h4 {
-  font-family: "Outfit";
-  margin: 0 0 .25rem 0;
-  font-size: 1.05rem;
-}
-
-.timeline .t-body p {
-  margin: 0;
-  color: var(--ink);
-  max-width: var(--read);
-}
-
-/* Compact on small screens */
-@media (max-width: 640px) {
-  .timeline ol {
-    padding-left: 1rem;
-  }
-
-  .timeline .t-body h4 {
-    font-size: 1rem;
-  }
-}
-
-/* Timeline (fixed spacing) */
 .timeline {
   margin-top: 2rem;
 }
@@ -609,7 +664,6 @@ footer {
   padding: 0;
   border-left: 2px solid var(--line);
   padding-left: 2.4rem;
-  /* was ~1.4rem → adds safe gutter */
   position: relative;
 }
 
@@ -617,7 +671,6 @@ footer {
   position: relative;
   margin: 0 0 1.6rem 0;
   min-height: 1.4rem;
-  /* ensures room for the point */
 }
 
 .timeline li:last-child {
@@ -627,20 +680,19 @@ footer {
 .timeline .t-point {
   position: absolute;
   left: -15px;
-  /* move dot left so it never sits on text */
   top: 0.3rem;
   width: 12px;
   height: 12px;
   background: #fff;
   border-radius: 50%;
-  border: 2px solid var(--blue);
-  box-shadow: 0 0 0 3px rgba(63, 169, 245, .12);
+  border: 2px solid var(--teal);
+  box-shadow: 0 0 0 3px rgba(46, 196, 182, .12);
 }
 
 .timeline .t-meta {
   font-size: .9rem;
   color: var(--muted);
-  margin: 0 0 .2rem .2rem;
+  margin: 0 0 .2rem 0;
   line-height: 1.3;
 }
 
@@ -660,4 +712,31 @@ footer {
   .timeline ol {
     padding-left: 2rem;
   }
+
+  .cta {
+    justify-content: flex-start
+  }
+}
+
+/* Footer */
+footer {
+  border-top: 1px solid var(--line);
+  padding: 1.6rem 0 2.6rem;
+  color: var(--muted)
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap
+}
+
+.links {
+  display: flex;
+  gap: 1rem
+}
+
+.links a:hover {
+  color: var(--ink)
 }

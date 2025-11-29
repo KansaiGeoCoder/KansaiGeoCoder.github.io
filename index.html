@@ -4,15 +4,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Northlayer Studio — Maps • Spatial Analysis • Cartography</title>
+  <title>Shotengaido – Mapping Japan's Walkable Shopping Streets</title>
   <meta name="description"
-    content="Northlayer Studio — thoughtful maps and spatial analysis. Portfolio, about, contact, and research." />
+    content="Shotengaido (商店街ド) – An interactive atlas exploring shotengai, Japan's traditional covered shopping streets, through spatial analysis and cartography." />
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap"
     rel="stylesheet">
-  <link rel="stylesheet" href="/styles/style.css" />
+  <link rel="stylesheet" href="../styles/style.css" />
 </head>
 
 <body>
@@ -20,17 +20,21 @@
 
   <header>
     <div class="container nav">
-      <a class="brand" href="#home" aria-label="Northlayer Studio home">
-        <img src="/assets/logo-layers.svg" alt="Northlayer layers logo" />
-        <span>Northlayer Studio</span>
+      <a class="brand" href="#home" aria-label="Shotengaido home">
+        <img src="/assets/logo-layers.svg" alt="Shotengaido logo" />
+        <div class="brand-text">
+          <span class="brand-name">Shotengaido</span>
+          <span class="brand-subtitle">an urban mapping project by Maximilian Prutsch</span>
+        </div>
       </a>
       <nav>
         <button class="menu-toggle" aria-label="Toggle menu" aria-expanded="false">Menu</button>
         <ul id="menu">
-          <li><a href="#work">Work</a></li>
+          <li><a href="#project">Project</a></li>
+          <li><a href="#about-shotengai">About Shotengai</a></li>
           <li><a href="#research">Research</a></li>
-          <li><a href="#about">About</a></li>
-          <li><a href="#contact">Contact</a></li>
+          <li><a href="#founder">About</a></li>
+          <li><a href="#explore" class="nav-cta">Explore Atlas</a></li>
         </ul>
       </nav>
     </div>
@@ -39,70 +43,144 @@
   <main id="home" class="hero">
     <div class="container hero-grid">
       <div>
-        <span class="eyebrow">Cartography & Spatial Analysis</span>
-        <h1>Mapping everyday life through data.</h1>
-        <p class="lead read">I combine cartography, spatial analysis, and design to reveal how people move, shop, and
-          connect — from local streets and walkable districts to regional accessibility and urban change.</p>
+        <span class="eyebrow">Interactive Mapping Project</span>
+        <h1>Exploring Japan's traditional shopping streets</h1>
+        <p class="lead read">An interactive atlas mapping <em>shotengai</em>—covered shopping arcades that form the
+          connective tissue of Japan's walkable neighborhoods. Combining spatial analysis, cartography, and urban
+          research to understand these vital urban corridors.</p>
         <div class="chips">
-          <span class="chip teal">Cartography</span>
-          <span class="chip blue">Spatial analysis</span>
-          <span class="chip gold">Walkability research</span>
-          <span class="chip teal">Shotengai studies</span>
+          <span class="chip teal">Shotengai Studies</span>
+          <span class="chip blue">Interactive Maps</span>
+          <span class="chip gold">Walkability Research</span>
         </div>
         <div class="cta">
-          <a class="btn btn-primary" href="#contact">Start a project</a>
-          <a class="btn btn-ghost" href="#work">See recent work</a>
+          <a class="btn btn-primary" href="#explore">Explore the Atlas</a>
+          <a class="btn btn-ghost" href="#about-shotengai">Learn about Shotengai</a>
         </div>
       </div>
       <div class="blob" aria-hidden="true">
-        <img src="/assets/hero-illustration.png" alt="Map layers illustration" />
+        <img src="heroillustration.png" alt="Shotengai map illustration" />
       </div>
     </div>
   </main>
 
-  <section id="work">
+  <section id="project">
     <div class="container">
       <div class="section-head">
-        <h2>Selected work</h2>
-        <p>Maps, analysis, and spatial stories.</p>
+        <h2>The Project</h2>
+        <p>Mapping walkable urban corridors</p>
       </div>
-      <div class="grid">
-        <a class="card" href="/work/walkability.html">
-          <img src="/images/work-walkability.jpg" alt="Walkability analysis mockup" />
-          <div class="meta">
-            <div class="tag">Analysis</div>
-            <h3>Citywide Walkability Index</h3>
-            <p class="read">Composite of land‑use mix, density, transit, and permeability at a 200m grid.</p>
-            <span class="more">Read case study →</span>
+      <div class="project-intro-columns">
+        <p>
+          The <strong>Shotengaido</strong> (商店街ド) is an interactive web-based mapping platform that documents and analyzes
+          Japan's traditional covered shopping streets. Born from master's research at Kyoto University, this project
+          combines geospatial analysis with cartographic design to reveal how these urban corridors function as vital
+          infrastructure for walkable, livable neighborhoods.
+        </p>
+        <p>
+          Through detailed spatial data, isochrone analysis, and visual storytelling, the atlas offers researchers,
+          urban planners, and curious minds a new lens for understanding the relationship between built form, daily
+          movement, and community vitality.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🗺️</div>
+          <h3>Interactive Maps</h3>
+          <p>Explore hundreds of shotengai locations across Japan with detailed spatial layers, walkability metrics, and
+            surrounding context.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Spatial Analysis</h3>
+          <p>Access comprehensive data on pedestrian accessibility, land-use diversity, transit integration, and urban
+            morphology.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔍</div>
+          <h3>Research Insights</h3>
+          <p>Discover findings from extensive fieldwork examining how shotengai contribute to economic resilience and
+            social cohesion.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3>Case Studies</h3>
+          <p>Deep dives into exemplary shotengai across different Japanese cities, analyzing patterns and best
+            practices.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="about-shotengai">
+    <div class="container">
+      <div class="section-head">
+        <h2>Understanding Shotengai</h2>
+        <p>The fabric of walkable Japanese urbanism</p>
+      </div>
+
+      <div class="shotengai-content">
+        <div class="content-block">
+          <h3>What are Shotengai?</h3>
+          <div class="rule"></div>
+          <div class="two-column-text">
+            <p>
+              <strong>Shotengai (商店街)</strong> are covered shopping arcades that thread through Japanese cities,
+              connecting residential neighborhoods to transit stations, markets, and civic spaces. More than mere retail
+              corridors, they serve as the pedestrian backbone of urban life—sheltered pathways where residents shop for
+              daily necessities, encounter neighbors, and participate in seasonal festivals.
+            </p>
+            <p>
+              Typically ranging from a few hundred meters to over a kilometer in length, shotengai feature continuous
+              arcade roofs that protect pedestrians from rain and sun. The narrow, car-free passages create intimate
+              human-scale environments that encourage walking, browsing, and social interaction.
+            </p>
           </div>
-        </a>
-        <a class="card" href="/work/retail-isochrones.html">
-          <img src="/images/work-retail.jpg" alt="Retail catchment explorer" />
-          <div class="meta">
-            <div class="tag">Web</div>
-            <h3>Retail Isochrone Explorer</h3>
-            <p class="read">5–15 minute multi‑modal sheds to compare locations and capture areas.</p>
-            <span class="more">Read case study →</span>
+        </div>
+
+        <div class="research-wrap reverse">
+          <div class="topo" aria-hidden="true">
+            <img src="ShotengaiIso.png" alt="Shotengai isochrone analysis" />
+            <div class="badge">5–10 min • Isochrones</div>
+            <div class="legend">Accessibility analysis from shotengai entrance</div>
           </div>
-        </a>
-        <a class="card" href="/shotengai/map-mapbox.html">
-          <img src="/images/work-shotengai.png" alt="Shotengai atlas mockup" />
-          <div class="meta">
-            <div class="tag" style="color:var(--teal)">Web</div>
-            <h3>Shotengai Atlas</h3>
-            <p class="read">Mapping traditional shopping streets in Japan, to create an explorable atlas.</p>
-            <span class="more">Open map →</span>
+          <div class="content-block">
+            <h3>Why They Matter</h3>
+            <div class="rule"></div>
+            <div class="two-column-text">
+              <p>
+                Shotengai represent a distinct model of urbanism—one that prioritizes pedestrian movement, mixed-use
+                density, and incremental development over car-centric planning. Their spatial characteristics offer
+                valuable lessons for contemporary urban design:
+              </p>
+              <ul class="benefits-list">
+                <li><strong>Walkability:</strong> Create continuous, sheltered pedestrian networks that reduce car
+                  dependency</li>
+                <li><strong>Economic resilience:</strong> Support diverse small businesses and local entrepreneurship</li>
+                <li><strong>Social cohesion:</strong> Foster chance encounters and community identity through daily
+                  routines</li>
+                <li><strong>Climate adaptation:</strong> Provide weather-protected public space that encourages year-round
+                  walking</li>
+                <li><strong>Urban connectivity:</strong> Link neighborhoods to transit and anchor community activities
+                </li>
+              </ul>
+            </div>
           </div>
-        </a>
-        <a class="card" href="/work/exhibit-map.html">
-          <img src="/images/work-print.jpg" alt="Exhibit map layout" />
-          <div class="meta">
-            <div class="tag">Print</div>
-            <h3>Exhibit‑quality City Map</h3>
-            <p class="read">Calm hierarchy and type for public‑facing reports and exhibitions.</p>
-            <span class="more">View project →</span>
+        </div>
+
+        <div class="content-block challenges">
+          <h3>Contemporary Challenges</h3>
+          <div class="rule"></div>
+          <div class="two-column-text">
+            <p>
+              Despite their urban value, many shotengai face significant pressures: declining foot traffic due to
+              suburbanization and large-scale retail, aging shopkeeper demographics, vacant storefronts, and maintenance
+              costs for aging arcade infrastructure. Understanding these challenges through spatial analysis helps
+              identify intervention strategies and revitalization opportunities.
+            </p>
           </div>
-        </a>
+        </div>
       </div>
     </div>
   </section>
@@ -110,152 +188,222 @@
   <section id="research">
     <div class="container">
       <div class="section-head">
-        <h2>Research</h2>
-        <p>Urban form, proximity, and the everyday city.</p>
+        <h2>Research Foundation</h2>
+        <p>Master's thesis at Kyoto University</p>
       </div>
-      <div class="research-wrap">
-        <div class="topo" aria-hidden="true">
-          <img src="/assets/ShotengaiIso.png" alt="Isochrone/topographic illustration" />
-          <div class="badge">5–10 min • Isochrones</div>
-          <div class="legend">From Master’s Thesis — Kyoto University, 2023</div>
+
+      <div class="research-content">
+        <div class="content-block">
+          <h3>Shotengai as Indicators of Urban Vitality</h3>
+          <div class="rule"></div>
+          <div class="two-column-text">
+            <p>
+              This atlas builds on extensive master's research conducted in Kyoto from 2021–2023, examining shotengai
+              through the lens of walkability and urban morphology. The study analyzed multiple spatial factors including
+              land-use diversity, pedestrian network density, transit accessibility, and building-scale permeability.
+            </p>
+            <p>
+              Through GIS analysis, field surveys, and isochrone modeling, the research revealed how shotengai function
+              as spatial indicators of neighborhood vitality—their presence correlating strongly with higher walkability
+              scores, mixed-use density, and sustained economic activity at the human scale.
+            </p>
+          </div>
         </div>
-        <div>
-          <h3>Shotengai — reimagining walkable urban corridors</h3>
-          <p class="read">
-            Across Japan’s cities, <strong>Shotengai</strong> — the covered shopping streets lining neighborhoods
-            — represent more than commercial infrastructure. They are the connective tissue of daily life: linking
-            homes,
-            transit, and local identity through walkable proximity.
-          </p>
-          <p class="read">
-            This study, conducted as part of my Master’s research at Kyoto University, explores how these arcades
-            function
-            as spatial indicators of urban vitality. By mapping various walkability factors in Kyoto,
-            it examines the relationship between built form, everyday movement, and economic resilience. The findings
-            contribute to a broader understanding of how local morphology supports liveable, human-scale cities.
-          </p>
-          <div class="cta">
-            <a class="btn btn-primary" href="/shotengai/">Explore full research</a>
+
+        <div class="methodology-grid">
+          <div class="method-card">
+            <h4>Data Collection</h4>
+            <p>Comprehensive mapping of shotengai locations, dimensions, and characteristics across Kyoto's urban area,
+              validated through field verification.</p>
+          </div>
+          <div class="method-card">
+            <h4>Walkability Analysis</h4>
+            <p>Multi-factor walkability index combining land-use mix, street connectivity, building density, and
+              pedestrian infrastructure quality.</p>
+          </div>
+          <div class="method-card">
+            <h4>Accessibility Modeling</h4>
+            <p>Network-based isochrone analysis measuring pedestrian reach from shotengai entrances at 5, 10, and 15
+              minute intervals.</p>
+          </div>
+          <div class="method-card">
+            <h4>Spatial Pattern Analysis</h4>
+            <p>Examination of shotengai distribution patterns, relationship to transit nodes, and correlation with
+              neighborhood demographic indicators.</p>
+          </div>
+        </div>
+
+        <div class="callout">
+          <h4>Key Findings</h4>
+          <div class="two-column-text">
+            <p>
+              Shotengai neighborhoods demonstrated significantly higher walkability scores than comparable areas, with
+              particularly strong performance in land-use diversity and pedestrian infrastructure. The continuous
+              weather-protected pathways effectively extend pedestrian catchment areas, creating resilient micro-retail
+              ecosystems even in aging neighborhoods.
+            </p>
+            <p>
+              <strong>Published:</strong> Master's Thesis, Graduate School of Global Environmental Studies, Kyoto
+              University, 2023
+            </p>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="about">
+  <section id="founder">
     <div class="container">
       <div class="section-head">
-        <h2>About</h2>
-        <p>Northlayer Studio</p>
+        <h2>About the Founder</h2>
+        <p>Maximilian Prutsch</p>
       </div>
-      <div class="read">
-        <p>
-          I’m <strong>Maximilian Prutsch</strong>, a geographer and cartographer working across Austria and Japan.
-          I hold an <strong>MSc in Environmental Management</strong> from Kyoto University, a
-          <strong>BSc in Geography</strong> from the University of Graz, and a
-          <strong>GIS Certificate</strong> from the University of Salzburg.
-        </p>
-        <p>
-          My work focuses on <strong>spatial analysis, urban research, and cartographic design</strong>,
-          exploring how people interact with the built environment, from <em>walkability studies</em>
-          to <em>Shotengai revitalization</em> projects.
-        </p>
-        <p>
-          Drawing from both European and Japanese planning contexts, I aim to create maps that bridge
-          analytical depth with visual clarity, tools that help cities, researchers, and communities
-          make informed, human-centered decisions.
-        </p>
-      </div>
-      <!-- Timeline -->
-      <div class="timeline">
-        <ol>
-          <li>
-            <div class="t-point"></div>
-            <div class="t-meta">Now</div>
-            <div class="t-body">
-              <h4>Northlayer Studio</h4>
-              <p>Independent cartography & spatial analysis practice working across Austria and Japan — maps,
-                cartography, and research.</p>
+      <div class="founder-content">
+        <div class="two-column-text">
+          <p>
+            I'm <strong>Maximilian Prutsch</strong>, a geographer and cartographer specializing in spatial analysis and
+            urban research. The Shotengaido emerged from my master's research at Kyoto University, where I became
+            fascinated by how Japan's traditional shopping streets embody principles of walkable urbanism.
+          </p>
+          <p>
+            Working across Austria and Japan, I combine rigorous spatial methods with thoughtful cartographic design to
+            help cities, researchers, and communities better understand the built environment. My approach draws from
+            both European spatial planning traditions and Japanese urban design sensibilities.
+          </p>
+          <p>
+            This project represents an intersection of my interests in walkability, retail geography, and the role of
+            incremental urban development in creating resilient neighborhoods. I continue to develop the atlas as an
+            open research platform and practical tool for urban practitioners.
+          </p>
+        </div>
+
+        <div class="timeline">
+          <ol>
+            <li>
+              <div class="t-point"></div>
+              <div class="t-meta">2025–Present</div>
+              <div class="t-body">
+                <h4>Shotengaido – an urban mapping project by Maximilian Prutsch</h4>
+                <p>Developing and maintaining the interactive Shotengai Atlas as an open research platform and mapping tool for urban practitioners.</p>
+              </div>
+            </li>
+            <li>
+              <div class="t-point"></div>
+              <div class="t-meta">2024–2025</div>
+              <div class="t-body">
+                <h4>GIS Certificate – University of Salzburg</h4>
+                <p>Advanced training in spatial analysis, cartographic design, and geospatial workflows using Python and SQL.</p>
+              </div>
+            </li>
+            <li>
+              <div class="t-point"></div>
+              <div class="t-meta">2023–2024</div>
+              <div class="t-body">
+                <h4>Spatial Planner – Styria, Austria</h4>
+                <p>Regional planning projects for municipalities, statutory map production, and spatial development analysis.</p>
+              </div>
+            </li>
+            <li>
+              <div class="t-point"></div>
+              <div class="t-meta">2020–2023</div>
+              <div class="t-body">
+                <h4>MSc Environmental Management – Kyoto University</h4>
+                <p>Master's research on shotengai as walkable urban corridors, examining multiple walkability factors and revitalization opportunities in Kyoto.</p>
+              </div>
+            </li>
+            <li>
+              <div class="t-point"></div>
+              <div class="t-meta">2015–2019</div>
+              <div class="t-body">
+                <h4>BSc Geography – University of Graz</h4>
+                <p>Foundations in human geography, urban systems, and spatial thinking with focus on human-environment interactions.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <div class="expertise">
+          <h3>Expertise</h3>
+          <div class="rule"></div>
+          <div class="skills-grid">
+            <div>
+              <strong>Spatial Analysis</strong>
+              <p>GIS, network analysis, walkability metrics, accessibility modeling, spatial statistics</p>
             </div>
-          </li>
-          <li>
-            <div class="t-point"></div>
-            <div class="t-meta">GIS Certificate — Univ. Salzburg</div>
-            <div class="t-body">
-              <h4>Geospatial methods</h4>
-              <p>Spatial analysis, data models, cartographic design; Python + SQL workflows for repeatable results.</p>
+            <div>
+              <strong>Cartography</strong>
+              <p>Web mapping, print cartography, data visualization, thematic map design, QGIS, Mapbox</p>
             </div>
-          </li>
-          <li>
-            <div class="t-point" aria-hidden="true"></div>
-            <div class="t-meta">Spatial Planning — Styria, Austria</div>
-            <div class="t-body">
-              <h4>Spatial Planner</h4>
-              <p>
-                Regional and spatial planning projects for municipalities and map production for statutory documents.
-              </p>
+            <div>
+              <strong>Urban Research</strong>
+              <p>Walkability studies, retail geography, urban morphology, mixed-methods field research</p>
             </div>
-          </li>
-          <li>
-            <div class="t-point"></div>
-            <div class="t-meta">MSc — Kyoto University</div>
-            <div class="t-body">
-              <h4>Environmental Management</h4>
-              <p>Master’s research on <em>Shotengai</em> as walkable urban corridors. Study of multiple walkability
-                factors and develpoment opportunities.</p>
+            <div>
+              <strong>Technical Skills</strong>
+              <p>Python, SQL, JavaScript, QGIS, PostGIS, Mapbox GL JS, D3.js</p>
             </div>
-          </li>
-          <li>
-            <div class="t-point"></div>
-            <div class="t-meta">BSc — Univ. Graz</div>
-            <div class="t-body">
-              <h4>Geography</h4>
-              <p>Foundations in human/environment systems, urban geography, and spatial thinking.</p>
-            </div>
-          </li>
-        </ol>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section id="contact">
+  <section id="explore">
     <div class="container">
-      <div class="section-head">
-        <h2>Contact</h2>
-        <p>Share a sentence about your goals and timeline.</p>
-      </div>
-      <form class="read" name="contact"
-        onsubmit="event.preventDefault(); alert('Thanks! I\'ll get back to you shortly.'); this.reset();">
-        <label>
-          <span>Name</span><br>
-          <input type="text" name="name" required placeholder="Your name" class="input" />
-        </label>
-        <div class="sp"></div>
-        <label>
-          <span>Email</span><br>
-          <input type="email" name="email" required placeholder="you@example.com" class="input" />
-        </label>
-        <div class="sp"></div>
-        <label>
-          <span>Message</span><br>
-          <textarea name="message" placeholder="Briefly describe your project, audience, and deadline…"
-            class="textarea"></textarea>
-        </label>
-        <div class="cta">
-          <button class="btn btn-primary" type="submit">Send inquiry</button>
+      <div class="cta-section">
+        <div class="cta-content">
+          <h2>Ready to Explore?</h2>
+          <p class="lead">Discover hundreds of shotengai mapped and analyzed across Japan. Navigate interactive maps,
+            examine spatial data, and understand how these corridors shape walkable neighborhoods.</p>
+          <div class="cta">
+            <a class="btn btn-primary btn-large" href="/shotengai/map-mapbox.html">Launch Shotengaido →</a>
+          </div>
+          <p class="cta-note">Free to explore • Updated regularly • Research-backed data</p>
         </div>
-      </form>
+      </div>
     </div>
   </section>
 
   <footer>
     <div class="container footer">
-      <div>© <span id="year"></span> Northlayer Studio</div>
-      <div class="links"><a href="#">LinkedIn</a><a href="#">GitHub</a><a href="#contact">Contact</a></div>
+      <div>© <span id="year"></span> Shotengaido – an urban mapping project by Maximilian Prutsch</div>
+      <div class="links">
+        <a href="mailto:contact@northlayer.studio">Contact</a>
+      </div>
     </div>
   </footer>
 
-  <script src="/js/script.js"></script>
+  <script>
+    // Year
+    const yearEl = document.getElementById('year');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+    // Mobile nav toggle
+    const btn = document.querySelector('.menu-toggle');
+    const menu = document.getElementById('menu');
+    if (btn && menu) {
+      btn.addEventListener('click', () => {
+        const open = menu.classList.toggle('open');
+        btn.setAttribute('aria-expanded', String(open));
+      });
+    }
+
+    // Smooth scroll offset for sticky header
+    for (const a of document.querySelectorAll('a[href^="#"]')) {
+      a.addEventListener('click', e => {
+        const id = a.getAttribute('href');
+        if (id && id.length > 1) {
+          const el = document.querySelector(id);
+          if (!el) return;
+          e.preventDefault();
+          const y = el.getBoundingClientRect().top + window.pageYOffset - 70;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+          menu?.classList.remove('open');
+          btn?.setAttribute('aria-expanded','false');
+        }
+      });
+    }
+  </script>
 </body>
 
 </html>
