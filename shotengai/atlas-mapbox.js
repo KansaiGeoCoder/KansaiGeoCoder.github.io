@@ -258,7 +258,7 @@ function showInfo(feature) {
   const photoHtml = photos.length
     ? `
       <div class="photo-viewer">
-        <button class="close photo-close" onclick="(window._hideInfo && window._hideInfo())">x</button>
+        <button class="photo-close" onclick="(window._hideInfo && window._hideInfo())">×</button>
         <img id="photoMain" src="${photos[0]}" alt="${name}" />
         ${photos.length > 1 ? `
           <div class="photo-nav">
@@ -269,7 +269,7 @@ function showInfo(feature) {
       </div>
     `
     : `<div class="photo-viewer placeholder">
-        <button class="close photo-close" onclick="(window._hideInfo && window._hideInfo())">x</button>
+        <button class="photo-close" onclick="(window._hideInfo && window._hideInfo())">×</button>
         <span>No photo available</span>
       </div>`;
 
@@ -279,7 +279,7 @@ function showInfo(feature) {
     <div class="card-head">
       <div class="title">${name}</div>
       ${canEdit ? `
-        <button class="btn btn-edit" onclick="window._openFeatureForm()">Edit Attributes</button>
+        <button class="btn-edit" onclick="window._openFeatureForm()">Edit Attributes</button>
       ` : ""}
     </div>
 
@@ -296,9 +296,9 @@ function showInfo(feature) {
           ${kv("Length", p.length_m ? `${Math.round(p.length_m)} m` : "")}
           ${kv("Station", p.nearest_station ? `${p.nearest_station}${p.walk_min ? ` - ${p.walk_min} min` : ""}` : "")}
           ${kv("Association", p.association)}
-          ${kv("Website", p.url ? `<a href="${p.url}" target="_blank" rel="noopener">Open â†’</a>` : "")}
+          ${kv("Website", p.url ? `<a href="${p.url}" target="_blank" rel="noopener">Open</a>` : "")}
           ${kv("Source", p.source)}
-          ${kv("Updated", p.last_update ? new Date(p.last_update).toLocaleDateString() : "â€“")}
+          ${kv("Updated", p.last_update ? new Date(p.last_update).toLocaleDateString() : "-")}
         </div>
 
         ${p.notes ? `<div class="desc">${p.notes}</div>` : ""}

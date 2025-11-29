@@ -509,31 +509,62 @@ header .sub {
 
 .infocard {
   pointer-events: auto;
-  background: rgba(14, 19, 24, 0.92);
+  background: rgba(14, 19, 24, 0.95);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
   padding: 0;
-  width: 640px;
+  width: 800px;
+  min-height: 450px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   color: #e5ebf5;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .infocard .card-head {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  padding: 16px 20px 12px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px 340px 12px 24px;
+  border-bottom: none;
+  position: relative;
+  z-index: 5;
+  background: transparent;
+  margin-bottom: 0;
+}
+
+.infocard .card-head::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 24px;
+  right: 340px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .infocard .title {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: #fff;
+  flex: 1;
+  padding-right: 120px;
+  line-height: 1.3;
 }
+
+/* Chips styling */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 12px;
+  margin-top: 12px;
+}
+
 
 .infocard /* Close button - enhanced styling for simple X */
 .close {
@@ -567,22 +598,33 @@ header .sub {
 /* Close button when overlaid on photo */
 .photo-close {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 16px;
+  right: 16px;
   z-index: 10;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px);
-  color: white;
-  width: 28px;
-  height: 28px;
+  background: rgba(14, 19, 24, 0.92) !important;
+  backdrop-filter: blur(10px);
+  color: #ffffff !important;
+  width: 32px !important;
+  height: 32px !important;
   border-radius: 6px;
-  font-size: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 18px !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  font-weight: 300;
+  line-height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0 !important;
+  margin: 0 !important;
 }
 
 .photo-close:hover {
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(14, 19, 24, 1) !important;
   border-color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
   transform: scale(1.05);
 }
 
@@ -590,21 +632,22 @@ header .sub {
 .btn-edit {
   display: inline-flex;
   align-items: center;
-  padding: 6px 12px;
-  background: rgba(106, 160, 255, 0.15);
-  border: 1px solid rgba(106, 160, 255, 0.3);
+  padding: 8px 14px;
+  background: rgba(106, 160, 255, 0.2);
+  border: 1px solid rgba(106, 160, 255, 0.4);
   color: var(--brand);
-  border-radius: 6px;
-  font-size: 12px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  margin-left: auto !important;
 }
 
 .btn-edit:hover {
-  background: rgba(106, 160, 255, 0.25);
-  border-color: rgba(106, 160, 255, 0.5);
+  background: rgba(106, 160, 255, 0.3);
+  border-color: rgba(106, 160, 255, 0.6);
   transform: translateY(-1px);
 }
 
@@ -627,8 +670,8 @@ header .sub {
 }
 
 .info-content {
-  padding: 16px 300px 20px 20px;
-  min-height: 300px;
+  padding: 0 340px 24px 24px;
+  min-height: 380px;
 }
 
 .info-text {
@@ -640,8 +683,9 @@ header .sub {
   position: absolute;
   top: 0;
   right: 0;
-  width: 280px;
+  width: 320px;
   height: 100%;
+  min-height: 450px;
   overflow: hidden;
   border-radius: 0 16px 16px 0;
   background: #0e1118;
@@ -651,9 +695,10 @@ header .sub {
 }
 
 .photo-viewer img {
-  height: 100%;
   width: 100%;
+  height: 100%;
   object-fit: cover;
+  object-position: center;
   border-radius: 0;
   user-select: none;
 }
@@ -684,7 +729,11 @@ header .sub {
 }
 
 .chips {
-  margin-bottom: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-bottom: 12px;
+  margin-top: 12px;
 }
 
 /* ---------- Buttons ---------- */
@@ -1160,8 +1209,21 @@ input[type="checkbox"] {
   }
   
   .infocard {
-    width: min(90vw, 640px);
-  }
+  pointer-events: auto;
+  background: rgba(14, 19, 24, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 0;
+  width: 800px;
+  min-height: 450px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  color: #e5ebf5;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 }
 
 @media (max-width: 768px) {
@@ -1183,19 +1245,57 @@ input[type="checkbox"] {
 
 @media (max-width: 700px) {
   .infocard {
-    width: min(92vw, 640px);
-  }
+  pointer-events: auto;
+  background: rgba(14, 19, 24, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 0;
+  width: 800px;
+  min-height: 450px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  color: #e5ebf5;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
   .photo-viewer {
-    position: relative;
-    width: 100%;
-    height: 200px;
-    border-radius: 16px 16px 0 0;
-  }
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 320px;
+  height: 100%;
+  min-height: 450px;
+  overflow: hidden;
+  border-radius: 0 16px 16px 0;
+  background: #0e1118;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
   .info-content {
-    padding: 16px 20px 20px 20px;
-  }
+  padding: 0 340px 24px 24px;
+  min-height: 380px;
+}
+
+  .btn-edit {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  background: rgba(106, 160, 255, 0.2);
+  border: 1px solid rgba(106, 160, 255, 0.4);
+  color: var(--brand);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  margin-left: auto;
+}
 
   .auth-card {
     max-width: 94vw;
